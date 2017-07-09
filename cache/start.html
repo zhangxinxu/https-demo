@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width">
+	<title>缓存JS和图片</title>
+	<style type="text/css">
+	span:empty::before {
+		content: '缺省';
+		color: gray;
+	}
+	</style>
+</head>
+<body>
+<p><img src="./static/mm1.jpg" alt="示意图片" width="512" height="381"></p>
+<h3>一些提示信息</h3>
+<ul>
+	<li>浏览器是否支持：<span id="isSupport"></span></li>
+	<li>service worker是否注册成功：<span id="isSuccess"></span></li>
+	<li>当前注册状态：<span id="state"></span></li>
+	<li>当前service worker状态：<span id="swState"></span></li>
+</ul>
+
+<script src="./static/jquery.min.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+	$('#isSupport').text('支持');
+
+	// 开始注册service workers
+	navigator.serviceWorker.register('./sw-demo-cache.js', {
+		scope: './'
+	}).then(function (registration) {
+		$('#isSuccess').text('注册成功');
+
+        var serviceWorker;
+        if (registration.installing) {
+            serviceWorker = registration.installing;
+            $('#state').text('installing');
+        } else if (registration.waiting) {
+            serviceWorker = registration.waiting;
+            $('#state').text('waiting');
+        } else if (registration.active) {
+            serviceWorker = registration.active;
+            $('#state').text('active');
+        }
+        if (serviceWorker) {
+            $('#swState').text(serviceWorker.state);
+            serviceWorker.addEventListener('statechange', function (e) {
+            	$('#swState').append('&emsp;状态变化为' + e.target.state);
+            });
+        }
+    }).catch (function (error) {
+        $('#isSuccess').text('注册没有成功');
+    });
+} else {
+	$('#isSupport').text('不支持');
+}
+</script>
+</body>
+</html>
