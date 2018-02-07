@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>正在安全验证中...</title>
+	<script>if ('serviceWorker' in navigator) {
+	navigator.serviceWorker.register('./sw-complie.js', {
+		scope: './'
+	}).then(function (registration) {
+		location.replace('./index.html');	
+	});
+}</script>
+</head>
+<body>
+	
+</body>
+</html>

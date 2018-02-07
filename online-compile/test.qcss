@@ -1,0 +1,34 @@
+/*
+$blue = #00a050;
+$light = #eee;
+$font = 'Microsoft yahei';
+*/
+.clear{cl}.center{tc;}.hidden{dn;}hr{dn;}
+.ml2{ml2}.ml5{ml5;}.ml10{ml10;}.m5{m5;}
+.imgpad{p3; bd#ccc;}
+.f11{f1.1em;}.f12{f1.2em;}
+.link{
+bg#f5f5f5;
+bdl5 s #ccc;
+f13; p4 0 4 8;}
+.params_table{bg#a0b3d6; f12;}
+.params_table th{bg#f0f3f9; bd3 s #fff; tc}
+.params_table td{bgc#f9f9f9; p2 4; bd3 s #fff;}
+.params_table tr:hover{op.9;}
+span.s{f0.9em; c#999;}
+h2.pagetitle {mt30;tc;}h3{p0;m30 0 0;n}.entry h3{mt18}h3{f1.3em;}
+body.category h3{f1.5em; mt10;}
+.zxx_code{p10; m5 0; f12; bg light; bd1 d #ccc; cl; z1;}
+.zxx_code pre{m0; c#00F; prew; bkw;}
+img.centered {db;mla;mra;}
+img.alignright {p4;m0 0 2 7;di;	}img.alignleft {p4;m0 7 3 0;di;}
+.alignright {l;}.alignleft {r;}
+p{p8 0; m0;}
+.a_link{tdl;tsl op .2s;}.a_link:hover{c#f30; tdn;}
+img{bd0;}.vimg{mb-3;}
+code{br3; p0 4; ff font;}
+@media all and (max-width:320px) {
+.da_inner{w calc(100vw - 24px);}
+.top_da{h262;}
+.top_da_out::before{dn}
+}

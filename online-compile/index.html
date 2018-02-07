@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>借助service worker在线编译测试</title>
+	<script>
+if ('serviceWorker' in navigator) {
+	if (!navigator.serviceWorker.controller) {
+		location.href = 'regist.html';
+	}
+}</script>
+<link rel="stylesheet" type="text/css" href="./test.qcss">
+</head>
+<body>
+<p>Service Worker注册时候的生命周期是这样的：</p>
+<ol>
+<li>Download &#8211; 下载注册的JS文件</li>
+<li>Install &#8211; 安装</li>
+<li>Activate &#8211; 激活</li>
+</ol>
+<p>一旦安装完成，如何注册的JS没有变化，则直接显示当前激活态。</p>
+<p>然而，实际的开发场景要更加复杂，使得Service Worker还有其它一些状态。例如下图这样：</p>
+<p>出现了<code>waiting</code>，这是怎么出现的呢？我们修改了Service Worker注册JS，然后重载的时候旧的Service Worker还在跑，新的Service Worker已经安装等待激活。我们打开开发者工具面板，Application → Service Workers，可能就会如下图这样：</p>
+<p>此时，我们页面强刷下会变成这样，进行了激活。</p>
+<p>再次刷新又回到注册完毕状态。</p>
+<p>然后，这些对应的状态，Service Worker是有对应的事件名进行捕获的，为：</p>
+<pre>self.addEventListener('install', function(event) { /* 安装后... */ });</pre>
+<pre>self.addEventListener('activate', function(event) { /* 激活后... */ });</pre>
+<p>最后，Service Worker还支持<code>fetch</code>事件，来响应和拦截各种请求。</p>
+<pre>self.addEventListener('fetch', function(event) { /* 请求后... */ });</pre>
+<p>基本上，目前Service Worker的所有应用都是基于上面3个事件的，例如，本文要介绍的缓存和离线开发，<code>'install'</code>用来缓存文件，<code>'activate'</code>用来缓存更新，<code>'fetch'</code>用来拦截请求直接返回缓存数据。三者齐心，构成了完成的缓存控制结构。</p>
+<h4>Service Worker的兼容性</h4>
+<p>桌面端Chrome和Firefox可用，IE不可用。移动端Chrome可用，以后估计会快速支持。</p>
+<p class="link">本文为原创文章，会经常更新知识点以及修正一些错误，因此转载请保留原出处，方便溯源，避免陈旧错误知识的误导，同时有更好的阅读体验。<br />
+本文地址：<a href="http://www.zhangxinxu.com/wordpress/?p=6269">http://www.zhangxinxu.com/wordpress/?p=6269</a></p>
+</body>
+</html>
