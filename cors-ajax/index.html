@@ -20,13 +20,19 @@ pre {
 <button id="button">点击按钮返回一张随机图片地址</button>
 <p id="result">&nbsp;</p>
 
-<pre>
-var xhr = new XMLHttpRequest();
-xhr.open('post', 'http://www.zhangxinxu.com/study/201802/cros-ajax.php');
-xhr.onload = function () {
-    result.innerHTML = xhr.responseText;
-};
-xhr.send(null);</pre>
+<pre>&lt;button id="button"&gt;点击按钮返回一张随机图片地址&lt;/button&gt;
+&lt;p id="result"&gt;&amp;nbsp;&lt;/p&gt;</pre>
+<pre>var button = document.getElementById('button');
+var result = document.getElementById('result');
+
+button.addEventListener('click', function () {
+    var xhr = new XMLHttpRequest();
+    xhr.open('post', 'http://www.zhangxinxu.com/study/201802/cros-ajax.php');
+    xhr.onload = function () {
+        result.innerHTML = xhr.responseText;
+    };
+    xhr.send(null);
+});</pre>
 
 <script>
 var button = document.getElementById('button');
