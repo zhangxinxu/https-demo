@@ -2,13 +2,10 @@ var qcss=function(b){var e={dn:"display: none",di:"display: inline",dib:"display
 
 self.addEventListener('fetch', function(event) {
   event.respondWith(async function () {
-    var body = '';
     if (/\.qcss/.test(event.request.url)) {
       let res = await fetch(event.request);
       let text = await res.text();
-      body = await qcss(text);
-
-      return new Response(body, {
+      return new Response(qcss(text), {
         headers: {
           'content-type': 'text/css; charset=utf-8'
         }
