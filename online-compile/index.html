@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>借助service worker在线编译测试</title>
+	<title>借助service worker在线编译qcss测试</title>
 	<script>
 if ('serviceWorker' in navigator) {
 	if (!navigator.serviceWorker.controller) {
@@ -10,28 +10,867 @@ if ('serviceWorker' in navigator) {
 	}
 }</script>
 <link rel="stylesheet" type="text/css" href="./test.qcss">
+<script>
+if (!('serviceWorker' in navigator)) {
+    // 测试用，实际开发不走此策略
+    document.querySelector('link').setAttribute('href', './test.css');
+}
+</script>
 </head>
 <body>
-<p>Service Worker注册时候的生命周期是这样的：</p>
-<ol>
-<li>Download &#8211; 下载注册的JS文件</li>
-<li>Install &#8211; 安装</li>
-<li>Activate &#8211; 激活</li>
-</ol>
-<p>一旦安装完成，如何注册的JS没有变化，则直接显示当前激活态。</p>
-<p>然而，实际的开发场景要更加复杂，使得Service Worker还有其它一些状态。例如下图这样：</p>
-<p>出现了<code>waiting</code>，这是怎么出现的呢？我们修改了Service Worker注册JS，然后重载的时候旧的Service Worker还在跑，新的Service Worker已经安装等待激活。我们打开开发者工具面板，Application → Service Workers，可能就会如下图这样：</p>
-<p>此时，我们页面强刷下会变成这样，进行了激活。</p>
-<p>再次刷新又回到注册完毕状态。</p>
-<p>然后，这些对应的状态，Service Worker是有对应的事件名进行捕获的，为：</p>
-<pre>self.addEventListener('install', function(event) { /* 安装后... */ });</pre>
-<pre>self.addEventListener('activate', function(event) { /* 激活后... */ });</pre>
-<p>最后，Service Worker还支持<code>fetch</code>事件，来响应和拦截各种请求。</p>
-<pre>self.addEventListener('fetch', function(event) { /* 请求后... */ });</pre>
-<p>基本上，目前Service Worker的所有应用都是基于上面3个事件的，例如，本文要介绍的缓存和离线开发，<code>'install'</code>用来缓存文件，<code>'activate'</code>用来缓存更新，<code>'fetch'</code>用来拦截请求直接返回缓存数据。三者齐心，构成了完成的缓存控制结构。</p>
-<h4>Service Worker的兼容性</h4>
-<p>桌面端Chrome和Firefox可用，IE不可用。移动端Chrome可用，以后估计会快速支持。</p>
-<p class="link">本文为原创文章，会经常更新知识点以及修正一些错误，因此转载请保留原出处，方便溯源，避免陈旧错误知识的误导，同时有更好的阅读体验。<br />
-本文地址：<a href="http://www.zhangxinxu.com/wordpress/?p=6269">http://www.zhangxinxu.com/wordpress/?p=6269</a></p>
+<div class="AD"><div class="AE">&nbsp;</div><div class="AF">&nbsp;</div></div>
+<div id="page" class="AG">
+  <div id="header">
+        <div id="nav">
+            <p class="AA">
+                您好，欢迎来淘宝！<a href>[请登录]</a><a href>[免费注册]</a>
+            </p>
+            <ul class="AH AB">
+                <li class="BI">
+                    <a href><s></s>我的淘宝<b></b></a>
+                </li>
+                <li class="BJ"><a href><s></s>购物车</a></li>
+                <li class="BK"><a href><s></s>收藏夹</a></li>
+                <li class="BL"><a href>社区</a></li>
+                <li class="BM">
+                    <a href><s></s>帮助<b></b></a>
+                </li>
+            </ul>
+        </div>
+        <div id="tb_banner">
+            <a href="#"><img width="100%" height="40" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/t_ad.gif" /></a>
+    </div>
+        <h1 id="logo">
+            <object width="300" height="68" class="holiday-logo" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000">
+                <param value="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/logo.swf" name="movie">
+                <param value="high" name="quality">
+                <param value="8.0.0" name="swfversion">
+                <param value="transparent" name="wmode">
+                <!--[if !IE]>-->
+                <object width="300" height="68" class="holiday-logo" name="holiday-logo" data="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/logo.swf" type="application/x-shockwave-flash">
+                    <param value="transparent" name="wmode">
+                </object>
+                <!--<![endif]-->
+            </object>
+        </h1>
+        <div id="search" class="AB">
+            <ul class="AI">
+                <li class="first AJ"><a href>宝贝</a></li>
+                <li><a href>淘宝商城</a></li>
+                <li><a href>店铺</a></li>
+                <li><a href>拍卖</a></li>
+                <li><a href>全球购</a></li>
+                <li><a href>打听</a></li>
+            </ul>
+            <ul class="BN">
+            <li><a href>高级搜索</a></li>
+                <li><a href>使用帮助</a></li>
+            </ul>
+            <div class="AK">
+                <b class="AL"></b>
+                <span class="BO">
+            <label id="sLab" class="hidden" for="q">输入您想搜索的宝贝</label>
+                    <input type="text" onfocus="javascript:document.getElementById('sLab').style.display='none';" autocomplete="off" title="搜索宝贝" name="q" id="q" />
+                    <button class="AM" type="button">搜 索</button>
+                </span>
+          </div>
+            <div class="BP"></div>
+        </div>
+    </div>
+    <div id="content">
+        <div class="BQ">
+            <div class="BR">
+                <div class="BS">
+                    <div id="product">
+                        <div class="BT">
+                            <ul class="AN">
+                                <li class="BU AO ks_megamenu_item"><a href><s></s><strong>淘宝商城<span class="span_mall"></span></strong><b></b><i></i></a></li>
+                                <li class="BU BV ks_megamenu_item"><a href><s></s><strong>淘宝电器城</strong><b></b><i></i></a></li>
+                                <li class="BU BW ks_megamenu_item"><a href><s></s><strong>淘资讯</strong><b></b><i></i></a></li>
+                                <li class="BX"><a href><s></s><strong>高清影院</strong></a></li>
+                                <li class="BY"><a href><s></s><strong>机票酒店</strong></a></li>
+                                <li class="BZ"><a href><s></s><strong>彩票</strong></a></li>
+                                <li class="CA"><a href><s></s><strong>淘江湖</strong></a></li>
+                                <li class="CB"><a href><s></s><strong>试衣间</strong></a></li>
+                                <li class="CC"><a href><s></s><strong>网游</strong></a></li>
+                                <li class="CD"><a href><s></s><strong>阿里旺旺</strong></a></li>
+                                <li class="CE"><a href><s></s><strong>手机淘宝</strong></a></li>
+                            </ul>
+                            <p class="CF"><a href>更多</a></p>
+                        </div>
+                        <b class="CG"></b>
+                        <b class="AQ"></b>
+                  </div>
+                    <div class="CH">
+                        <div class="CI">
+                            <div class="slide_player CK CJ">
+                                <ol class="CL" style="top:-150px;">
+                                    <li><a href><img width="100%" height="150" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/a1.gif" /></a></li>
+                                    <li><a href><img width="100%" height="150" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/a2.jpg" /></a></li>
+                                    <li><a href><img width="100%" height="150" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/a3.jpg" /></a></li>
+                                    <li><a href><img width="100%" height="150" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/a4.gif" /></a></li>
+                                    <li><a href><img width="100%" height="150" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/a5.jpg" /></a></li>
+                                </ol>
+                                <ul class="AP"><li>1</li><li class="CM">2</li><li>3</li><li>4</li><li>5</li></ul>
+                            </div>
+                      </div>
+                        <div class="AV" id="mall" >
+                            <div class="AR">
+                                <h3><a href="http://mall.taobao.com/">淘宝商城 · 精选<s></s></a></h3>
+                                <ul class="AS AB">
+                                <li><a href>天下淘宝年货专辑</a></li>
+                                    <li><a href>满99元即返999个积分</a></li>
+                                </ul>
+                            </div>
+                            <div class="BF">
+                                <a title="上一页" href hidefocus="true" class="AT"></a>
+                                <a title="下一页" href hidefocus="true" class="AU"></a>
+                                <div class="CN">
+                                    <b class="rl"></b>
+                                    <b class="AL"><b></b></b>
+                                    <div class="AW">
+                                        <div class="AX">
+                                            <ol class="AZ" style="left:-824px;">
+                                                <li>
+                                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ks1.jpg" /></a>
+                                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ks2.jpg" /></a>
+                                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ks3.jpg" /></a>
+                                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ks4.jpg" /></a>
+                                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ks5.jpg" /></a>
+                                                </li>
+                                                <li>
+                                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ks6.jpg" /></a>
+                                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ks7.jpg" /></a>
+                                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ks8.jpg" /></a>
+                                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ks9.jpg" /></a>
+                                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ks10.jpg" /></a>
+                                                </li>
+                                                <li>
+                                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ks11.jpg" /></a>
+                                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ks12.jpg" /></a>
+                                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ks13.jpg" /></a>
+                                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ks14.jpg" /></a>
+                                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ks15.jpg" /></a>
+                                                </li>
+                                            </ol>
+                                        </div>
+                                        <s class="CO"></s>
+                                        <s class="CP"></s>
+                                    </div>
+                                    <b class="AQ"><b></b></b>
+                                </div>
+                                <div class="CQ">
+                                    <ol class="AZ" style="left:-832px;">
+                                        <li>
+                                            <a href><img width="190" height="70" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/p1.jpg" /><i class="CR"></i></a>
+                                            <a href><img width="190" height="70" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/p2.jpg" /><i></i></a>
+                                        </li>
+                                        <li>
+                                            <a href><img width="190" height="70" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/p3.png" /><i class="CR"></i></a>
+                                            <a href><img width="190" height="70" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/p4.gif" /><i></i></a>
+                                        </li>
+                                        <li>
+                                            <a href><img width="190" height="70" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/p5.gif" /><i class="CR"></i></a>
+                                            <a href><img width="190" height="70" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/p6.gif" /><i></i></a>
+                                        </li>
+                                    </ol>
+                                </div>
+                            </div>
+                            <b class="AY"></b>
+                            <b class="AQ"><b></b></b>
+                        </div>
+                    </div>
+                    <div id="category" class="BE">
+                        <div class="AR ">
+                            <h3><a href>所有类目</a></h3>
+                            <ul class="BA">
+                                <li><a href>店铺街</a></li>
+                                <li><a href>淘1站</a></li>
+                                <li><a href>刷卡打折</a></li>
+                                <li><a href>货到付款</a></li>
+                            </ul>
+                            <ul class="BB">
+                                <li class="s2"><s></s><a href>促销</a></li>
+                                <li class="s1"><s></s><a href>全球购</a></li>
+                                <li class="s3"><s></s><a href>礼物</a></li>
+                                <li class="s4"><s></s><a href>创意站</a></li>
+                                <li class="s5"><s></s><a href>跳蚤街</a></li>
+                            </ul>
+                        </div>
+                        <div class="BF">
+                          <div class="category_list">
+                                <div class="DA CS">
+                                    <h4><a href>服装</a><i></i></h4>
+                                    <ul>
+                                        <li>
+                                            <h5><a href>女装</a></h5>
+                                            <span><a href class="DB">羽绒</a><a href>棉衣</a><a href>毛呢</a><a href>毛衣</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>休闲男装</a></h5>
+                                            <span><a href>羽绒服</a><a href>棉衣</a><a href>毛衣</a><a href>裤</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>内衣</a></h5>
+                                            <span><a href>保暖</a><a href>文胸</a><a href>睡衣</a><a href>裤袜</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>精品女装</a></h5>
+                                            <span><a href>打底</a><a href>针织</a><a href>连衣裙</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>商务男装</a></h5>
+                                            <span><a href>呢大衣</a><a href>尼克服</a><a class="DB" href>男鞋</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>运动服</a></h5>
+                                            <span><a href>运动套装</a><a href>棉衣</a><a href>卫衣</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>女鞋</a></h5>
+                                            <span><a href>靴子</a><a href>雪地靴</a><a href>短靴</a><a href>长靴</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>运动鞋</a></h5>
+                                            <span><a href>板鞋</a><a href>跑步鞋</a><a href>篮球鞋</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>童装</a></h5>
+                                            <span><a href>裤</a><a href class="DB">鞋</a><a href>孕妇装</a><a href>羽绒</a><a href>外套</a></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="DA CW">
+                                    <h4><a href>配饰</a><i></i></h4>
+                                    <ul>
+                                        <li>
+                                            <h5><a href>男女箱包</a></h5>
+                                            <span><a href>单肩</a><a href>钱包</a><a href>旅行</a><a href>男包</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>珠宝</a></h5>
+                                            <span><a href>婚钻</a><a href>翡翠</a><a href>施华洛</a><a href class="DB">周大福</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>手表</a></h5>
+                                            <span><a href>Casio</a><a href>天梭</a><a href>浪琴</a><a href>欧米茄</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>服饰配件</a></h5>
+                                            <span><a href>围巾</a><a href>帽子</a><a href>皮带</a><a href>颈环</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>饰品</a></h5>
+                                            <span><a href>毛衣链</a><a href>耳饰</a><a href>发饰</a><a href>戒指</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>眼镜</a></h5>
+                                            <span><a class="DB" href>Zippo</a><a href>太阳镜</a><a href>眼镜架</a><a href>烟具</a></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="DA CT">
+                                    <h4><a href>家居</a><i></i></h4>
+                                    <ul>
+                                        <li>
+                                            <h5><a href>装潢建材</a></h5>
+                                            <span><a href class="DB">卫浴</a><a href>灯饰</a><a href>地板</a><a href>浴霸</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>家具</a></h5>
+                                            <span><a href>床</a><a href>沙发</a><a href>柜子</a><a href>茶几</a><a href>宜家</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>家饰</a></h5>
+                                            <span><a href>十字绣</a><a href>挂木</a><a href>木雕</a><a href>相框</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>日用</a></h5>
+                                            <span><a href>新年</a><a href>保暖</a><a href>收纳</a><a href>钟表</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>日化</a></h5>
+                                            <span><a href>沐浴</a><a class="DB" href>洗发</a><a href>牙膏</a><a href>纸品</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>成人</a></h5>
+                                            <span><a href>安全套</a><a href>计生</a><a href>女用</a><a href>情具</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>厨房</a></h5>
+                                            <span><a href>餐具</a><a href>杯</a><a href>锅具</a><a href>配件</a><a href>保鲜</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>清洁</a></h5>
+                                            <span><a href>拖把</a><a href>擦地拖鞋</a><a href>衣物清洁</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>家纺</a></h5>
+                                            <span><a href>冬被</a><a href>枕头</a><a href class="DB">四件套</a><a href>靠垫</a><a href>外套</a></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="DA CY">
+                                    <h4><a href>母婴</a><i></i></h4>
+                                    <ul>
+                                        <li>
+                                            <h5><a href>奶粉</a></h5>
+                                            <span><a href>辅食</a><a href>营养</a><a href>宝宝保健</a><a href>更多</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>用品</a></h5>
+                                            <span><a href>尿片</a><a href>睡袋</a><a href>洗护</a><a href>喂哺</a><a href>宜家</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>益智</a></h5>
+                                            <span><a href class="DB">家具</a><a href>早教</a><a href>推车</a><a href>车</a><a href>户外</a></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="DA CY">
+                                    <h4><a href>食品</a><i></i></h4>
+                                    <ul>
+                                        <li>
+                                            <h5><a href>零食</a></h5>
+                                            <span><a href>蜜饯</a><a href>山核桃</a><a href class="DB">巧克力</a><a href>进口</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>保健</a></h5>
+                                            <span><a href>安利</a><a href>燕窝</a><a href>蜂蜜</a><a href>维生素</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>民生</a></h5>
+                                            <span><a href>年货</a><a href>膳食</a><a href>佳节礼盒</a><a href>人参</a></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="DA CY">
+                                    <h4><a href>美容</a><i></i></h4>
+                                    <ul>
+                                        <li>
+                                            <h5><a href>护肤</a></h5>
+                                            <span><a href>精华</a><a href>爽肤水</a><a href class="DB">面膜</a><a href>精油</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>彩妆</a></h5>
+                                            <span><a href>香水</a><a href>粉饼</a><a href>粉底</a><a href>眼影</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>国货</a></h5>
+                                            <span><a href>芳草集</a><a href>牛尔</a><a href>佰草集</a><a href>相宜</a></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="DA CZ">
+                                    <h4><a href>数码</a><i></i></h4>
+                                    <ul>
+                                        <li>
+                                            <h5><a href>手机</a></h5>
+                                            <span><a href class="DB">Nokia</a><a href>三星</a><a href>索爱</a><a href>Dopod</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>国货手机</a></h5>
+                                            <span><a href>双卡双待</a><a href>智能</a><a href>炒股</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>相机</a></h5>
+                                            <span><a href>佳能</a><a href>索尼</a><a href>单反</a><a href>摄像机</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>笔记本</a></h5>
+                                            <span><a href>上网本</a><a href>IBM</a><a href>苹果</a><a href>联想</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>电脑</a></h5>
+                                            <span><a href>硬件</a><a href>整机</a><a href>LCD</a><a href>网络</a><a href>周边</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>MP4</a></h5>
+                                            <span><a href>蓝魔</a><a href>艾诺</a><a class="DB" href>IPOD</a><a href>索尼</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>配件</a></h5>
+                                            <span><a href>3G上网</a><a href>电池</a><a href>摄像头</a><a href>USB</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>电玩</a></h5>
+                                            <span><a href>PSP</a><a href>红棒</a><a href class="DB">Wii</a><a href>U盘</a><a href>内存卡</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>办公</a></h5>
+                                            <span><a href>墨盒</a><a href>打印</a><a href>投影</a><a href>词典</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>大家电</a></h5>
+                                            <span><a href>液晶</a><a href>冰箱</a><a href>空调</a><a href>油烟机</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>小家电</a></h5>
+                                            <span><a href>取暖器</a><a href>加湿</a><a href>豆浆</a><a href>耳机</a><a href>内存卡</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>个人护理</a></h5>
+                                            <span><a href>剃须刀</a><a href>按摩</a><a href>足浴器</a></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="DA CU">
+                                    <h4><a href>文体</a><i></i></h4>
+                                    <ul>
+                                        <li>
+                                            <h5><a href>户外</a></h5>
+                                            <span><a href>冲锋衣</a><a href>登山鞋</a><a href>垂钓</a><a href>滑雪</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>运动</a></h5>
+                                            <span><a href class="DB">羽拍</a><a href>跑步机</a><a href>瑜伽</a><a href>泳衣</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>汽车</a></h5>
+                                            <span><a href>坐垫</a><a href>GPS</a><a href>保养</a><a href>视听</a><a href>美容</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>玩具</a></h5>
+                                            <span><a href>毛绒</a><a href>机器人</a><a href>娃娃</a><a href>模型</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>宠物</a></h5>
+                                            <span><a href>狗粮</a><a class="DB" href>零食</a><a href>猫粮</a><a href>服饰</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>书籍</a></h5>
+                                            <span><a href>考试</a><a href>小说</a><a href class="DB">育儿</a><a href>养生</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>收藏</a></h5>
+                                            <span><a href>钱币</a><a href class="DB">虎年</a><a href>和田玉</a><a href>古玩街</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>文具</a></h5>
+                                            <span><a href>日韩</a><a href>本册</a><a href>台历</a><a href>书包</a><a href>笔</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>音像</a></h5>
+                                            <span><a href>吉他</a><a href>唱片</a><a href>电影</a><a href>胎教</a><a href>外套</a></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="DA CX">
+                                    <h4><a href>虚拟</a><i></i></h4>
+                                    <ul>
+                                        <li>
+                                            <h5><a href>充值卡</a></h5>
+                                            <span><a href>移动</a><a href>联通</a><a href>电信</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>网游</a></h5>
+                                            <span><a href class="DB">魔兽</a><a href>梦幻西游</a><a href>蜀门</a><a href>QQ</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>彩票</a></h5>
+                                            <span><a href>大乐透</a><a href>排三</a><a href>双色球</a><a href>足球</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>IP卡</a></h5>
+                                            <span><a href>网络电话</a><a href>skype</a><a href>手机号码</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>游戏币</a></h5>
+                                            <span><a href>DNF</a><a href>梦幻诛仙</a><a href>永恒之塔</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>机票</a></h5>
+                                            <span><a href>酒店</a><a href class="DB">旅游度假路线</a><a href>客栈</a></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="DA CV">
+                                    <h4><a href>服务</a><i></i></h4>
+                                    <ul>
+                                        <li>
+                                            <h5><a href>网络服务</a></h5>
+                                            <span><a href>物流</a><a href>软件</a><a href>网店装修</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>折扣劵</a></h5>
+                                            <span><a href>超市卡</a><a href>蛋糕劵</a><a href>电影票</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>生活</a></h5>
+                                            <span><a href class="DB">鲜花</a><a href>园艺</a><a href>翻译</a><a href>摄影</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>房产</a></h5>
+                                            <span><a href>租房</a><a href>合租</a><a href>二手房</a><a href>急售</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>保姆</a></h5>
+                                            <span><a class="DB" href>装修</a><a href>培训班</a><a href>租车</a><a href>招工</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>吃喝玩乐</a></h5>
+                                            <span><a href>省钱</a><a href>同城活动</a><a href>外卖</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>创意站</a></h5>
+                                            <span><a href class="DB">礼物</a><a href>智能顽</a><a href>定制</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>全球购</a></h5>
+                                            <span><a href>台湾</a><a href>折扣名包</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>跳蚤街</a></h5>
+                                            <span><a href>一元拍</a><a href>数码</a><a href>闲置派</a></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="DA CY">
+                                    <h4><a href>保险</a><i></i></h4>
+                                    <ul>
+                                        <li>
+                                            <h5><a href>意外险</a></h5>
+                                            <span><a href>交通</a><a href class="DB">旅行</a><a href>意外医疗</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>保险公司</a></h5>
+                                            <span><a href>泰康</a><a href>华泰</a><a href>阳光</a></span>
+                                        </li>
+                                        <li>
+                                            <h5><a href>特色</a></h5>
+                                            <span><a href>出国</a><a href>自驾车</a><a href>家财</a></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="DC">
+                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/b1.png" /></a>
+                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/b2.png" /></a>
+                                    <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/b3.png" /></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="DD">
+                <div class="AV BE" id="help">
+                    <b class="AL"><b></b></b>
+                    <div class="BF ">
+                      <div class="BC">
+                            <a href><strong>免费注册</strong><s>免费注册快乐体验</s></a>
+                            <a href><strong>登 录</strong><s>开始淘宝之旅</s></a>
+                        </div>
+                    </div>
+                    <b class="AQ"><b></b></b>
+                </div>
+                <div class="AV BE" id="announce">
+                    <b class="AL"><b></b></b>
+                    <div class="AR">
+                      <ul class="BD DE">
+                            <li class="AJ"><span>公告</span><s></s></li>
+                        <li><span>规则</span><s></s></li>
+                            <li><span>安全保障</span><s></s></li>
+                            <li class="DF"><span><a href>公益</a></span><s class="last"></s></li>
+                        </ul>
+                    </div>
+                    <div class="BF">
+                        <div class="DH">
+                            <ul class="AS DI">
+                                <li><a href>淘宝为寒冬经济保驾护航</a></li>
+                                <li><a href>淘宝封杀不良卖家</a></li>
+                                <li><a href>海地:地震无情仁爱无疆</a></li>
+                                <li><a href>喜！买年货竟有这些保障</a></li>
+                            </ul>
+                        </div>
+                        <div class="DH AC">
+                            <ul class="AS DI">
+                                <li><a href>淘宝规则全接触</a></li>
+                                <li><a href>消保协议及规则变更通知</a></li>
+                                <li><a href>广州亚运会标志禁售通知</a></li>
+                                <li><a href>“规则走近客户”活动</a></li>
+                            </ul>
+                        </div>
+                        <div class="DH AC">
+                            <ul class="AS DI">
+                                <li><a href>出租店铺被骗1.5万</a></li>
+                                <li><a href>购物保障：新规则上线</a></li>
+                                <li><a href>日本原装幕后真相</a></li>
+                                <li><a href>卖家售后情况正式展现</a></li>
+                            </ul>
+                        </div>
+                        <div class="DH AC">
+                            <ul class="AS DI">
+                                <li><a href>淘友再度捐助援建学校</a></li>
+                                <li><a href>仁爱无疆吁淘友援助海地</a></li>
+                                <li><a href>为海地誓言：决不放弃</a></li>
+                                <li><a href>网货会也搞碳中和</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="AV BE" id="recom">
+                    <b class="AL"><b></b></b>
+                    <div class="AR">
+                      <ul class="BD DJ">
+                            <li><span>精彩活动</span><s></s></li>
+                            <li class="AJ"><span><a href="#">创意极品</a></span><s></s></li>
+                            <li class="DF"><span>特价宝贝</span><s class="last"></s></li>
+                        </ul>
+                    </div>
+                    <div class="BF">
+                        <div class="DH tab_panel_activity AC">
+                            <div class="tab_panel_activity_bigpic">
+                                <a href><img src="http://img06.taobaocdn.com/tps/i6/T1IPRsXbRgXXXXXXXX-270-70.png" /></a>
+                            </div>
+                            <div class="tab_panel_activity_info">
+                                <a class="DM" href>
+                                    <img width="80" height="80" src="http://img05.taobaocdn.com/tps/i5/T1jOdsXcxoXXXXXXXX-80-80.png" />
+                                    <span class="DN">美丽新风尚</span>
+                                </a>
+                                <ul class="AS">
+                                    <li><a href>淘美食！最全年货推荐！</a></li>
+                                    <li><a class="DB" href>年终疯抢家居满就减全场包邮</a></li>
+                                    <li><a href>省钱又省心,节日出游旅行箱包</a></li>
+                                    <li><a href>爆！淘宝火热推出在线高清影院</a></li>
+                                    <li><a href>新年新气象,紧追潮流,更新换"袋"!</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="DH tab_panel_hotsale AC" style="display:block;">
+                            <ul class="DK">
+                                <li class="DL">
+                                    <div class="DM">
+                                        <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/iv1.gif"></a>
+                                    </div>
+                                     <div class="DN"><a href>他们PK我拿奖品</a></div>
+                                </li>
+                                <li class="DL">
+                                    <div class="DM">
+                                        <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/iv2.gif"></a>
+                                     </div>
+                                     <div class="DN"><a href>给做梦的女孩~</a></div>
+                                </li>
+                                <li class="DL">
+                                    <div class="DM">
+                                        <a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/iv3.gif"></a>
+                                    </div>
+                                    <div class="DN"><a href>MM翘睫毛的秘密</a></div>
+                                </li>
+                                <li class="DL">
+                                    <div class="DM"><a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/iv4.gif"></a></div>
+                                     <div class="DN"><a href>和你一起吃冰激凌好吗？</a></div>
+                                </li>
+                                <li class="DL">
+                                    <div class="DM"><a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/iv5.gif"></a></div>
+                                     <div class="DN"><a href>此笔好昂贵</a></div>
+                                </li>
+                                <li class="DL">
+                                    <div class="DM"><a href><img src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/iv6.gif"></a></div>
+                                    <div class="DN"><a href>80后的居家美学</a></div>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="DH tab_panel_special AC">
+                            <ul class="DK">
+                                <li class="DL">
+                                    <div class="DM"><a href><img src="http://img02.taobaocdn.com/tps/i2/T1MmFsXo4oXXXXXXXX-70-70.jpg"></a></div>
+                                     <div class="DN"><a href>热销雪花款圆钻</a></div>
+                                </li>
+                                <li class="DL">
+                                    <div class="DM"><a href><img src="http://img02.taobaocdn.com/tps/i2/T1384sXftJXXXXXXXX-70-70.jpg"></a></div>
+                                     <div class="DN"><a href>狂销原生态巢蜜</a></div>
+                                </li>
+                                <li class="DL">
+                                    <div class="DM"><a href><img src="http://img07.taobaocdn.com/tps/i7/T14PVsXcxtXXXXXXXX-70-70.jpg"></a></div>
+                                     <div class="DN"><a href>健康火山能量石</a></div>
+                                </li>
+                                <li class="DL">
+                                    <div class="DM"><a href><img src="http://img01.taobaocdn.com/tps/i1/T1iCJsXmXoXXXXXXXX-70-70.jpg"></a></div>
+                                     <div class="DN"><a href>超低价天然珍珠</a></div>
+                                </li>
+                                <li class="DL">
+                                    <div class="DM"><a href><img src="http://img01.taobaocdn.com/bao/uploaded/i1/T1ZSRqXeVXXXb34rzb_122921.jpg_70x70.jpg"></a></div>
+                                     <div class="DN"><a href>极品蚕丝被</a></div>
+                                </li>
+                                <li class="DL">
+                                    <div class="DM"><a href><img src="http://img01.taobaocdn.com/tps/i1/T1WR4sXhJJXXXXXXXX-70-70.jpg"></a></div>
+                                     <div class="DN"><a href>熏制腊肉抢购中</a></div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="AV BE" id="info">
+                    <b class="AL"><b></b></b>
+                    <div class="AR">
+                      <ul class="BD DE">
+                            <li><span><a href>淘资讯</a></span><s></s></li>
+                            <li><span><a href>淘江湖</a></span><s></s></li>
+                            <li><span><a href>淘帮派</a></span><s></s></li>
+                            <li class="DF AJ"><span><a href>高清影院</a></span><s class="last"></s></li>
+                        </ul>
+                    </div>
+                    <div class="BF">
+                        <div class="DH DO AC" style="display:block;">
+                            <ul class="DP">
+                                <li><a href>高清大片</a></li>
+                                <li><a href>热播剧场</a></li>
+                                <li><a href>免费杂志</a></li>
+                            </ul>
+                            <h4><a href><strong>[最热推荐]</strong> 揭秘！成龙语：我不愿意娶她！</a></h4>
+                            <div class="DQ">
+                                <div class="DR">
+                                    <a href>
+                                        <img width="80" height="80" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/inf1.jpg" />
+                                        <span class="DN">十月围城</span>
+                                    </a>
+                                </div>
+                                <ul class="AS">
+                                <li><a href>[视频] 让人心疼的三角关系</a></li>
+                                    <li><a class="DB" href>[视频] 孔子也被商业化，叹！</a></li>
+                                    <li><a href>[视频] 十月围城称霸亚洲影展</a></li>
+                                </ul>
+                                <ul class="DS DT">
+                                    <li>[<a href>动作</a>]</li>
+                                    <li>[<a href>爱情</a>]</li>
+                                    <li>[<a href>悬疑</a>]</li>
+                                    <li>[<a href>科幻</a>]</li>
+                                    <li>[<a href>偶像</a>]</li>
+                                    <li>[<a href>都市</a>]</li>
+                                    <li>[<a href>喜剧</a>]</li>
+                                    <li>[<a href>历史</a>]</li>
+                                    <li>[<a href>动画</a>]</li>
+                                    <li>[<a href>预告</a>]</li>
+                                </ul>
+                                <div class="DR">
+                                    <a href>
+                                        <img width="80" height="80" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/inf2.jpg" />
+                                        <span class="DN">杂拌儿</span>
+                                    </a>
+                                </div>
+                                <ul class="AS">
+                                <li><a href>[杂志] 情人节的约会宝典</a></li>
+                                    <li><a class="DB" href>[杂志] 孙海英怒斥同性恋</a></li>
+                                    <li><a href>[杂志] 新年去鸟巢滑雪吧</a></li>
+                                </ul>
+                                <ul class="DS">
+                                    <li>[<a href>娱乐休闲</a>]</li>
+                                    <li>[<a href>女性男性</a>]</li>
+                                    <li>[<a href>新闻商业</a>]</li>
+                                    <li>[<a href>ＩＴ教育</a>]</li>
+                                    <li>[<a href>精品文章</a>]</li>
+                                    <li>[<a href>热门杂志</a>]</li>
+                                </ul>
+                            </div>
+                            <ul class="AS DI">
+                                <li><a href>如何为晚餐"瘦身"？</a></li>
+                                <li><a href>豪放女豪放到死？！</a></li>
+                                <li><a href>阿凡达内地票房破七亿</a></li>
+                                <li><a href>《蜗居》如房价般红火</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="AV BE" id="expressway">
+                    <b class="AL"><b></b></b>
+                    <div class="AR">
+                      <ul class="BD DE">
+                            <li class="AJ"><span>手机充值</span><s></s></li>
+                        <li><span>游戏快充</span><s></s></li>
+                            <li><span>机票</span><s></s></li>
+                            <li class="DF"><span>彩票</span><s class="last"></s></li>
+                        </ul>
+                    </div>
+                    <div class="BF">
+                        <ul class="DU">
+                            <li>运营商：<select><option>移动</option><option>联通</option><option>电信/CDMA</option></select></li>
+                            <li>地&nbsp;&nbsp;区：<select><option>浙江</option><option>江苏</option><option>广东</option><option>安徽</option><option>重庆</option><option>福建</option><option>武汉</option><option>郑州</option><option>其他</option></select></li>
+                            <li>面&nbsp;&nbsp;值：<select><option>100</option><option>10</option><option>20</option><option>50</option><option>200</option><option>500</option><option>1000</option><option>2000</option></select></li>
+                            <li class="DV">
+                                <a href>查看淘宝折扣折扣价</a>
+                            </li>
+                        </ul>
+                        <p class="DW">
+                            <a href>水电煤缴费</a><br />
+                            <a href>信用卡还款</a>
+                        </p>
+                    </div>
+                </div>
+                <div class="DX"><a href><img width="300" height="250" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ad.jpg" /></a></div>
+            </div>
+        </div>
+        <div class="DG">
+            <div class="AV BE" id="p4p">
+                <b class="AL"><b></b></b>
+                <div class="AR">
+                  <h3>热卖单品</h3>
+                </div>
+                <div class="BF">
+                    <ul class="DK">
+                        <li><div class="DM"><a title="去红血丝 敏感 活动中抢" href><img width="100" height="100" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/gd1.jpg"></a></div><div class="DN"><a title="去红血丝 敏感 活动中抢" href>去红血丝 敏感 活动中抢</a></div><div class="BG"><strong>178.00</strong></div></li>
+                        <li><div class="DM"><a title="皇冠火爆热销！镇静抗敏全能营养水" href><img width="100" height="100" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/gd2.jpg"></a></div><div class="DN"><a title="皇冠火爆热销！镇静抗敏全能营养水" href>皇冠火爆热销！镇静抗敏全能营养水</a></div><div class="BG"><strong>98.00</strong></div></li>
+                        <li><div class="DM"><a title="吃葡萄的眼睛最迷人！电脑眼熊猫眼救星来啦" href><img width="100" height="100" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/gd3.jpg"></a></div><div class="DN"><a title="吃葡萄的眼睛最迷人！电脑眼熊猫眼救星来啦" href>吃葡萄的眼睛最迷人！电脑眼熊猫眼救星来啦</a></div><div class="BG"><strong>128.00</strong></div></li>
+                        <li><div class="DM"><a title="硬货！3冠御寒极品700克真羽绒服" href><img width="100" height="100" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/gd4.jpg"></a></div><div class="DN"><a title="硬货！3冠御寒极品700克真羽绒服" href>硬货！3冠御寒极品700克真羽绒服</a></div><div class="BG"><strong>458.00</strong></div></li>
+                        <li><div class="DM"><a title="情人节送女友 珍珠饰品 假一赔百【心中有爱" href><img width="100" height="100" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/gd5.jpg"></a></div><div class="DN"><a title="情人节送女友 珍珠饰品 假一赔百【心中有爱" href>情人节送女友 珍珠饰品 假一赔百【心中有爱</a></div><div class="BG"><strong>118.00</strong></div></li>
+                        <li><div class="DM"><a title="月销千双！左脚右脚！热卖时尚保暖男士靴子" href><img width="100" height="100" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/gd6.jpg"></a></div><div class="DN"><a title="月销千双！左脚右脚！热卖时尚保暖男士靴子" href>月销千双！左脚右脚！热卖时尚保暖男士靴子</a></div><div class="BG"><strong>269.00</strong></div></li>
+                        <li><div class="DM"><a title="三皇冠 热卖五千多 牛漆皮亮钻加绒 中跟靴" href><img width="100" height="100" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/gd7.jpg"></a></div><div class="DN"><a title="三皇冠 热卖五千多 牛漆皮亮钻加绒 中跟靴" href>三皇冠 热卖五千多 牛漆皮亮钻加绒 中跟靴</a></div><div class="BG"><strong>138.00</strong></div></li>
+                        <li><div class="DM"><a title="復古卡哇伊 短毛绒翻折絨球球雪地靴" href><img width="100" height="100" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/gd8.jpg"></a></div><div class="DN"><a title="復古卡哇伊 短毛绒翻折絨球球雪地靴" href>復古卡哇伊 短毛绒翻折絨球球雪地靴</a></div><div class="BG"><strong>39.90</strong></div></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="DY">
+                <div class="AA"><a href><img width="728" height="90" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ad_b1.jpg"></a></div>
+                <div class="AB"><a href><img width="190" height="90" src="https://zhangxinxu.github.io/gulp-qcss/example/dist/image/taobao/ad_b2.gif"></a></div>
+            </div>
+            <div class="AV DZ" id="links">
+                <b class="AL"><b></b></b>
+                <div class="BF">
+                  <div class="BH EA">
+                        <h4><span>交易安全</span></h4>
+                        <ul>
+                            <li><a href>免费注册</a></li>
+                            <li><a href>支付宝</a></li>
+                            <li><a href>购物流程</a></li>
+                            <li><a href>交易安全</a></li>
+                        </ul>
+                    </div>
+                    <div class="BH ED">
+                        <h4><span>消费者保障</span></h4>
+                        <ul>
+                            <li><a href>如实描述</a></li>
+                            <li><a href>7天退换</a></li>
+                            <li><a href>假一赔三</a></li>
+                            <li><a href>闪电发货</a></li>
+                            <li><a href>30天维修</a></li>
+                            <li><a href>正品保障</a></li>
+                        </ul>
+                    </div>
+                    <div class="BH EB">
+                        <h4><span>付款方式</span></h4>
+                        <ul>
+                            <li><a href>货到付款</a></li>
+                            <li><a href>信用卡支付</a></li>
+                            <li><a href>网上银行支付</a></li>
+                            <li><a href>线下网点支付</a></li>
+                        </ul>
+                    </div>
+                    <div class="BH EC">
+                        <h4><span>售后服务</span></h4>
+                        <ul>
+                            <li><a href>退换货政策</a></li>
+                            <li><a href>退换货流程</a></li>
+                            <li><a href>投诉举报流程</a></li>
+                            <li><a href>客服电话</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <b class="AQ"><b></b></b>
+            </div>
+        </div>
+        <div class="EE">
+            Copyright &copy; 2010 by <a title="张鑫旭" href="http://www.zhangxinxu.com/">张鑫旭-鑫空间-鑫生活</a><br />此淘宝新版首页纯静态页面由<a title="张鑫旭" href="http://www.zhangxinxu.com">张鑫旭</a>重新编写，有较多的修正与优化，用于学习交流
+        </div>
+    </div>
+</div>
 </body>
 </html>
