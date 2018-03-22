@@ -5,7 +5,8 @@ self.addEventListener('fetch', function(event) {
     if (/\.qcss/.test(event.request.url)) {
       let res = await fetch(event.request);
       let text = await res.text();
-      return new Response(qcss(text), {
+      let now  = +new Date();
+      return new Response(qcss(text) + '/*'+ (+new Date() - now) +'ms*/', {
         headers: {
           'content-type': 'text/css; charset=utf-8'
         }
