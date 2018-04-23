@@ -8,7 +8,9 @@ self.addEventListener('fetch', function(event) {
 
       var data = {};
       text = text.replace(/<script\s+type=\"text\/json\">([\w\W]*?)<\/script>/, function (matchs, $1) {
-        data = JSON.parse($1);
+        if ($1) {
+          data = JSON.parse($1);
+        }
         return '';
       });
 
