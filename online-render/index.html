@@ -1,0 +1,123 @@
+<script type="text/json">
+{
+    "typeId": "bbbbbb",
+    "goods": [{ "id": "000010", "name": "白萝卜", "price": 0.4, "units": "/斤", "num": 1 },
+        { "id": "000011", "name": "花生", "price": 2.25, "units": "/斤", "num": 0 },
+        { "id": "000012", "name": "菜花", "price": 0.85, "units": "/斤", "num": 0 },
+        { "id": "000013", "name": "绿豆芽", "price": 0.83, "units": "/斤", "num": 0 },
+        { "id": "000014", "name": "荸荠", "price": 2.13, "units": "/斤", "num": 0 },
+        { "id": "000015", "name": "红薯 ", "price": 0.5, "units": "/斤", "num": 0 },
+        { "id": "000016", "name": "大白菜 ", "price": 0.35, "units": "/斤", "num": 0 },
+        { "id": "000017", "name": "青蒜 ", "price": 0.75, "units": "/斤", "num": 0 },
+        { "id": "000018", "name": "冬瓜", "price": 0.32, "units": "/斤", "num": 0 },
+        { "id": "000019", "name": "扁豆  ", "price": 1.7, "units": "/斤", "num": 0 }]
+}
+</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>借助service worker在线HTML模板渲染</title>
+	<script>
+if ('serviceWorker' in navigator) {
+	if (!navigator.serviceWorker.controller) {
+		location.href = 'regist.html';
+	}
+}</script>
+<style>
+body{font-size: 14px;}
+ul{padding:0; margin:0; list-style-type:none;}
+a{text-decoration:none;}
+.equal_height{width:100%; height:9999px; position:absolute; left:0; top:0;}
+.cho_link,.cho_btn,.cho_desc,.cho_asc{background:url(./choose_bg.png) no-repeat;}
+.cho_search{width:170px; margin-right:-20px; padding-right:20px; *vertical-align:-2px;}
+.cho_box{border:1px solid #bfbfbf; background-color:#ebebeb; *position:relative; overflow-y:hidden;}
+.cho_line{display:block; padding-top:2px; background-color:#d2d2d2; border-bottom:1px solid #f0f0f0;}
+.cho_left{width:20%; margin-right:10px; float:left; position:relative;}
+.cho_equal_height{border-right:1px solid #ccc; background-color:#fff;}
+.cho_menu{padding-bottom:72px;position:relative;}
+.cho_link,.cho_link_on{display:block; line-height:32px; padding-left:19px; color:#333; *zoom:1;}
+.cho_link{background-color:#fafafa; border-bottom:1px solid #f6f6f6;}
+.cho_link:hover{background:#f6f6f6; border-bottom:1px solid #e0e0e0; text-decoration:none;}
+.cho_link_on{margin:-1px -1px 0 0; background:#ebebeb; border-bottom:1px solid #ccc; border-top:1px solid #ccc; position:relative; cursor:default;}
+.cho_link_on:hover{text-decoration:none;}
+.cho_list,.cho_list_title{line-height:21px; padding:5px 20px; border-bottom:1px solid #d9d9d9;}
+.cho_list_title{border-bottom-color:#ccc;}
+.cho_list_hover,.cho_list:hover{background-color:#f3f3f3;}
+.cho_list_on,.cho_list_on:hover{background-color:#fbfbfb;}
+.cho_list_li{width:33%; float:left;}
+.cho_btn{display:inline-block; width:45px; height:20px; line-height:19px; background-position:0 -230px; color:#666; font-weight:bold; text-shadow:1px 1px #fff;}
+.cho_btn{position:absolute; left:-6000px;}
+.cho_btn:hover{background-position:0 -260px; color:#fff; text-decoration:none; text-shadow:0 -1px #0D7D00;}
+.cho_list_hover .cho_btn, .cho_list:hover .cho_btn{position:static;}
+.cho_desc,.cho_asc{display:inline-block; width:16px; height:17px; margin-bottom:-3px;}
+.cho_desc{background-position:0 -50px;}
+.cho_desc:hover{background-position:0 -80px;}
+.cho_desc_off{background-position:0 -110px;}
+.cho_asc{background-position:0 -140px;}
+.cho_asc:hover{background-position:0 -170px;}
+.cho_asc_off{background-position:0 -200px;}
+.cho_input{width:42px; height:15px; margin:0 5px; padding:0 0 1px 0; text-align:center; vertical-align:middle;}
+.cho_out{display:none;}
+.tc{text-align: center;}
+.g6{color: #666;}
+.g9{color: #999;}
+.fix,.cell{overflow: hidden;}
+</style>
+</head>
+<body>
+
+<script>
+if (!('serviceWorker' in navigator)) {
+    // 测试用，实际开发不走此策略
+    alert('浏览器不支持ServiceWorker，本demo跑步起来~');
+}
+</script>
+<p class="tc g9">下面的数据是谷歌到的北京2012-09-23前后的菜价</p>
+<div class="mt10 cho_box z">
+    <b class="cho_line"></b>
+    <div class="fix">
+        <!-- 左边的选菜项 -->
+        <div class="cho_left">
+            <div class="equal_height cho_equal_height"></div>
+            <ul class="cho_menu">
+                <li><a href="javascript:" name="choLink" class="cho_link" data-id="aaaaaa">我爱水果<span class="ml20" id="aaaaaa"></span></a></li>
+                <li><a href="javascript:" name="choLink" class="cho_link_on" data-id="bbbbbb">我爱蔬菜<span class="ml20" id="bbbbbb"></span></a></li>
+            </ul>
+        </div>
+        
+        <!-- 右侧主列表 -->
+        <div id="listOut" class="cell">
+            <ul class="fix cho_list_title">
+                <li class="cho_list_li">名称</li>
+                <li class="cho_list_li tc">价格(元)</li>
+                <li class="cho_list_li tc">数量/操作</li>
+            </ul>
+            <%for (var i=0;i<goods.length;i++) {%>
+                <%if (goods[i].num == 0){%>
+                <ul class="fix cho_list">
+                    <li class="cho_list_li"><%=goods[i].name%></li>
+                    <li class="cho_list_li tc g6"><%=goods[i].price%><%=goods[i].units%></li>
+                    <li class="cho_list_li tc">
+                        <a href="javascript:" class="cho_btn" name="choOpt" title="购买" rel="1" id="<%=goods[i].id%>">购买</a>
+                    </li>
+                </ul>
+                <%} else {%>
+                <ul class="fix cho_list cho_list_on">
+                    <li class="cho_list_li"><%=goods[i].name%></li>
+                    <li class="cho_list_li tc g6"><%=goods[i].price%><%=goods[i].units%></li>
+                    <li class="cho_list_li tc">
+                        <span class="cho_nums">
+                            <a href="javascript:" class="cho_desc" name="choOpt" title="减少一份" rel="<%=goods[i].num-1%>" id="<%=goods[i].id%>">
+                            </a><input class="cho_input" name="choInput" value="<%=goods[i].num%>" id="<%=goods[i].id%>" title="修改数量" /><a
+                            href="javascript:" class="cho_asc" name="choOpt" title="增加一份" rel="<%=goods[i].num+1%>" id="<%=goods[i].id%>"></a>
+                        </span>
+                    </li>
+                </ul>
+                <%}%>                
+            <%}%>
+        </div>
+    </div>               
+</div>
+</body>
+</html>
