@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>实时像素跟踪与识别演示</title>
+<style>
+.alert-error {
+    position: fixed;
+    width: 640px;
+    top: 10px;
+    left: 0; right: 0;
+    margin: 10px auto;
+    border: 1px solid #cd0000;
+    color: #cd0000;
+    line-height: 40px;
+    text-align: center;
+    max-width: 100%;
+}
+.tips {
+    background-color: yellow;
+    padding: 5px;
+    color: #000;
+}
+</style>
+</head>
+<body>
+<video id="webcam" width="640" height="480" style="display:none;"></video>
+<div style="width:640px;height:360px;margin: 10px auto;">
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <div id="no_rtc" class="alert alert-error" style="display:none;"></div>
+    <div id="log" class="alert alert-info"></div>
+    <p class="tips">点击视频画面选择跟踪区域。</p>
+</div>
+
+<script type="text/javascript" src="js/jsfeat-min.js"></script>
+<script type="text/javascript" src="js/compatibility.js"></script>
+<script type="text/javascript" src="js/profiler.js"></script>
+<script type="text/javascript">
+    // 提示元素
+    var no_rtc = document.getElementById('no_rtc');
+    var div_log = document.getElementById('log');
+    // 视频和画布元素
+    var video = document.getElementById('webcam');
+    var canvas = document.getElementById('canvas');
+    // 尺寸
+    var originWidth = 640, originHeight = 480;
+    try {
+        var attempts = 0;
+        var readyListener = function(event) {
+            findVideoSize();
+        };
+        var findVideoSize = function() {
+            if(video.videoWidth > 0 && video.videoHeight > 0) {
+                video.removeEventListener('loadeddata', readyListener);
+                onDimensionsReady(video.videoWidth, video.videoHeight);
+            } else {
+                if(attempts < 10) {
+                    attempts++;
+                    setTimeout(findVideoSize, 200);
+                } else {
+                    onDimensionsReady(originWidth, originHeight);
+                }
+            }
+        };
+        var onDimensionsReady = function(width, height) {
+            demo_app(width, height);
+            compatibility.requestAnimationFrame(tick);
+        };
+
+        video.addEventListener('loadeddata', readyListener);
+
+        compatibility.getUserMedia({video: true}, function(stream) {
+            try {
+                video.src = compatibility.URL.createObjectURL(stream);
+            } catch (error) {
+                video.src = stream;
+            }
+            setTimeout(function() {
+                video.play();
+            }, 500);
+
+            canvas.insertAdjacentHTML('beforeBegin', '<p>当前使用WebRTC视频，关闭或禁用摄像头会使用本地视频。</p>');
+        }, function (error) {
+            originWidth = 640;
+            originHeight = 360;
+            // 使用本地视频示意
+            video.width = canvas.width = originWidth;
+            video.height = canvas.height = originHeight;
+            video.muted = true;
+            video.src = './img/dance.mp4';
+            // 插入提示文字
+            canvas.insertAdjacentHTML('beforeBegin', '<p>WebRTC不可用，使用本地视频代替。</p>');
+            var tips = document.querySelector('.tips');
+            tips.innerHTML = '1. ' + tips.innerHTML + '<br>2. 点击此按钮播放视频：<button onclick="video.play();this.disabled=true;">播放</button>'
+        });
+    } catch (error) {
+        canvas.style.display = 'none';
+            div_log.style.display = 'none';
+        no_rtc.innerHTML = '<h4>发生错误。</h4>';
+        no_rtc.style.display = 'block';
+    }
+
+    var stat = new profiler();
+
+    var gui,options,ctx,canvasWidth,canvasHeight;
+    var curr_img_pyr, prev_img_pyr, point_count, point_status, prev_xy, curr_xy;
+
+    var demo_opt = function(){
+        this.win_size = 20;
+        this.max_iterations = 30;
+        this.epsilon = 0.01;
+        this.min_eigen = 0.001;
+    }
+
+    function demo_app(videoWidth, videoHeight) {
+        canvasWidth  = canvas.width;
+        canvasHeight = canvas.height;
+        ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = "rgb(0,255,0)";
+        ctx.strokeStyle = "rgb(0,255,0)";
+
+        curr_img_pyr = new jsfeat.pyramid_t(3);
+        prev_img_pyr = new jsfeat.pyramid_t(3);
+        curr_img_pyr.allocate(originWidth, originHeight, jsfeat.U8_t|jsfeat.C1_t);
+        prev_img_pyr.allocate(originWidth, originHeight, jsfeat.U8_t|jsfeat.C1_t);
+
+        point_count = 0;
+        point_status = new Uint8Array(100);
+        prev_xy = new Float32Array(100*2);
+        curr_xy = new Float32Array(100*2);
+
+        options = new demo_opt();
+
+        stat.add("grayscale");
+        stat.add("build image pyramid");
+        stat.add("optical flow lk");
+    }
+
+    function tick() {
+        compatibility.requestAnimationFrame(tick);
+        stat.new_frame();
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            ctx.drawImage(video, 0, 0, originWidth, originHeight);
+            var imageData = ctx.getImageData(0, 0, originWidth, originHeight);
+
+            // swap flow data
+            var _pt_xy = prev_xy;
+            prev_xy = curr_xy;
+            curr_xy = _pt_xy;
+            var _pyr = prev_img_pyr;
+            prev_img_pyr = curr_img_pyr;
+            curr_img_pyr = _pyr;
+
+            stat.start("grayscale");
+            jsfeat.imgproc.grayscale(imageData.data, originWidth, originHeight, curr_img_pyr.data[0]);
+            stat.stop("grayscale");
+
+            stat.start("build image pyramid");
+            curr_img_pyr.build(curr_img_pyr.data[0], true);
+            stat.stop("build image pyramid");
+
+            stat.start("optical flow lk");
+            jsfeat.optical_flow_lk.track(prev_img_pyr, curr_img_pyr, prev_xy, curr_xy, point_count, options.win_size|0, options.max_iterations|0, point_status, options.epsilon, options.min_eigen);
+            stat.stop("optical flow lk");
+
+            prune_oflow_points(ctx);
+
+            document.getElementById('log').innerHTML = stat.log() + '<br/>click to add tracking points: ' + point_count
+        }
+    }
+
+    function on_canvas_click(e) {
+        var coords = canvas.relMouseCoords(e);
+        if(coords.x > 0 & coords.y > 0 & coords.x < canvasWidth & coords.y < canvasHeight) {
+            curr_xy[point_count<<1] = coords.x;
+            curr_xy[(point_count<<1)+1] = coords.y;
+            point_count++;
+        }
+    }
+    canvas.addEventListener('click', on_canvas_click, false);
+
+    function draw_circle(ctx, x, y) {
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI*2, true);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    function prune_oflow_points(ctx) {
+        var n = point_count;
+        var i=0,j=0;
+
+        for(; i < n; ++i) {
+            if(point_status[i] == 1) {
+                if(j < i) {
+                    curr_xy[j<<1] = curr_xy[i<<1];
+                    curr_xy[(j<<1)+1] = curr_xy[(i<<1)+1];
+                }
+                draw_circle(ctx, curr_xy[j<<1], curr_xy[(j<<1)+1]);
+                ++j;
+            }
+        }
+        point_count = j;
+    }
+
+    function relMouseCoords(event) {
+        var totalOffsetX=0,totalOffsetY=0,canvasX=0,canvasY=0;
+        var currentElement = this;
+
+        do {
+            totalOffsetX += currentElement.offsetLeft - currentElement.scrollLeft;
+            totalOffsetY += currentElement.offsetTop - currentElement.scrollTop;
+        } while(currentElement = currentElement.offsetParent)
+
+        canvasX = event.pageX - totalOffsetX;
+        canvasY = event.pageY - totalOffsetY;
+
+        return {x:canvasX, y:canvasY}
+    }
+    HTMLCanvasElement.prototype.relMouseCoords = relMouseCoords;
+</script>
+</body>
+</html>
