@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的静态演示仓储站</title>
+<meta name="description" content="有些新特性、新方法只能在 HTTPS 环境下生效，于是借助 GitHub 来做演示。">
+<style>
+  :root {
+    --bg: #05070b;
+    --fg: #e9eef7;
+    --muted: #8494ab;
+    --cyan: #22d3ee;
+    --violet: #a78bfa;
+    --px: 0;
+    --py: 0;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- 背景层 ---------- */
+  .backdrop {
+    position: fixed;
+    inset: -20%;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(42% 42% at 50% 44%, rgba(34, 211, 238, .18), transparent 70%),
+      radial-gradient(38% 38% at 80% 16%, rgba(167, 139, 250, .14), transparent 72%),
+      radial-gradient(46% 46% at 14% 88%, rgba(34, 211, 238, .09), transparent 72%);
+  }
+
+  .grid {
+    position: fixed;
+    left: 50%;
+    bottom: -12vh;
+    width: 220vw;
+    height: 74vh;
+    z-index: 0;
+    pointer-events: none;
+    transform: translateX(-50%) perspective(320px) rotateX(63deg);
+    transform-origin: bottom center;
+    background-image:
+      linear-gradient(rgba(125, 211, 252, .16) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(125, 211, 252, .16) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(ellipse 52% 62% at 50% 96%, #000 6%, transparent 76%);
+    mask-image: radial-gradient(ellipse 52% 62% at 50% 96%, #000 6%, transparent 76%);
+    animation: grid-flow 9s linear infinite;
+  }
+
+  @keyframes grid-flow {
+    to { background-position: 0 64px, 64px 0; }
+  }
+
+  .noise {
+    position: fixed;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    opacity: .05;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- 轨道 SVG ---------- */
+  .orbits {
+    position: fixed;
+    left: 50%;
+    top: 44%;
+    z-index: 1;
+    width: min(118vmin, 1020px);
+    height: min(118vmin, 1020px);
+    translate: -50% -50%;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .orbits .spin {
+    transform-box: view-box;
+    transform-origin: 500px 500px;
+  }
+
+  .spin-a { animation: spin 26s linear infinite; }
+  .spin-b { animation: spin 44s linear infinite reverse; }
+  .spin-c { animation: spin 18s linear infinite; }
+  .spin-d { animation: spin 9s linear infinite reverse; }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .pulse {
+    animation: pulse 3.4s ease-in-out infinite;
+    transform-box: view-box;
+    transform-origin: 500px 500px;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: .25; transform: scale(1); }
+    50%      { opacity: .6;  transform: scale(1.04); }
+  }
+
+  /* ---------- 顶栏 ---------- */
+  .topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px clamp(18px, 4vw, 40px);
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12px;
+    letter-spacing: .22em;
+    color: #93a4bb;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: rise .9s .1s ease forwards;
+  }
+
+  .brand svg { display: block; }
+
+  .gh {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 15px 8px 12px;
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .035);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    color: #a7b6ca;
+    font-size: 13px;
+    text-decoration: none;
+    letter-spacing: .01em;
+    transition: color .25s, border-color .25s, background .25s, box-shadow .25s;
+    opacity: 0;
+    animation: rise .9s .2s ease forwards;
+  }
+
+  .gh:hover,
+  .gh:focus-visible {
+    color: #fff;
+    border-color: rgba(34, 211, 238, .5);
+    background: rgba(34, 211, 238, .1);
+    box-shadow: 0 0 28px -8px rgba(34, 211, 238, .75);
+    outline: none;
+  }
+
+  .gh svg { display: block; flex: none; }
+
+  /* ---------- 主内容 ---------- */
+  .stage {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 20px;
+    padding: 0 24px 6vh;
+    text-align: center;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: #7d8ea6;
+    opacity: 0;
+    animation: rise .9s .3s ease forwards;
+  }
+
+  .eyebrow .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 10px 2px rgba(34, 211, 238, .8);
+    animation: blink 2.4s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: .35; transform: scale(.75); }
+  }
+
+  .title {
+    margin: 0;
+    font-size: clamp(30px, 5.4vw, 62px);
+    font-weight: 600;
+    line-height: 1.22;
+    letter-spacing: .04em;
+    background: linear-gradient(178deg, #ffffff 4%, #cbe0f2 46%, #6c8299 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 6px 34px rgba(34, 211, 238, .22));
+    opacity: 0;
+    animation: rise 1.1s .42s cubic-bezier(.22, .8, .28, 1) forwards;
+  }
+
+  .subtitle {
+    max-width: 30em;
+    margin: 2px 0 0;
+    font-size: clamp(13px, 1.5vw, 15px);
+    line-height: 1.9;
+    color: var(--muted);
+    opacity: 0;
+    animation: rise 1.1s .62s cubic-bezier(.22, .8, .28, 1) forwards;
+  }
+
+  .subtitle i { font-style: normal; color: #a9bdd4; }
+
+  .hint {
+    margin-top: 10px;
+    font-size: 11px;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    color: #55647a;
+    opacity: 0;
+    animation: rise 1.1s .8s ease forwards;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------- 响应式 ---------- */
+  @media (max-width: 560px) {
+    .gh { padding: 8px; }
+    .gh span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .stage { padding-bottom: 14vh; gap: 16px; }
+    .topbar { padding: 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; }
+    .brand, .gh, .eyebrow, .title, .subtitle, .hint { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="backdrop"></div>
+<div class="grid"></div>
+
+<svg class="orbits" viewBox="0 0 1000 1000" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="ring" x1="120" y1="120" x2="880" y2="880" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity=".9"/>
+      <stop offset=".5" stop-color="#7dd3fc" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#a78bfa" stop-opacity=".9"/>
+    </linearGradient>
+
+    <radialGradient id="core">
+      <stop offset="0" stop-color="#67e8f9" stop-opacity=".5"/>
+      <stop offset=".55" stop-color="#22d3ee" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="glow" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="26"/>
+    </filter>
+  </defs>
+
+  <!-- 中央光核 -->
+  <circle cx="500" cy="500" r="230" fill="url(#core)" filter="url(#soft)"/>
+
+  <!-- 静态轨道：点阵 -->
+  <g stroke="#7dd3fc" fill="none">
+    <circle cx="500" cy="500" r="132" stroke-width="1" stroke-dasharray="1.5 9" opacity=".34"/>
+    <circle cx="500" cy="500" r="214" stroke-width="1" stroke-dasharray="1.5 13" opacity=".22"/>
+    <circle cx="500" cy="500" r="318" stroke-width="1" stroke-dasharray="1.5 17" opacity=".16"/>
+    <circle cx="500" cy="500" r="436" stroke-width="1" stroke-dasharray="1.5 21" opacity=".1"/>
+  </g>
+
+  <!-- 旋转弧段 -->
+  <g stroke="url(#ring)" fill="none" stroke-linecap="round">
+    <circle class="spin spin-a" cx="500" cy="500" r="214" stroke-width="1.4"
+            stroke-dasharray="86 380 150 900" opacity=".85"/>
+    <circle class="spin spin-b" cx="500" cy="500" r="318" stroke-width="1.2"
+            stroke-dasharray="200 640 60 1300" opacity=".6"/>
+    <circle class="spin spin-c" cx="500" cy="500" r="436" stroke-width="1"
+            stroke-dasharray="34 1500 120 1200" opacity=".45"/>
+  </g>
+
+  <!-- 呼吸描边 -->
+  <g fill="none" stroke="#22d3ee" stroke-width="1">
+    <circle class="pulse" cx="500" cy="500" r="132" opacity=".4"/>
+    <circle class="pulse" cx="500" cy="500" r="178" opacity=".22"
+            style="animation-delay:-1.7s"/>
+  </g>
+
+  <!-- 轨道上的光点 -->
+  <g class="spin spin-d">
+    <circle cx="714" cy="500" r="3.2" fill="#a5f3fc"/>
+    <circle cx="714" cy="500" r="16" fill="#22d3ee" opacity=".38" filter="url(#glow)"/>
+  </g>
+  <g class="spin spin-b">
+    <circle cx="500" cy="182" r="2.4" fill="#ddd6fe"/>
+    <circle cx="500" cy="182" r="12" fill="#a78bfa" opacity=".34" filter="url(#glow)"/>
+  </g>
+</svg>
+
+<header class="topbar">
+  <div class="brand">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5eead4" stroke-width="1.6">
+      <path d="M12 2.6 21 12l-9 9.4L3 12z" opacity=".9"/>
+      <circle cx="12" cy="12" r="3.2" stroke="#22d3ee"/>
+    </svg>
+    HTTPS DEMO
+  </div>
+
+  <a class="gh" href="https://github.com/zhangxinxu/https-demo" target="_blank" rel="noopener">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+    </svg>
+    <span>zhangxinxu / https-demo</span>
+  </a>
+</header>
+
+<main class="stage">
+  <p class="eyebrow"><span class="dot"></span>STATIC DEMO ARCHIVE</p>
+  <h1 class="title">我的静态演示仓储站</h1>
+  <p class="subtitle">
+    为了方便某些新特性、新 API、新方法让大家学习，<br>
+    于是把相关演示页面托管在这里。
+  </p>
+  <p class="hint">Coming Soon</p>
+</main>
+
+<div class="noise"></div>
+
+<script>
+  // 轻微鼠标视差：轨道与文字分层移动
+  (function () {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    var stage = document.querySelector('.stage');
+    var orbits = document.querySelector('.orbits');
+    var tx = 0, ty = 0, cx = 0, cy = 0;
+
+    window.addEventListener('pointermove', function (e) {
+      tx = (e.clientX / window.innerWidth - 0.5) * 2;
+      ty = (e.clientY / window.innerHeight - 0.5) * 2;
+    }, { passive: true });
+
+    (function frame() {
+      cx += (tx - cx) * 0.055;
+      cy += (ty - cy) * 0.055;
+      stage.style.transform = 'translate3d(' + (-cx * 9).toFixed(2) + 'px,' + (-cy * 9).toFixed(2) + 'px,0)';
+      orbits.style.transform = 'translate3d(' + (cx * 16).toFixed(2) + 'px,' + (cy * 16).toFixed(2) + 'px,0)';
+      requestAnimationFrame(frame);
+    })();
+  })();
+</script>
+
+</body>
+</html>
