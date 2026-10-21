@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>使用IMG元素作为标签节点演示案例</title>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --text: #1c2333;
+    --muted: #5b6577;
+    --line: #e4e8f1;
+    --accent: #4a6cf7;
+    --accent-soft: #eef2ff;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; }
+
+  body {
+    min-height: 100vh;
+    padding: 56px 20px 80px;
+    background:
+      radial-gradient(1000px 520px at 50% -180px, #e6ecff 0%, transparent 70%),
+      var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  header { margin-bottom: 22px; }
+
+  h1 {
+    margin: 0 0 10px;
+    font-size: clamp(22px, 3.4vw, 30px);
+    letter-spacing: -.02em;
+  }
+
+  .sub {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  code {
+    padding: 1px 5px;
+    border-radius: 5px;
+    background: var(--accent-soft);
+    color: #3b55c9;
+    font-size: 13px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  /* ---------- 演示区 ---------- */
+  .card {
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--card);
+    box-shadow: 0 12px 32px -22px rgba(24, 38, 76, .45);
+  }
+
+  .editor {
+    min-height: 96px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 2;
+    outline: none;
+    word-break: break-word;
+    transition: border-color .18s, box-shadow .18s;
+  }
+
+  .editor:empty::before {
+    content: attr(data-placeholder);
+    color: #a6b0c0;
+  }
+
+  .editor:focus {
+    border-color: #c2ccdd;
+    box-shadow: 0 0 0 4px rgba(74, 108, 247, .09);
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 13px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--card);
+    color: var(--muted);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: color .18s, border-color .18s, background .18s;
+  }
+
+  .add-btn:hover {
+    color: var(--text);
+    border-color: #c8d2e2;
+    background: #fbfcff;
+  }
+
+  .tip {
+    color: #9aa4b5;
+    font-size: 12px;
+  }
+
+  /*
+   * 标签节点本体：<img> 只是「容器」，
+   * src 是 1×1 透明 gif，真实视觉全部由背景图绘制：
+   * 第一层 = 图标 SVG，第二层 = 文件名 SVG text（宽度由 JS 量算后裁切）。
+   */
+  .tag {
+    display: inline-block;
+    height: 22px;
+    border-radius: 6px;
+    background-color: #eff1f5;
+    background-repeat: no-repeat;
+    background-size: 13px 13px, auto 22px;
+    margin-inline: 2px;
+    vertical-align: middle;
+    cursor: default;
+  }
+
+  /* ---------- 说明 ---------- */
+  .notes {
+    margin: 26px 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: n;
+  }
+
+  .notes li {
+    counter-increment: n;
+    position: relative;
+    margin-bottom: 14px;
+    padding-left: 28px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .notes li::before {
+    content: counter(n);
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: #3b55c9;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 19px;
+    text-align: center;
+  }
+
+  .notes b { color: var(--text); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>使用IMG元素作为标签节点演示案例</h1>
+    <p class="sub">
+      输入框里的文件名标签，真正的 DOM 是 <code>&lt;img&gt;</code> 元素：
+      <code>src</code> 指向 1×1 透明 gif，图标和文字都由 CSS 背景图渲染。
+    </p>
+  </header>
+
+  <div class="card">
+    <div class="editor" contenteditable="true" data-placeholder="试试输入文字，再点击下方按钮添加文件…"></div>
+
+    <div class="toolbar">
+      <button class="add-btn" type="button">+ 添加文件</button>
+      <span class="tip">支持图片、视频、文档</span>
+    </div>
+
+    <input class="picker" type="file" multiple hidden
+           accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md">
+  </div>
+
+  <ol class="notes">
+    <li><b>为什么用 img：</b>它是 contenteditable 里的原子节点，光标只能落在它前后，Backspace 一次删掉整块，天然可拖拽、有 alt/title 描述，不需要 contentEditable=false 那一堆补丁。</li>
+    <li><b>视觉为什么在背景里：</b>src 是透明占位图，类型图标是内联 SVG，文件名是 SVG <code>&lt;text&gt;</code>，二者都塞进 background-image，节点尺寸靠 JS 算好写进 width。</li>
+    <li><b>宽度为什么要量：</b>背景图不会参与布局，所以先用 canvas 的 measureText 按展示字体量出文字宽度，再据此裁剪 SVG 背景、决定 img 宽度。</li>
+  </ol>
+</div>
+
+<script>
+  /** 透明占位 gif（1×1），tag chip 的真实视觉靠 CSS 背景呈现 */
+  const GIF = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+
+  /** 三类文件的单色图标（深灰） */
+  const ICONS = {
+    image: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b6577' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='16' rx='3'/><circle cx='8.6' cy='9.4' r='1.4' fill='%235b6577' stroke='none'/><path d='M4.2 17.4l4.8-4.4 3.5 3.2 3-2.6 4.7 4.4'/></svg>",
+    video: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b6577' stroke-width='1.7' stroke-linejoin='round'><rect x='2.6' y='5' width='18.8' height='14' rx='3'/><path d='M10.4 9.5l4.8 2.5-4.8 2.5z' fill='%235b6577' stroke='none'/></svg>",
+    doc: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b6577' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M13.6 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.4z'/><path d='M13.6 3v5.4H19'/></svg>",
+  };
+
+  /** chip 文字字号：量算与 SVG 背景必须同参 */
+  const FONT = "13px system-ui, sans-serif";
+  /** chip 高度、图标尺寸、间距、左右留白（与样式里的 .tag 对应） */
+  const H = 22, ICON = 13, GAP = 4, PAD = 6;
+
+  const editor = document.querySelector(".editor");
+  const picker = document.querySelector(".picker");
+
+  /** 用与展示一致的字体量算文字宽度 */
+  const measure = text => {
+    const ctx = document.createElement("canvas").getContext("2d");
+    ctx.font = FONT;
+    return Math.ceil(ctx.measureText(text).width) + 1;
+  };
+
+  /** 文件名 → SVG text 背景（宽度按量算值裁剪，长文件名不截断） */
+  const buildLabel = (text, width) =>
+    `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${H}'>` +
+    `<text x='0' y='${H / 2}' font-family='system-ui, sans-serif' font-size='13' fill='%23343c4a' ` +
+    `dominant-baseline='middle'>${encodeURIComponent(text)}</text></svg>")`;
+
+  const createTag = (name, mime) => {
+    const type = mime.startsWith("image") ? "image" : mime.startsWith("video") ? "video" : "doc";
+    const textWidth = measure(name);
+    const labelX = PAD + ICON + GAP;
+
+    const img = document.createElement("img");
+    img.className = "tag";
+    img.src = GIF;
+    img.alt = name;
+    img.title = name;
+    img.dataset.type = type;
+    img.style.width = `${labelX + textWidth + PAD}px`;
+    img.style.backgroundImage = `url("${ICONS[type]}"), ${buildLabel(name, textWidth)}`;
+    img.style.backgroundPosition = `${PAD}px center, ${labelX}px center`;
+    return img;
+  };
+
+  /** 插入到光标处，光标停在节点之后 */
+  const insertAtCaret = node => {
+    const sel = getSelection();
+    if (!sel.rangeCount || !editor.contains(sel.anchorNode)) {
+      editor.append(node);
+      return;
+    }
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(node);
+    range.setStartAfter(node);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  };
+
+  const btn = document.querySelector(".add-btn");
+
+  // 阻止按钮抢走焦点，保住编辑器里的选区
+  btn.addEventListener("mousedown", e => e.preventDefault());
+  btn.addEventListener("click", () => picker.click());
+
+  picker.addEventListener("change", () => {
+    Array.from(picker.files).forEach(file => insertAtCaret(createTag(file.name, file.type)));
+    picker.value = "";
+    editor.focus();
+  });
+</script>
+
+</body>
+</html>
