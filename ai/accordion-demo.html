@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>手风琴 Accordion 高度动画演示</title>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --text: #1c2333;
+    --muted: #5b6577;
+    --line: #e4e8f1;
+    --accent: #4a6cf7;
+    --accent-soft: #eef2ff;
+    --radius: 14px;
+    --ease: cubic-bezier(.4, 0, .2, 1);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; }
+
+  body {
+    min-height: 100vh;
+    padding: 56px 20px 80px;
+    background:
+      radial-gradient(1000px 520px at 50% -180px, #e6ecff 0%, transparent 70%),
+      var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  header { margin-bottom: 28px; }
+
+  h1 {
+    margin: 0 0 10px;
+    font-size: clamp(22px, 3.4vw, 30px);
+    letter-spacing: -.02em;
+  }
+
+  .sub {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  code {
+    padding: 1px 5px;
+    border-radius: 5px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: .92em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  /* 案例小标题 */
+  .demo-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 34px 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: .01em;
+  }
+
+  .demo-title .badge {
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+  }
+
+  .demo-title:first-of-type { margin-top: 0; }
+
+  .accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .item {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition:
+      border-color .25s var(--ease),
+      box-shadow .25s var(--ease);
+  }
+
+  .item > h3 { margin: 0; }
+
+  .item:hover { border-color: #cfd7ea; }
+
+  /* details 版本靠原生 [open] 状态，div 版本靠 is-open 类，二者共用外观 */
+  .item.is-open,
+  .item[open] {
+    border-color: #c3cff2;
+    box-shadow: 0 10px 26px -14px rgba(74, 108, 247, .45);
+  }
+
+  /* 标题按钮：整行可点，语义化折叠控件 */
+  .accordion-trigger {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 18px 20px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color .25s var(--ease);
+  }
+
+  .accordion-trigger:hover { background: #fafbff; }
+
+  .accordion-trigger:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+    border-radius: var(--radius);
+  }
+
+  /* 序号小圆点 */
+  .num {
+    flex: 0 0 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 700;
+    transition: background-color .25s var(--ease), color .25s var(--ease);
+  }
+
+  .item.is-open .num,
+  .item[open] .num {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .label { flex: 1 1 auto; }
+
+  /* 加号 → 减号 图标 */
+  .icon {
+    position: relative;
+    flex: 0 0 18px;
+    height: 18px;
+  }
+
+  .icon::before,
+  .icon::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 13px;
+    height: 2px;
+    margin: -1px 0 0 -6.5px;
+    border-radius: 2px;
+    background: var(--muted);
+    transition:
+      transform .35s var(--ease),
+      background-color .25s var(--ease);
+  }
+
+  .icon::after { transform: rotate(90deg); }
+
+  .item.is-open .icon::before,
+  .item.is-open .icon::after,
+  .item[open] .icon::before,
+  .item[open] .icon::after {
+    background: var(--accent);
+    transform: rotate(0deg);
+  }
+
+  /*
+   * 高度动画核心：
+   * grid-template-rows 的 0fr → 1fr 可以插值，
+   * 高度由内容自动撑开，无需 JS 量 scrollHeight。
+   */
+  .accordion-panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows .42s var(--ease);
+  }
+
+  .item.is-open .accordion-panel { grid-template-rows: 1fr; }
+
+  .accordion-panel > .panel-inner {
+    overflow: hidden;
+    min-height: 0; /* 让 0fr 能真正塌陷到 0 */
+  }
+
+  /*
+   * details 版本的高度动画：
+   * ::details-content 代表展开的内容区，
+   * interpolate-size: allow-keywords 让 block-size 能在 0 与 auto 之间插值，
+   * content-visibility 走 allow-discrete，关闭时内容不会瞬间消失。
+   */
+  details.item {
+    interpolate-size: allow-keywords;
+  }
+
+  /* summary 改为 flex 后原生三角 marker 自动消失 */
+  summary.accordion-trigger {
+    display: flex;
+    list-style: none;
+  }
+
+  summary.accordion-trigger::-webkit-details-marker { display: none; }
+
+  details.flow-item::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition:
+      block-size .42s var(--ease),
+      content-visibility .42s var(--ease);
+    transition-behavior: allow-discrete;
+  }
+
+  details.flow-item[open]::details-content {
+    block-size: auto;
+  }
+
+  /*
+   * grid 版本：details 的内容区也能用 grid 行高做 0fr → 1fr 过渡，
+   * 插值方式与第一个案例完全一致，只是把 .accordion-panel 换成了 ::details-content，
+   * 关闭时依旧靠 content-visibility 的离散过渡保持可见，直到高度收完。
+   */
+  details.grid-item::details-content {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition:
+      grid-template-rows .42s var(--ease),
+      content-visibility .42s var(--ease);
+    transition-behavior: allow-discrete;
+  }
+
+  details.grid-item[open]::details-content {
+    grid-template-rows: 1fr;
+  }
+
+  details.grid-item .panel-inner {
+    overflow: hidden;
+    min-height: 0; /* 让 0fr 能真正塌陷到 0 */
+  }
+
+  .panel-body {
+    padding: 0 20px 20px 60px;
+    color: var(--muted);
+    font-size: 14.5px;
+    line-height: 1.85;
+    /* 配合外层高度过渡，视觉上更柔和 */
+    opacity: 0;
+    transform: translateY(-4px);
+    transition:
+      opacity .3s var(--ease) .06s,
+      transform .35s var(--ease) .06s;
+  }
+
+  .item.is-open .panel-body,
+  .item[open] .panel-body {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .panel-body p { margin: 0 0 10px; }
+  .panel-body p:last-child { margin-bottom: 0; }
+
+  .tip {
+    margin-top: 26px;
+    padding: 14px 16px;
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    background: var(--accent-soft);
+    color: #465279;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 32px 14px 56px; }
+    .accordion-trigger { padding: 15px 16px; font-size: 15px; }
+    .panel-body { padding: 0 16px 16px; }
+  }
+
+  /* 尊重系统"减少动效"偏好 */
+  @media (prefers-reduced-motion: reduce) {
+    .accordion-panel,
+    details.flow-item::details-content,
+    details.grid-item::details-content,
+    .panel-body,
+    .icon::before,
+    .icon::after { transition-duration: .01ms; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>手风琴 Accordion 高度动画</h1>
+      <p class="sub">同一个页面给出三种实现，外观与动画曲线保持一致：JS 驱动的 <code>grid-template-rows</code>，以及原生 <code>&lt;details name&gt;</code> 的两种高度动画写法。</p>
+    </header>
+
+    <h2 class="demo-title"><span class="badge">方式一</span>div + grid-template-rows（JS 控制状态）</h2>
+
+    <div class="accordion" id="accordion">
+      <section class="item is-open">
+        <h3>
+          <button class="accordion-trigger" type="button" aria-expanded="true" aria-controls="panel-1" id="trigger-1">
+            <span class="num">01</span>
+            <span class="label">为什么用 grid-template-rows 做高度动画？</span>
+            <span class="icon" aria-hidden="true"></span>
+          </button>
+        </h3>
+        <div class="accordion-panel" id="panel-1" role="region" aria-labelledby="trigger-1">
+          <div class="panel-inner">
+            <div class="panel-body">
+              <p>传统做法是用 <code>max-height</code> 过渡，但内容高度未知时只能猜一个足够大的值，导致收起时前半段几乎看不到动画。</p>
+              <p><code>0fr</code> 到 <code>1fr</code> 是数值插值，浏览器能算出真实高度，所以展开和收起的时长与曲线完全一致。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="item">
+        <h3>
+          <button class="accordion-trigger" type="button" aria-expanded="false" aria-controls="panel-2" id="trigger-2">
+            <span class="num">02</span>
+            <span class="label">内层为什么必须加 overflow: hidden？</span>
+            <span class="icon" aria-hidden="true"></span>
+          </button>
+        </h3>
+        <div class="accordion-panel" id="panel-2" role="region" aria-labelledby="trigger-2">
+          <div class="panel-inner">
+            <div class="panel-body">
+              <p>grid 行高塌陷到 0 时，子元素的内容不会自己消失，仍然会溢出到面板外面。</p>
+              <p>给直接子元素设置 <code>overflow: hidden</code> 与 <code>min-height: 0</code>，才能真正把内容裁掉，让高度动画看起来是"收进去"的。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="item">
+        <h3>
+          <button class="accordion-trigger" type="button" aria-expanded="false" aria-controls="panel-3" id="trigger-3">
+            <span class="num">03</span>
+            <span class="label">点击标题时 JS 做了什么？</span>
+            <span class="icon" aria-hidden="true"></span>
+          </button>
+        </h3>
+        <div class="accordion-panel" id="panel-3" role="region" aria-labelledby="trigger-3">
+          <div class="panel-inner">
+            <div class="panel-body">
+              <p>只做两件事：切换父级 <code>.item</code> 的 <code>is-open</code> 类，以及同步 <code>aria-expanded</code> 状态。</p>
+              <p>高度、透明度、图标旋转全部由 CSS 过渡完成，没有逐帧计算，也没有读取布局属性，性能开销极小。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="item">
+        <h3>
+          <button class="accordion-trigger" type="button" aria-expanded="false" aria-controls="panel-4" id="trigger-4">
+            <span class="num">04</span>
+            <span class="label">可以同时展开多个吗？</span>
+            <span class="icon" aria-hidden="true"></span>
+          </button>
+        </h3>
+        <div class="accordion-panel" id="panel-4" role="region" aria-labelledby="trigger-4">
+          <div class="panel-inner">
+            <div class="panel-body">
+              <p>当前是"多开模式"，每个面板互相独立。若要做成"一次只开一个"，在打开某一项时先把其他项的 <code>is-open</code> 移除即可。</p>
+              <p>标题使用原生 <code>&lt;button&gt;</code>，因此回车、空格都能操作，Tab 也能正常聚焦。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <h2 class="demo-title"><span class="badge">方式二</span>details + name（原生互斥，零 JS）</h2>
+
+    <div class="accordion">
+      <details class="item flow-item" name="faq-native" open>
+        <summary class="accordion-trigger">
+          <span class="num">01</span>
+          <span class="label">details + name 算是「原生手风琴」吗？</span>
+          <span class="icon" aria-hidden="true"></span>
+        </summary>
+        <div class="panel-body">
+          <p><code>&lt;summary&gt;</code> 天然就是可点击的标题，点击切换父级 <code>&lt;details&gt;</code> 的 <code>open</code> 状态，展开收起由浏览器负责。</p>
+          <p>而 <code>name</code> 属性会让同名的一组 <code>&lt;details&gt;</code> 互斥：打开其中一个，其余自动关闭。整套交互不需要一行 JS。</p>
+        </div>
+      </details>
+
+      <details class="item flow-item" name="faq-native">
+        <summary class="accordion-trigger">
+          <span class="num">02</span>
+          <span class="label">details 的高度动画是从哪来的？</span>
+          <span class="icon" aria-hidden="true"></span>
+        </summary>
+        <div class="panel-body">
+          <p>内容区由 <code>::details-content</code> 伪元素表示。给它设置 <code>block-size: 0</code> 与 <code>overflow: hidden</code>，展开时切到 <code>block-size: auto</code>。</p>
+          <p>关键在于 <code>interpolate-size: allow-keywords</code>，它允许 <code>0</code> 与 <code>auto</code> 这类关键字尺寸参与插值；再配合 <code>transition-behavior: allow-discrete</code> 让 <code>content-visibility</code> 延迟隐藏，收起时内容不会瞬间消失。</p>
+        </div>
+      </details>
+
+      <details class="item flow-item" name="faq-native">
+        <summary class="accordion-trigger">
+          <span class="num">03</span>
+          <span class="label">name 属性的互斥规则是怎样的？</span>
+          <span class="icon" aria-hidden="true"></span>
+        </summary>
+        <div class="panel-body">
+          <p>同名的 <code>details</code> 同一时间最多只有一个处于展开状态；点击已展开的那一项，可以把它重新关上，也就是允许全部收起。</p>
+          <p>本例中四个面板使用了同一个 <code>name="faq-native"</code>，所以它们彼此互斥，与上方「多处同时展开」的方式一形成对比。</p>
+        </div>
+      </details>
+
+      <details class="item flow-item" name="faq-native">
+        <summary class="accordion-trigger">
+          <span class="num">04</span>
+          <span class="label">这种方式有什么取舍？</span>
+          <span class="icon" aria-hidden="true"></span>
+        </summary>
+        <div class="panel-body">
+          <p>优点是语义完整、无 JS 也能工作，禁用脚本或纯静态文档场景下依然可交互，同时天然支持页内搜索与打印展开。</p>
+          <p>代价是高度动画依赖 <code>::details-content</code> 与 <code>interpolate-size</code> 这两项较新的 CSS 能力，老浏览器里会退化为瞬时切换——功能不受影响，只是没有过渡效果。</p>
+        </div>
+      </details>
+    </div>
+
+    <h2 class="demo-title"><span class="badge">方式三</span>details + name + grid-template-rows（0fr → 1fr）</h2>
+
+    <div class="accordion">
+      <details class="item grid-item" name="faq-grid" open>
+        <summary class="accordion-trigger">
+          <span class="num">01</span>
+          <span class="label">details 的内容区可以直接当 grid 容器用吗？</span>
+          <span class="icon" aria-hidden="true"></span>
+        </summary>
+        <div class="panel-inner">
+          <div class="panel-body">
+            <p><code>::details-content</code> 本身就是包住展开内容的容器，给它 <code>display: grid</code> 加 <code>grid-template-rows: 0fr</code>，展开时切到 <code>1fr</code> 即可。</p>
+            <p>与第一个案例的唯一区别是：这里的 grid 容器不是自己写的 <code>div</code>，而是浏览器提供的伪元素。</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="item grid-item" name="faq-grid">
+        <summary class="accordion-trigger">
+          <span class="num">02</span>
+          <span class="label">内层的 overflow: hidden 还需要吗？</span>
+          <span class="icon" aria-hidden="true"></span>
+        </summary>
+        <div class="panel-inner">
+          <div class="panel-body">
+            <p>需要。行高塌陷到 0 只是把 grid 轨道压扁，内容本身仍会溢出到面板外面，视觉上会"露出来"。</p>
+            <p>所以要在 <code>::details-content</code> 的唯一子元素上设置 <code>overflow: hidden</code> 和 <code>min-height: 0</code>，让内容被真正裁掉，这正是第一个案例的 <code>.panel-inner</code> 所做的事。</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="item grid-item" name="faq-grid">
+        <summary class="accordion-trigger">
+          <span class="num">03</span>
+          <span class="label">和方式二的 block-size 方案有什么差别？</span>
+          <span class="icon" aria-hidden="true"></span>
+        </summary>
+        <div class="panel-inner">
+          <div class="panel-body">
+            <p>方式二依赖 <code>interpolate-size: allow-keywords</code>，让 <code>0</code> 与 <code>auto</code> 之间也能插值；方式三是 <code>0fr</code> 与 <code>1fr</code> 之间的纯数值插值，不需要关键字尺寸支持。</p>
+            <p>两者都要处理 <code>content-visibility</code> 的离散切换，否则收起瞬间内容会直接消失，高度动画就看不到了。</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="item grid-item" name="faq-grid">
+        <summary class="accordion-trigger">
+          <span class="num">04</span>
+          <span class="label">为什么要把 name 分组错开？</span>
+          <span class="icon" aria-hidden="true"></span>
+        </summary>
+        <div class="panel-inner">
+          <div class="panel-body">
+            <p>方式二用的是 <code>name="faq-native"</code>，这里用 <code>name="faq-grid"</code>。分组名一旦相同，两组就会合并成同一互斥组，点击会互相干扰。</p>
+            <p>因此每个演示区块要使用自己的 <code>name</code> 值，保证互斥范围只在本组内生效。</p>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <p class="tip">
+      三种实现共用一套视觉样式，差别只在动画载体：案例一是 <code>div</code> + <code>grid-template-rows</code>，案例二是 <code>::details-content</code> + <code>block-size: auto</code>，案例三是 <code>::details-content</code> + <code>grid-template-rows</code>。状态分别由 <code>is-open</code> 类与 <code>[open]</code> 属性驱动。
+    </p>
+  </div>
+
+<script>
+  document.getElementById('accordion').addEventListener('click', function (e) {
+    var trigger = e.target.closest('.accordion-trigger');
+    if (!trigger) return;
+
+    var item = trigger.closest('.item');
+    var isOpen = item.classList.toggle('is-open');
+    trigger.setAttribute('aria-expanded', String(isOpen));
+  });
+</script>
+</body>
+</html>
