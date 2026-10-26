@@ -213,9 +213,12 @@
     color: #3b55c9;
   }
 
-  /* 原生走 :target-current；Polyfill 走 [data-current]，两者共用样式 */
-  .nav a:target-current,
-  .nav a[data-current] {
+  /*
+   * 原生走 :target-current，Polyfill 走 [data-current]。
+   * 一定要用 :is() 包起来：选择器列表里只要有一个不认识的伪类，整条规则都会失效，
+   * 而 :is() 是宽恕型的，会自动丢掉不支持的那一项，Polyfill 的样式才能活下来。
+   */
+  .nav a:is(:target-current, [data-current]) {
     background: var(--accent);
     color: #fff;
     border-color: transparent;
@@ -235,22 +238,56 @@
     gap: 4px;
   }
 
-  /* 布局二：菜单在内容上方，水平排列，像选项卡按钮 */
+  /* 布局二：下划线选项卡，指示条跟着当前项滑动 */
   .nav-h {
+    position: relative;
     display: flex;
-    gap: 6px;
+    flex-wrap: wrap;
+    gap: 2px;
     margin-bottom: 12px;
-    padding-bottom: 2px;
-    overflow-x: auto;
-    scrollbar-width: none;
+    border-bottom: 1px solid var(--line);
   }
 
-  .nav-h::-webkit-scrollbar { display: none; }
-
   .nav-h a {
-    padding: 7px 15px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
+    padding: 7px 12px 9px;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+  }
+
+  .nav-h a:hover {
+    background: transparent;
+    color: var(--accent);
+  }
+
+  /* 降级路径：不支持锚点定位时，每个链接自己亮下划线 */
+  .nav-h a:is(:target-current, [data-current]) {
+    background: transparent;
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* 指示条：默认不渲染，只有浏览器支持锚点定位时才启用 */
+  .ink { display: none; }
+
+  @supports (position-anchor: --tab) {
+    .nav-h a:is(:target-current, [data-current]) {
+      anchor-name: --tab;
+      border-bottom-color: transparent;
+    }
+
+    .ink {
+      position: absolute;
+      display: block;
+      position-anchor: --tab;
+      left: anchor(left);
+      right: anchor(right);
+      bottom: 0;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--accent);
+      transition: left .26s cubic-bezier(.4, 0, .2, 1),
+                  right .26s cubic-bezier(.4, 0, .2, 1);
+    }
   }
 
   /* ---------- 说明 ---------- */
@@ -370,14 +407,15 @@
 
   <!-- 演示二：水平选项卡式菜单 -->
   <section class="demo">
-    <h2>演示二 · 水平排列的选项卡按钮</h2>
-    <p class="desc">同一套属性换一种外观：胶囊按钮横排，高亮当作选项卡的选中态来用。</p>
+    <h2>演示二 · 下划线选项卡</h2>
+    <p class="desc">同一套属性换一种外观：下划线跟着当前项走，切换时用 CSS 锚点定位把指示条滑过去。</p>
 
     <nav class="nav nav-h">
       <a href="#t1">基础用法</a>
       <a href="#t2">选中态</a>
       <a href="#t3">键盘可达</a>
       <a href="#t4">常见问题</a>
+      <span class="ink" aria-hidden="true"></span>
     </nav>
 
     <div class="scroll-box">
