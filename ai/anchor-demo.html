@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>纯CSS实现锚点组件演示案例</title>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --text: #1c2333;
+    --muted: #5b6577;
+    --line: #e4e8f1;
+    --accent: #4a6cf7;
+    --accent-soft: #eef2ff;
+    --radius: 14px;
+
+    scroll-behavior: smooth;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; }
+
+  body {
+    min-height: 100vh;
+    padding: 56px 20px 80px;
+    background:
+      radial-gradient(1000px 520px at 50% -180px, #e6ecff 0%, transparent 70%),
+      var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  header { margin-bottom: 24px; }
+
+  h1 {
+    margin: 0 0 10px;
+    font-size: clamp(22px, 3.4vw, 30px);
+    letter-spacing: -.02em;
+  }
+
+  .sub {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  code {
+    padding: 1px 5px;
+    border-radius: 5px;
+    background: var(--accent-soft);
+    color: #3b55c9;
+    font-size: 12.5px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  .status {
+    display: inline-block;
+    margin: 0;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: #fdf0e4;
+    color: #a35a12;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .status[data-native="true"] {
+    background: #e7f7ee;
+    color: #1a7f47;
+  }
+
+  /* ---------- 演示卡片 ---------- */
+  .demo {
+    margin-bottom: 18px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--card);
+    box-shadow: 0 12px 32px -24px rgba(24, 38, 76, .5);
+  }
+
+  .demo h2 {
+    margin: 0 0 4px;
+    font-size: 15px;
+  }
+
+  .demo .desc {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* ---------- 滚动主体 ---------- */
+  .scroll-box {
+    height: 300px;
+    padding: 2px 16px;
+    border-radius: 10px;
+    background: #f8fafd;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+  }
+
+  .scroll-box::-webkit-scrollbar { width: 8px; }
+  .scroll-box::-webkit-scrollbar-track { background: transparent; }
+  .scroll-box::-webkit-scrollbar-thumb {
+    background: #dbe1eb;
+    border-radius: 8px;
+  }
+
+  .panel {
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--line);
+  }
+
+  .panel:last-child { border-bottom: 0; }
+
+  .panel h3 {
+    margin: 0 0 7px;
+    font-size: 14px;
+  }
+
+  .panel p {
+    margin: 0 0 8px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .panel p:last-child { margin-bottom: 0; }
+
+  /* ---------- 锚点菜单：核心 CSS ---------- */
+  .nav { scroll-target-group: auto; }
+
+  .nav a {
+    display: block;
+    padding: 7px 10px;
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 13px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background .18s, color .18s, border-color .18s;
+  }
+
+  .nav a:hover {
+    background: var(--accent-soft);
+    color: #3b55c9;
+  }
+
+  /* 原生走 :target-current；Polyfill 走 [data-current]，两者共用样式 */
+  .nav a:target-current,
+  .nav a[data-current] {
+    background: var(--accent);
+    color: #fff;
+    border-color: transparent;
+  }
+
+  /* 布局一：内容在左，菜单在右，垂直排列 */
+  .split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 116px;
+    gap: 16px;
+  }
+
+  .nav-v {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+
+  /* 布局二：菜单在内容上方，水平排列，像选项卡按钮 */
+  .nav-h {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    padding-bottom: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .nav-h::-webkit-scrollbar { display: none; }
+
+  .nav-h a {
+    padding: 7px 15px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+  }
+
+  /* ---------- 说明 ---------- */
+  .notes {
+    margin: 26px 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: n;
+  }
+
+  .notes li {
+    counter-increment: n;
+    position: relative;
+    margin-bottom: 14px;
+    padding-left: 28px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .notes li::before {
+    content: counter(n);
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: #3b55c9;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 19px;
+    text-align: center;
+  }
+
+  .notes b { color: var(--text); font-weight: 600; }
+
+  @media (max-width: 640px) {
+    body { padding: 36px 16px 64px; }
+
+    .split { grid-template-columns: minmax(0, 1fr); }
+
+    .nav-v {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 6px;
+      order: -1;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>纯CSS实现锚点组件演示案例</h1>
+    <p class="sub">
+      菜单高亮不再需要监听滚动 + 计算位置：容器声明 <code>scroll-target-group: auto</code>，
+      容器内所有带 <code>#fragment</code> 的链接自动成为 scroll marker，
+      <code>:target-current</code> 直接命中"目标当前在视口中"的那一个。
+    </p>
+    <p class="status" id="status">正在检测浏览器支持…</p>
+  </header>
+
+  <!-- 演示一：右侧垂直菜单 -->
+  <section class="demo">
+    <h2>演示一 · 内容右侧的垂直菜单</h2>
+    <p class="desc">滚动左侧内容或在右侧点击菜单，高亮都会实时跟随。</p>
+
+    <div class="split">
+      <div class="scroll-box">
+        <section class="panel" id="v1">
+          <h3>什么是锚点组件</h3>
+          <p>锚点组件就是「一列导航 + 若干目标区块」：点击导航跳到对应区块，反过来滚动内容时导航自动高亮当前区块。</p>
+          <p>以往这一步必须写 JS，用 scroll 事件配合 getBoundingClientRect 反复计算，既费性能又要处理吸顶偏移。</p>
+        </section>
+
+        <section class="panel" id="v2">
+          <h3>核心只有一个属性</h3>
+          <p>给导航容器加上 scroll-target-group: auto，容器内所有形如 &lt;a href="#id"&gt; 的链接会被浏览器识别为 scroll marker。</p>
+          <p>浏览器自己维护「谁是当前目标」，然后用 :target-current 伪类把状态交回给 CSS，选择器里写高亮就可以了。</p>
+        </section>
+
+        <section class="panel" id="v3">
+          <h3>状态跟随滚动</h3>
+          <p>无论是点击链接平滑滚过去，还是手动拖动滚动条、用触控板惯性滚动，高亮都会跟着目标区块走，不需要额外同步。</p>
+          <p>配合 :target-before 和 :target-after，还能做出"已读进度条"之类的效果，判断链接触发之前还是之后的区块。</p>
+        </section>
+
+        <section class="panel" id="v4">
+          <h3>兼容与降级</h3>
+          <p>目前 Chrome 140+、Edge 140+、Opera 124+ 已经原生支持，Safari 与 Firefox 还没有。本页检测到不支持时，会监听容器的 scroll，用 getBoundingClientRect 找出当前区块，打上 data-current 作为兜底。</p>
+          <p>检测方式用特性嗅探 <code>CSS.supports("scroll-target-group: auto")</code>，而不是判断 UA 或浏览器名字：属性将来被改名、被回收，嗅探会自己跟着失效，UA 不会。</p>
+          <p>两条路径共用同一段高亮样式，业务代码不需要分辨浏览器，也不需要写两套类名。</p>
+          <p>这也是它比"纯 JS 组件"省心的地方：不支持时唯一的损失是自动高亮，点击跳转本身是原生锚点行为，永远可用，属于安全的渐进增强。</p>
+          <p>Polyfill 的局限也要知道：它拿的是首次执行时那批区块，如果内容是滚动加载进来的，需要重新收集面板并重算，而原生实现是浏览器自己持续维护的。</p>
+          <p>等 Safari 补上这块能力，把脚本里那段 if 整块删掉即可，CSS 一行都不用改。</p>
+        </section>
+      </div>
+
+      <nav class="nav nav-v">
+        <a href="#v1">什么是锚点组件</a>
+        <a href="#v2">核心属性</a>
+        <a href="#v3">状态跟随</a>
+        <a href="#v4">兼容降级</a>
+      </nav>
+    </div>
+  </section>
+
+  <!-- 演示二：水平选项卡式菜单 -->
+  <section class="demo">
+    <h2>演示二 · 水平排列的选项卡按钮</h2>
+    <p class="desc">同一套属性换一种外观：胶囊按钮横排，高亮当作选项卡的选中态来用。</p>
+
+    <nav class="nav nav-h">
+      <a href="#t1">基础用法</a>
+      <a href="#t2">选中态</a>
+      <a href="#t3">键盘可达</a>
+      <a href="#t4">常见问题</a>
+    </nav>
+
+    <div class="scroll-box">
+      <section class="panel" id="t1">
+        <h3>基础用法</h3>
+        <p>把链接横排放在内容上方，容器设 scroll-target-group: auto，外观交给普通的 flex 与圆角边框即可。</p>
+        <p>因为祖先链上的滚动容器会被自动识别，所以这组按钮控制的是下方那个小滚动区域，而不是整个页面。</p>
+      </section>
+
+      <section class="panel" id="t2">
+        <h3>选中态怎么写</h3>
+        <p>.nav a:target-current 里写背景色和文字色就行，和 :hover、:focus-visible 一样是纯 CSS 状态。</p>
+        <p>无需额外的 .active 类，也无需在点击时手动移除其他项的高亮，状态永远只与"当前可见的目标"有关。</p>
+      </section>
+
+      <section class="panel" id="t3">
+        <h3>键盘可达</h3>
+        <p>链接本身就在 tab 序列里，回车即跳转，聚焦样式用 :focus-visible 单独写，语义与原生锚点完全一致。</p>
+        <p>如果想让它更像 tablist，需要在 JS 里补 role 与方向键逻辑，这部分 CSS 帮不上忙，也不该由 CSS 负责。</p>
+      </section>
+
+      <section class="panel" id="t4">
+        <h3>常见问题</h3>
+        <p>目标区块记得加 scroll-margin-top，避免固定在顶部的吸顶导航把它遮住。这里之所以看起来刚好对齐，是因为滚动容器自身有内边距。</p>
+        <p>如果一组菜单对应多个滚动容器，请把菜单拆成多个 scroll-target-group 容器，一个容器只管自己那一组目标。</p>
+        <p>同一页里有好几组锚点导航时，每组导航各自声明 scroll-target-group 就行，彼此互不干扰；不要把两组链接塞进同一个容器，否则高亮会串。</p>
+        <p>只有当链接的 href 指向的 id 真实存在时，它才会被识别为 scroll marker；写了 #foo 却没有对应元素，这一项会一直不高亮。</p>
+        <p>这条属性只负责「谁是当前项」，不改变滚动行为本身。平滑滚动仍然由 scroll-behavior: smooth 控制，两者可以放心组合。</p>
+        <p>需要更复杂的时序控制时再上 JS：例如「停止滚动 200ms 后才更新高亮」，或者进入视口后延迟切换，这类需求 CSS 不负责，也不该硬塞给它。</p>
+      </section>
+    </div>
+  </section>
+
+  <ol class="notes">
+    <li><b>声明即可：</b>导航容器加 <code>scroll-target-group: auto</code>，内部带 <code>#fragment</code> 的 <code>&lt;a&gt;</code> 自动成为 scroll marker，标记与目标的对应关系由浏览器维护。</li>
+    <li><b>高亮交给伪类：</b><code>:target-current</code> 只匹配「目标正处于视口中」的链接，滚动、点击、惯性滑动都会实时更新，不需要任何滚动监听。</li>
+    <li><b>Polyfill 只补状态：</b>不支持时监听容器的 <code>scroll</code>，用 <code>getBoundingClientRect</code> 找出「已经越过容器顶部」的最后一个区块，给对应链接加 <code>data-current</code>，与 <code>:target-current</code> 并列写进同一组选择器。</li>
+  </ol>
+</div>
+
+<script>
+  /** 原生支持检测 */
+  const NATIVE = CSS.supports("scroll-target-group: auto");
+
+  const status = document.querySelector("#status");
+  status.dataset.native = NATIVE;
+  status.textContent = NATIVE
+    ? "当前浏览器原生支持 scroll-target-group，高亮由 :target-current 完成"
+    : "当前浏览器不支持 scroll-target-group，已启用 JS Polyfill 补高亮";
+
+  /**
+   * Polyfill：监听每个演示自己的滚动容器，
+   * 找出「顶部已经越过容器上沿」的最后一个区块，它就是当前区块。
+   */
+  if (!NATIVE) {
+    document.querySelectorAll(".demo").forEach(demo => {
+      const box = demo.querySelector(".scroll-box");
+      const panels = [...box.querySelectorAll(":scope > .panel")];
+      const links = [...demo.querySelectorAll(".nav a")];
+
+      const update = () => {
+        const boxTop = box.getBoundingClientRect().top;
+        let current = panels[0];
+
+        for (const panel of panels) {
+          if (panel.getBoundingClientRect().top - boxTop <= 4) current = panel;
+        }
+
+        links.forEach(a => a.toggleAttribute("data-current", a.hash === "#" + current.id));
+      };
+
+      box.addEventListener("scroll", update, { passive: true });
+      update();
+    });
+  }
+</script>
+
+</body>
+</html>
