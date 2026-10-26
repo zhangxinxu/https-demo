@@ -80,6 +80,59 @@
     color: #1a7f47;
   }
 
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+  }
+
+  /* 开关：控制点击导航是否写入 #hash */
+  .switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .switch input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+
+  .track {
+    position: relative;
+    flex: none;
+    width: 34px;
+    height: 20px;
+    border-radius: 999px;
+    background: #dde4ef;
+    transition: background .2s;
+  }
+
+  .track::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(20, 30, 60, .28);
+    transition: translate .2s;
+  }
+
+  .switch input:checked + .track { background: var(--accent); }
+  .switch input:checked + .track::after { translate: 14px 0; }
+  .switch input:focus-visible + .track { box-shadow: 0 0 0 3px rgba(74, 108, 247, .28); }
+
   /* ---------- 演示卡片 ---------- */
   .demo {
     margin-bottom: 18px;
@@ -260,7 +313,14 @@
       容器内所有带 <code>#fragment</code> 的链接自动成为 scroll marker，
       <code>:target-current</code> 直接命中"目标当前在视口中"的那一个。
     </p>
-    <p class="status" id="status">正在检测浏览器支持…</p>
+    <div class="toolbar">
+      <p class="status" id="status">正在检测浏览器支持…</p>
+      <label class="switch">
+        <input type="checkbox" id="no-hash">
+        <span class="track"></span>
+        点击导航不写入 #hash
+      </label>
+    </div>
   </header>
 
   <!-- 演示一：右侧垂直菜单 -->
@@ -355,21 +415,27 @@
     <li><b>声明即可：</b>导航容器加 <code>scroll-target-group: auto</code>，内部带 <code>#fragment</code> 的 <code>&lt;a&gt;</code> 自动成为 scroll marker，标记与目标的对应关系由浏览器维护。</li>
     <li><b>高亮交给伪类：</b><code>:target-current</code> 只匹配「目标正处于视口中」的链接，滚动、点击、惯性滑动都会实时更新，不需要任何滚动监听。</li>
     <li><b>Polyfill 只补状态：</b>不支持时监听容器的 <code>scroll</code>，用 <code>getBoundingClientRect</code> 找出「已经越过容器顶部」的最后一个区块，给对应链接加 <code>data-current</code>，与 <code>:target-current</code> 并列写进同一组选择器。</li>
-    <li><b>想让 URL 干净（可选）：</b>原生锚点跳转必然把 <code>#xxx</code> 写进地址栏，要避免只能拦掉点击、手动 <code>scrollIntoView</code>。这几行 JS 只改「怎么滚过去」，高亮仍由 CSS 负责；<code>href</code> 里的 <code>#fragment</code> 千万别删，删了链接就不再是 scroll marker，高亮直接失效。</li>
+    <li><b>想让 URL 干净（顶部开关）：</b>默认走浏览器原生锚点跳转，地址栏必然追加 <code>#xxx</code>；打开开关后才拦掉点击、手动 <code>scrollIntoView</code>。这几行 JS 只改「怎么滚过去」，高亮仍由 CSS 负责；<code>href</code> 里的 <code>#fragment</code> 千万别删，删了链接就不再是 scroll marker，高亮直接失效。</li>
   </ol>
 </div>
 
 <script>
   /**
-   * 可选增强：点击导航不写 hash。
-   * 原生锚点跳转一定会把 #xxx 写进地址栏，所以这里拦掉默认行为手动滚过去。
-   * href 里的 #fragment 必须保留：链接本身仍是 scroll marker，
+   * 可切换的跳转方式（默认关闭，走浏览器原生 hash 跳转）：
+   * 开关关闭 → 交给浏览器，地址栏会追加 #xxx；
+   * 开关开启 → 拦掉默认行为手动滚过去，URL 保持不变。
+   * 两种方式下 href 里的 #fragment 都要保留，否则链接不再是 scroll marker，
    * :target-current 判断的是「目标在不在视口中」，与 URL 是否带 hash 无关。
    */
+  const noHash = document.querySelector("#no-hash");
+
   document.querySelectorAll(".nav").forEach(nav => {
     nav.addEventListener("click", event => {
+      if (!noHash.checked) return;
+
       const link = event.target.closest("a[href^='#']");
       if (!link) return;
+
       event.preventDefault();
       document.querySelector(link.hash)?.scrollIntoView();
     });
