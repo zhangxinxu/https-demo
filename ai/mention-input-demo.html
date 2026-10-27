@@ -16,8 +16,6 @@
     --radius: 14px;
   }
 
-  * { box-sizing: border-box; }
-
   html, body { margin: 0; }
 
   body {
@@ -27,13 +25,11 @@
       radial-gradient(1000px 520px at 50% -180px, #e6ecff 0%, transparent 70%),
       var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
-      "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+    font-family: system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 
   .wrap {
-    width: 100%;
     max-width: 720px;
     margin: 0 auto;
   }
@@ -127,17 +123,18 @@
   }
 
   /*
-   * 标签节点本体：<img> 只是「容器」，
-   * src 是 1×1 透明 gif，真实视觉全部由背景图绘制：
-   * 第一层 = 图标 SVG，第二层 = 文件名 SVG text（宽度由 JS 量算后裁切）。
+   * 标签节点本体：<img> 的 src 就是文件名渲染成的 SVG 图，
+   * 右侧用 padding 撑出一块空白，类型图标作为背景图画在里面。
    */
   .tag {
     display: inline-block;
     height: 22px;
+    padding: 0 6px 0 23px;        /* 左 = 间距 4 + 图标 13 + 留白 6 */
     border-radius: 6px;
     background-color: #eff1f5;
     background-repeat: no-repeat;
-    background-size: 13px 13px, auto 22px;
+    background-position: left 4px center;
+    background-size: 16px 16px;
     margin-inline: 2px;
     vertical-align: middle;
     cursor: default;
@@ -187,7 +184,7 @@
     <h1>使用IMG元素作为标签节点演示案例</h1>
     <p class="sub">
       输入框里的文件名标签，真正的 DOM 是 <code>&lt;img&gt;</code> 元素：
-      <code>src</code> 指向 1×1 透明 gif，图标和文字都由 CSS 背景图渲染。
+      <code>src</code> 就是文件名本身（SVG 图），类型图标画在右侧 padding 撑出的空白里。
     </p>
   </header>
 
@@ -205,26 +202,23 @@
 
   <ol class="notes">
     <li><b>为什么用 img：</b>它是 contenteditable 里的原子节点，光标只能落在它前后，Backspace 一次删掉整块，天然可拖拽、有 alt/title 描述，不需要 contentEditable=false 那一堆补丁。</li>
-    <li><b>视觉为什么在背景里：</b>src 是透明占位图，类型图标是内联 SVG，文件名是 SVG <code>&lt;text&gt;</code>，二者都塞进 background-image，节点尺寸靠 JS 算好写进 width。</li>
-    <li><b>宽度为什么要量：</b>背景图不会参与布局，所以先用 canvas 的 measureText 按展示字体量出文字宽度，再据此裁剪 SVG 背景、决定 img 宽度。</li>
+    <li><b>图标为什么在背景里：</b>src 已经被文件名占用，类型图标只能走 background-image；给 img 右侧留出 padding 当画布，图标就画在这块空白里，不用伪元素也不用额外子节点。</li>
+    <li><b>宽度为什么要量：</b>SVG 图没有排版能力，先用 canvas 的 measureText 按展示字体量出文字宽度，再据此生成 SVG 的 width 和 img 的 width，两者一致才不会缩放变形。</li>
   </ol>
 </div>
 
 <script>
-  /** 透明占位 gif（1×1），tag chip 的真实视觉靠 CSS 背景呈现 */
-  const GIF = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-
   /** 三类文件的单色图标（深灰） */
   const ICONS = {
     image: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b6577' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='16' rx='3'/><circle cx='8.6' cy='9.4' r='1.4' fill='%235b6577' stroke='none'/><path d='M4.2 17.4l4.8-4.4 3.5 3.2 3-2.6 4.7 4.4'/></svg>",
-    video: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b6577' stroke-width='1.7' stroke-linejoin='round'><rect x='2.6' y='5' width='18.8' height='14' rx='3'/><path d='M10.4 9.5l4.8 2.5-4.8 2.5z' fill='%235b6577' stroke='none'/></svg>",
+    video: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b6577' stroke-width='1.7' stroke-linejoin='round'><rect x='3' y='4' width='18' height='16' rx='3'/><path d='M10.2 8.8l5.4 3.2-5.4 3.2z' fill='%235b6577' stroke='none'/></svg>",
     doc: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b6577' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M13.6 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.4z'/><path d='M13.6 3v5.4H19'/></svg>",
   };
 
-  /** chip 文字字号：量算与 SVG 背景必须同参 */
+  /** chip 文字字号：量算与 SVG 图必须同参 */
   const FONT = "13px system-ui, sans-serif";
-  /** chip 高度、图标尺寸、间距、左右留白（与样式里的 .tag 对应） */
-  const H = 22, ICON = 13, GAP = 4, PAD = 6;
+  /** SVG 图高度，与 .tag 的 height 一致 */
+  const H = 22;
 
   const editor = document.querySelector(".editor");
   const picker = document.querySelector(".picker");
@@ -236,26 +230,24 @@
     return Math.ceil(ctx.measureText(text).width) + 1;
   };
 
-  /** 文件名 → SVG text 背景（宽度按量算值裁剪，长文件名不截断） */
+  /** 文件名 → SVG 图像（宽度按量算值裁剪，长文件名不截断） */
   const buildLabel = (text, width) =>
-    `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${H}'>` +
-    `<text x='0' y='${H / 2}' font-family='system-ui, sans-serif' font-size='13' fill='%23343c4a' ` +
-    `dominant-baseline='middle'>${encodeURIComponent(text)}</text></svg>")`;
+    `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${H}'>` +
+    `<text x='0' y='${H / 2 + 1}' font-family='system-ui, sans-serif' font-size='13' fill='%23343c4a' ` +
+    `dominant-baseline='middle'>${encodeURIComponent(text)}</text></svg>`;
 
   const createTag = (name, mime) => {
     const type = mime.startsWith("image") ? "image" : mime.startsWith("video") ? "video" : "doc";
     const textWidth = measure(name);
-    const labelX = PAD + ICON + GAP;
 
     const img = document.createElement("img");
     img.className = "tag";
-    img.src = GIF;
+    img.src = buildLabel(name, textWidth);      // 图像本身就是文件名
     img.alt = name;
     img.title = name;
     img.dataset.type = type;
-    img.style.width = `${labelX + textWidth + PAD}px`;
-    img.style.backgroundImage = `url("${ICONS[type]}"), ${buildLabel(name, textWidth)}`;
-    img.style.backgroundPosition = `${PAD}px center, ${labelX}px center`;
+    img.style.width = `${textWidth}px`;         // 只给文字宽度，图标区留在 padding 里
+    img.style.backgroundImage = `url("${ICONS[type]}")`;
     return img;
   };
 
