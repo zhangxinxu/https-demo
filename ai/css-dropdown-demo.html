@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>纯HTML和CSS驱动的任意下拉组件演示页面 - 第二章</title>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --text: #1c2333;
+    --muted: #5b6577;
+    --line: #e4e8f1;
+    --accent: #4a6cf7;
+    --accent-soft: #eef2ff;
+    --radius: 14px;
+  }
+
+  html, body { margin: 0; }
+
+  body {
+    min-height: 100vh;
+    padding: 56px 20px 80px;
+    background:
+      radial-gradient(1000px 520px at 50% -180px, #e6ecff 0%, transparent 70%),
+      var(--bg);
+    color: var(--text);
+    font-family: system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  header { margin-bottom: 24px; }
+
+  h1 {
+    margin: 0 0 10px;
+    font-size: clamp(20px, 3.2vw, 28px);
+    letter-spacing: -.02em;
+  }
+
+  .sub {
+    margin: 0 0 16px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  code {
+    padding: 1px 5px;
+    border-radius: 5px;
+    background: var(--accent-soft);
+    color: #3b55c9;
+    font-size: 12.5px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  /* ---------- 能力检测徽标 ---------- */
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #eef1f6;
+    color: #6b778a;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .badge[data-state="native"] {
+    background: #e7f7ee;
+    color: #1a7f47;
+  }
+
+  .badge[data-state="polyfill"] {
+    background: #fdf0e4;
+    color: #a35a12;
+  }
+
+  /* ---------- 演示卡片 ---------- */
+  .demo {
+    margin-bottom: 18px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--card);
+    box-shadow: 0 12px 32px -24px rgba(24, 38, 76, .5);
+  }
+
+  .demo h2 {
+    margin: 0 0 6px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .demo .desc {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .stage { min-height: 40px; }
+
+  /* ---------- 触发器 ---------- */
+  .trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--text);
+    font: inherit;
+    font-size: 14px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color .18s, background .18s, color .18s, box-shadow .18s;
+  }
+
+  .trigger:hover {
+    border-color: #c8d2e2;
+    background: #fbfcff;
+    box-shadow: 0 4px 14px -8px rgba(24, 38, 76, .35);
+  }
+
+  .trigger:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .trigger svg { flex: none; opacity: .7; }
+
+  /* 锚点绑定：触发元素成为 anchor，浮层贴着它定位 */
+  #trigger-1 { anchor-name: --menu-1; }
+  #menu-1 { position-anchor: --menu-1; }
+
+  #trigger-2 { anchor-name: --menu-2; }
+  #menu-2 { position-anchor: --menu-2; }
+
+  #trigger-3 { anchor-name: --menu-3; }
+  #menu-3 { position-anchor: --menu-3; }
+
+  /* ---------- 下拉浮层 ---------- */
+  .menu {
+    width: 272px;
+    padding: 6px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 20px 44px -20px rgba(24, 38, 76, .45);
+    color: var(--text);
+
+    /* 清掉 UA 给 [popover] 的 inset: 0 / margin: auto */
+    inset: auto;
+    margin: 6px 0 0;
+    position-area: bottom span-right;
+
+    opacity: 0;
+    translate: 0 -6px;
+    transition: opacity .16s ease, translate .16s ease,
+                display .16s allow-discrete, overlay .16s allow-discrete;
+  }
+
+  /* 原生是伪类，polyfill 是 .\:popover-open 类名，用 :where() 容错并列 */
+  .menu:where(:popover-open, .\:popover-open) {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  @starting-style {
+    .menu:where(:popover-open, .\:popover-open) {
+      opacity: 0;
+      translate: 0 -6px;
+    }
+  }
+
+  /* ---------- 书单 ---------- */
+  .books {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .books li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background .16s;
+  }
+
+  .books li:hover { background: #f5f7fb; }
+
+  .cover {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 34px;
+    border-radius: 4px;
+    background: linear-gradient(160deg, var(--c), color-mix(in srgb, var(--c) 70%, #000));
+    color: #fff;
+    font-size: 9px;
+    letter-spacing: .02em;
+    box-shadow: inset -2px 0 0 rgba(255, 255, 255, .35);
+  }
+
+  .book {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .book b {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .book small {
+    color: #98a3b6;
+    font-size: 11px;
+  }
+
+  /* ---------- 说明 ---------- */
+  .notes {
+    margin: 26px 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: n;
+  }
+
+  .notes li {
+    counter-increment: n;
+    position: relative;
+    margin-bottom: 14px;
+    padding-left: 28px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .notes li::before {
+    content: counter(n);
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: #3b55c9;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 19px;
+    text-align: center;
+  }
+
+  .notes b { color: var(--text); font-weight: 600; }
+
+  @media (max-width: 560px) {
+    body { padding: 36px 16px 64px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>纯HTML和CSS驱动的任意下拉组件演示页面 </h1>
+    <p class="sub">
+      三种声明式触发方式，触发元素上一个属性都没有写任何事件逻辑：
+      <code>popovertarget</code>、<code>commandfor</code>、<code>interestfor</code>。
+      浮层的位置全部交给 CSS 锚点定位。
+    </p>
+    <div class="badges">
+      <span class="badge" data-key="popover">popover</span>
+      <span class="badge" data-key="anchor">锚点定位</span>
+      <span class="badge" data-key="command">commandfor</span>
+      <span class="badge" data-key="interest">interestfor</span>
+    </div>
+  </header>
+
+  <!-- 演示一：popovertarget -->
+  <section class="demo">
+    <h2>方式一 · <code>popovertarget</code></h2>
+    <p class="desc">按钮与浮层用 id 绑定，点击开关，按 Esc 或点击空白处自动关闭。</p>
+    <div class="stage">
+      <button class="trigger" id="trigger-1" type="button" popovertarget="menu-1">
+        按钮
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+
+      <div class="menu" id="menu-1" popover>
+        <ul class="books">
+          <li>
+            <span class="cover" style="--c:#4a6cf7">CSS</span>
+            <span class="book"><b>CSS 世界</b><small>2019 年出版</small></span>
+          </li>
+          <li>
+            <span class="cover" style="--c:#8b5cf6">选择器</span>
+            <span class="book"><b>CSS 选择器世界</b><small>2020 年出版</small></span>
+          </li>
+          <li>
+            <span class="cover" style="--c:#0ea5a4">新</span>
+            <span class="book"><b>CSS 新世界</b><small>2022 年出版</small></span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 演示二：commandfor -->
+  <section class="demo">
+    <h2>方式二 · <code>commandfor</code> + <code>command</code></h2>
+    <p class="desc">新的 invoker commands 语法：<code>command="show-popover"</code> 显式声明动作，比 <code>popovertarget</code> 更通用。</p>
+    <div class="stage">
+      <button class="trigger" id="trigger-2" type="button" commandfor="menu-2" command="show-popover">
+        按钮
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+
+      <div class="menu" id="menu-2" popover>
+        <ul class="books">
+          <li>
+            <span class="cover" style="--c:#4a6cf7">CSS</span>
+            <span class="book"><b>CSS 世界</b><small>2019 年出版</small></span>
+          </li>
+          <li>
+            <span class="cover" style="--c:#8b5cf6">选择器</span>
+            <span class="book"><b>CSS 选择器世界</b><small>2020 年出版</small></span>
+          </li>
+          <li>
+            <span class="cover" style="--c:#0ea5a4">新</span>
+            <span class="book"><b>CSS 新世界</b><small>2022 年出版</small></span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 演示三：interestfor -->
+  <section class="demo">
+    <h2>方式三 · <code>interestfor</code></h2>
+    <p class="desc">悬停或键盘聚焦链接即预展示浮层，移开自动收起，不需要点击。</p>
+    <div class="stage">
+      <a class="trigger" id="trigger-3" href="#" interestfor="menu-3">
+        导航链接
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </a>
+
+      <div class="menu" id="menu-3" popover>
+        <ul class="books">
+          <li>
+            <span class="cover" style="--c:#4a6cf7">CSS</span>
+            <span class="book"><b>CSS 世界</b><small>2019 年出版</small></span>
+          </li>
+          <li>
+            <span class="cover" style="--c:#8b5cf6">选择器</span>
+            <span class="book"><b>CSS 选择器世界</b><small>2020 年出版</small></span>
+          </li>
+          <li>
+            <span class="cover" style="--c:#0ea5a4">新</span>
+            <span class="book"><b>CSS 新世界</b><small>2022 年出版</small></span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <ol class="notes">
+    <li><b>零事件逻辑：</b>三种写法都只在触发元素上放属性，加 id 关联目标，开关、light dismiss、Esc 关闭全部由浏览器负责。</li>
+    <li><b>定位交给 CSS：</b>触发元素设 <code>anchor-name</code>，浮层用 <code>position-anchor</code> 加 <code>position-area: bottom span-right</code> 贴住它，JS 一行都不用写。</li>
+    <li><b>按需 polyfill：</b>先检测 <code>"popover" in HTMLElement.prototype</code>、<code>"anchorName" in style</code>、<code>"interestForElement" in HTMLButtonElement.prototype</code>，缺哪个才动态加载哪个，支持的浏览器一个字节都不多下。</li>
+    <li><b>四个 polyfill 各管一段：</b>popover、anchor positioning、invokers（commandfor）、interestfor，检测哪个缺就只加载哪个。invokers-polyfill 支持 <code>show</code>/<code>hide</code>/<code>toggle-popover</code> 与 <code>show-modal</code>，但不负责同步 <code>aria-expanded</code>，无障碍状态仍需自己维护。</li>
+  </ol>
+</div>
+
+<script type="module">
+  /** 四项能力检测 */
+  const support = {
+    popover: "popover" in HTMLElement.prototype,
+    anchor: "anchorName" in document.documentElement.style,
+    command: "commandForElement" in HTMLButtonElement.prototype,
+    interest: "interestForElement" in HTMLButtonElement.prototype,
+  };
+
+  document.querySelectorAll(".badge").forEach(badge => {
+    const ok = support[badge.dataset.key];
+    badge.dataset.state = ok ? "native" : "polyfill";
+    badge.textContent += ok ? " · 原生" : " · Polyfill";
+  });
+
+  /** 演示链接不该真的跳转 */
+  document.querySelectorAll('a[href="#"]').forEach(a => {
+    a.addEventListener("click", event => event.preventDefault());
+  });
+
+  /** 缺什么补什么，支持的浏览器不会发起任何 polyfill 请求 */
+  try {
+    if (!support.popover) {
+      await import("https://cdn.jsdelivr.net/npm/@oddbird/popover-polyfill@latest");
+    }
+
+    if (!support.anchor) {
+      await import("https://unpkg.com/@oddbird/css-anchor-positioning");
+    }
+
+    if (!support.command) {
+      await import("https://unpkg.com/invokers-polyfill@latest/invoker.min.js");
+    }
+
+    if (!support.interest) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://mfreed7.github.io/interestfor/interestfor.min.js";
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.append(script);
+      });
+    }
+  } catch (error) {
+    console.warn("polyfill 加载失败：", error);
+  }
+</script>
+
+</body>
+</html>
