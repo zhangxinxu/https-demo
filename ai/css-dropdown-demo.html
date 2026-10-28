@@ -686,13 +686,7 @@
     }
 
     if (!support.interest) {
-      await new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = "./assets/interestfor.min.js";
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.append(script);
-      });
+      await import("./assets/interestfor.min.js");
     }
   } catch (error) {
     console.warn("polyfill 加载失败：", error);
