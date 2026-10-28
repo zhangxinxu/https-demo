@@ -438,7 +438,7 @@
     if (!support.interest) {
       await new Promise((resolve, reject) => {
         const script = document.createElement("script");
-        script.src = "https://mfreed7.github.io/interestfor/interestfor.min.js";
+        script.src = "./assets/interestfor.min.js";
         script.onload = resolve;
         script.onerror = reject;
         document.head.append(script);
