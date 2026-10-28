@@ -95,10 +95,39 @@
     box-shadow: 0 12px 32px -24px rgba(24, 38, 76, .5);
   }
 
+  .demo-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
   .demo h2 {
-    margin: 0 0 6px;
+    margin: 0;
     font-size: 15px;
     font-weight: 600;
+  }
+
+  .code-btn {
+    flex: none;
+    padding: 5px 11px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--muted);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: color .16s, border-color .16s, background .16s;
+  }
+
+  .code-btn:hover,
+  .code-btn:focus-visible {
+    color: var(--accent);
+    border-color: #c8d2e2;
+    background: #fbfcff;
+    outline: none;
   }
 
   .demo .desc {
@@ -283,6 +312,95 @@
 
   .notes b { color: var(--text); font-weight: 600; }
 
+  /* ---------- 源码弹框 ---------- */
+  .code-dialog {
+    display: flex;
+    flex-direction: column;
+    width: min(640px, calc(100vw - 32px));
+    max-width: none;
+    max-height: min(82vh, 720px);
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #fff;
+    color: var(--text);
+    box-shadow: 0 30px 80px -30px rgba(16, 24, 40, .55);
+  }
+
+  .code-dialog:not([open]) { display: none; }
+
+  .code-dialog::backdrop {
+    background: rgba(16, 24, 40, .38);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+  }
+
+  .code-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 16px 13px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .code-head h3 {
+    margin: 0;
+    font-size: 15px;
+  }
+
+  .code-close {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 8px;
+    background: #f2f4f9;
+    color: var(--muted);
+    font: inherit;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .code-close:hover { background: #e8ecf4; color: var(--text); }
+
+  .code-body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 16px 18px 18px;
+  }
+
+  .code-body h4 {
+    margin: 0 0 8px;
+    color: #98a3b6;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+
+  .code-body pre {
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    border: 1px solid #edf0f6;
+    border-radius: 10px;
+    background: #f8fafd;
+    overflow: auto;
+    font-size: 12.5px;
+    line-height: 1.75;
+  }
+
+  .code-body pre:last-child { margin-bottom: 0; }
+
+  .code-body pre code {
+    padding: 0;
+    background: none;
+    color: #2b3547;
+    font-size: inherit;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
   @media (max-width: 560px) {
     body { padding: 36px 16px 64px; }
   }
@@ -308,7 +426,10 @@
 
   <!-- 演示一：popovertarget -->
   <section class="demo">
-    <h2>方式一 · <code>popovertarget</code></h2>
+    <div class="demo-head">
+      <h2>方式一 · <code>popovertarget</code></h2>
+      <button class="code-btn" type="button" data-demo="1">查看源码</button>
+    </div>
     <p class="desc">按钮与浮层用 id 绑定，点击开关，按 Esc 或点击空白处自动关闭。</p>
     <div class="stage">
       <button class="trigger" id="trigger-1" type="button" popovertarget="menu-1">
@@ -337,7 +458,10 @@
 
   <!-- 演示二：commandfor -->
   <section class="demo">
-    <h2>方式二 · <code>commandfor</code> + <code>command</code></h2>
+    <div class="demo-head">
+      <h2>方式二 · <code>commandfor</code> + <code>command</code></h2>
+      <button class="code-btn" type="button" data-demo="2">查看源码</button>
+    </div>
     <p class="desc">新的 invoker commands 语法：<code>command="show-popover"</code> 显式声明动作，比 <code>popovertarget</code> 更通用。</p>
     <div class="stage">
       <button class="trigger" id="trigger-2" type="button" commandfor="menu-2" command="show-popover">
@@ -366,7 +490,10 @@
 
   <!-- 演示三：interestfor -->
   <section class="demo">
-    <h2>方式三 · <code>interestfor</code></h2>
+    <div class="demo-head">
+      <h2>方式三 · <code>interestfor</code></h2>
+      <button class="code-btn" type="button" data-demo="3">查看源码</button>
+    </div>
     <p class="desc">悬停或键盘聚焦链接即预展示浮层，移开自动收起，不需要点击。</p>
     <div class="stage">
       <a class="trigger" id="trigger-3" href="#" interestfor="menu-3">
@@ -401,7 +528,110 @@
   </ol>
 </div>
 
+<dialog class="code-dialog" id="code-dialog">
+  <div class="code-head">
+    <h3 id="code-title">查看源码</h3>
+    <button class="code-close" type="button" aria-label="关闭">✕</button>
+  </div>
+  <div class="code-body">
+    <h4>HTML</h4>
+    <pre><code id="code-html"></code></pre>
+    <h4>CSS</h4>
+    <pre><code id="code-css"></code></pre>
+  </div>
+</dialog>
+
 <script type="module">
+  /** 每种触发方式的核心源码 */
+  const SOURCES = {
+    1: {
+      title: "方式一 · popovertarget",
+      html: `<button popovertarget="menu-1">按钮</button>
+
+<div id="menu-1" popover>
+  <ul class="books">…书名列表…</ul>
+</div>`,
+      css: `/* 触发元素成为锚点 */
+#trigger-1 {
+  anchor-name: --menu-1;
+}
+
+/* 浮层贴着锚点定位 */
+#menu-1 {
+  position-anchor: --menu-1;
+  position-area: bottom span-right;
+
+  /* 清掉 UA 给 [popover] 的默认定位 */
+  inset: auto;
+  margin: 6px 0 0;
+}`,
+    },
+    2: {
+      title: "方式二 · commandfor + command",
+      html: `<button commandfor="menu-2" command="show-popover">按钮</button>
+
+<div id="menu-2" popover>
+  <ul class="books">…书名列表…</ul>
+</div>`,
+      css: `/* command 可选 show-popover / hide-popover / toggle-popover */
+#trigger-2 {
+  anchor-name: --menu-2;
+}
+
+#menu-2 {
+  position-anchor: --menu-2;
+  position-area: bottom span-right;
+
+  inset: auto;
+  margin: 6px 0 0;
+}`,
+    },
+    3: {
+      title: "方式三 · interestfor",
+      html: `<a href="#" interestfor="menu-3">导航链接</a>
+
+<div id="menu-3" popover>
+  <ul class="books">…书名列表…</ul>
+</div>`,
+      css: `#trigger-3 {
+  anchor-name: --menu-3;
+}
+
+#menu-3 {
+  position-anchor: --menu-3;
+  position-area: bottom span-right;
+
+  inset: auto;
+  margin: 6px 0 0;
+}
+
+/* 悬停态：原生伪类与 polyfill 类名并列 */
+:is([interestfor]:interest-source),
+[interestfor].interest-source {
+  color: #4a6cf7;
+}`,
+    },
+  };
+
+  const dialog = document.querySelector("#code-dialog");
+
+  document.querySelectorAll(".code-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const source = SOURCES[btn.dataset.demo];
+      document.querySelector("#code-title").textContent = source.title;
+      document.querySelector("#code-html").textContent = source.html;
+      document.querySelector("#code-css").textContent = source.css;
+      dialog.showModal();
+    });
+  });
+
+  dialog.querySelector(".code-close").addEventListener("click", () => dialog.close());
+
+  // 点遮罩关闭（backdrop 的点击事件目标是 dialog 本身）
+  dialog.addEventListener("click", event => {
+    if (event.target === dialog) dialog.close();
+  });
+
   /** 四项能力检测 */
   const support = {
     popover: "popover" in HTMLElement.prototype,
