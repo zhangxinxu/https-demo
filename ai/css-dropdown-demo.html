@@ -249,13 +249,22 @@
     border-radius: 4px;
     /* 兜底：不认识 color-mix() 的浏览器用纯色到黑的渐变 */
     background: linear-gradient(160deg, var(--c), #000);
-    background: linear-gradient(160deg, var(--c), color-mix(in srgb, var(--c) 70%, #000));
     color: #fff;
     font-size: 11px;
     letter-spacing: .02em;
     writing-mode: vertical-rl;
     text-combine-upright: all;
     box-shadow: inset -2px 0 0 rgba(255, 255, 255, .35);
+  }
+
+  /* 注意：这里必须用 @supports，不能靠"写两行 background"做兜底。
+     因为声明里含 var() 时浏览器在解析阶段不做语法校验，
+     第二条会直接覆盖第一条；等到计算值阶段才发现 color-mix() 不认识，
+     属性会变成 IACVT 而回退到初始值（背景消失），而不是回退到上面那条。 */
+  @supports (color: color-mix(in srgb, red, blue)) {
+    .cover {
+      background: linear-gradient(160deg, var(--c), color-mix(in srgb, var(--c) 70%, #000));
+    }
   }
 
   /* Safari 的 text-combine-upright 不认中文，中文封面改为横排 + 水平压缩 */
