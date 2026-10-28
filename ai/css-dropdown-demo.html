@@ -214,6 +214,14 @@
     }
   }
 
+  /* 不支持 popover 时没有 top layer，退化成普通绝对定位浮层 */
+  @supports not selector(:popover-open) {
+    .menu {
+      position: absolute;
+      z-index: 10;
+    }
+  }
+
   /* ---------- 书单 ---------- */
   .books {
     margin: 0;
@@ -239,6 +247,8 @@
     width: 28px;
     height: 34px;
     border-radius: 4px;
+    /* 兜底：不认识 color-mix() 的浏览器用纯色到黑的渐变 */
+    background: linear-gradient(160deg, var(--c), #000);
     background: linear-gradient(160deg, var(--c), color-mix(in srgb, var(--c) 70%, #000));
     color: #fff;
     font-size: 11px;
