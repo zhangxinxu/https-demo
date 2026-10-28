@@ -218,6 +218,19 @@
     box-shadow: inset -2px 0 0 rgba(255, 255, 255, .35);
   }
 
+  /* Safari 的 text-combine-upright 不认中文，中文封面改为横排 + 水平压缩 */
+  .cover-cn {
+    writing-mode: horizontal-tb;
+    text-combine-upright: none;
+    font-size: 9px;
+  }
+
+  .cover-cn > span {
+    display: block;
+    white-space: nowrap;
+    transform: scaleX(calc(2 / 3));   /* 3 个字压成 2 个字宽 */
+  }
+
   .book {
     display: flex;
     flex-direction: column;
@@ -310,7 +323,7 @@
             <span class="book"><b>CSS 世界</b><small>2019 年出版</small></span>
           </li>
           <li>
-            <span class="cover" style="--c:#8b5cf6">选择器</span>
+            <span class="cover cover-cn" style="--c:#8b5cf6"><span>选择器</span></span>
             <span class="book"><b>CSS 选择器世界</b><small>2020 年出版</small></span>
           </li>
           <li>
@@ -339,7 +352,7 @@
             <span class="book"><b>CSS 世界</b><small>2019 年出版</small></span>
           </li>
           <li>
-            <span class="cover" style="--c:#8b5cf6">选择器</span>
+            <span class="cover cover-cn" style="--c:#8b5cf6"><span>选择器</span></span>
             <span class="book"><b>CSS 选择器世界</b><small>2020 年出版</small></span>
           </li>
           <li>
@@ -368,7 +381,7 @@
             <span class="book"><b>CSS 世界</b><small>2019 年出版</small></span>
           </li>
           <li>
-            <span class="cover" style="--c:#8b5cf6">选择器</span>
+            <span class="cover cover-cn" style="--c:#8b5cf6"><span>选择器</span></span>
             <span class="book"><b>CSS 选择器世界</b><small>2020 年出版</small></span>
           </li>
           <li>
