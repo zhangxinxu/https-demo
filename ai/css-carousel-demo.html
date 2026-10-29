@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>纯CSS实现的跑马灯轮播组件演示案例 - 第二章</title>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --text: #1c2333;
+    --muted: #5b6577;
+    --line: #e4e8f1;
+    --accent: #4a6cf7;
+    --accent-soft: #eef2ff;
+    --radius: 14px;
+  }
+
+  html, body { margin: 0; }
+
+  body {
+    min-height: 100vh;
+    padding: 56px 20px 80px;
+    background:
+      radial-gradient(1000px 520px at 50% -180px, #e6ecff 0%, transparent 70%),
+      var(--bg);
+    color: var(--text);
+    font-family: system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  header { margin-bottom: 24px; }
+
+  h1 {
+    margin: 0 0 10px;
+    font-size: clamp(21px, 3.2vw, 28px);
+    letter-spacing: -.02em;
+  }
+
+  .sub {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  code {
+    padding: 1px 5px;
+    border-radius: 5px;
+    background: var(--accent-soft);
+    color: #3b55c9;
+    font-size: 12.5px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  /* ---------- 轮播 ---------- */
+  .frame {
+    /* 收缩到与轮播等宽，JS 兜底元素才和 ::scroll-button 处在同一坐标系 */
+    position: relative;
+    width: fit-content;
+    margin: 0 auto 26px;
+
+    /* 按钮与圆点的视觉参数：原生伪元素和兜底元素共用一套 */
+    --btn-size: 32px;
+    --btn-offset: 12px;
+    --btn-bg: rgba(8, 10, 18, .55);
+    --btn-bg-hover: rgba(8, 10, 18, .82);
+    --dot-size: 8px;
+    --dot-active: 24px;
+    --dot-bg: rgba(255, 255, 255, .5);
+    --dot-active-bg: #fff;
+  }
+
+  .carousel {
+    /* 滚动 + 吸附 */
+    display: grid;
+    width: 320px;
+    grid-auto-flow: column;
+    grid-auto-columns: 100%;
+    aspect-ratio: 4 / 3;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+
+    /* 生成 ::scroll-marker-group，并让滚动按钮能锚定到自己 */
+    scroll-marker-group: after;
+    anchor-name: --carousel;
+
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    position: relative;
+    border-radius: 18px;
+    background: #0b0c12;
+    box-shadow: 0 22px 48px -28px rgba(16, 24, 40, .6);
+  }
+
+  .carousel::-webkit-scrollbar { display: none; }
+
+  .carousel li {
+    scroll-snap-align: center;
+  }
+
+  .carousel img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* ---------- 左右切换：::scroll-button ---------- */
+  .carousel::scroll-button(*) {
+    position: absolute;
+    position-anchor: --carousel;
+    top: anchor(center);
+    width: var(--btn-size);
+    height: var(--btn-size);
+    border: 0;
+    border-radius: 50%;
+    background-color: var(--btn-bg);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 18px;
+    cursor: pointer;
+    transition: background-color .2s, opacity .2s;
+  }
+
+  .carousel::scroll-button(*):enabled:hover {
+    background-color: var(--btn-bg-hover);
+  }
+
+  .carousel::scroll-button(*):disabled {
+    opacity: .3;
+    cursor: default;
+  }
+
+  .carousel::scroll-button(left) {
+    content: "" / "上一张";
+    left: anchor(left);
+    translate: var(--btn-offset) -50%;
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M15 5l-7 7 7 7'/></svg>");
+  }
+
+  .carousel::scroll-button(right) {
+    content: "" / "下一张";
+    right: anchor(right);
+    translate: calc(var(--btn-offset) * -1) -50%;
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M9 5l7 7-7 7'/></svg>");
+  }
+
+  /* ---------- 索引按钮：::scroll-marker ---------- */
+  .carousel::scroll-marker-group {
+    position: absolute;
+    inset: auto 0 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .carousel li::scroll-marker {
+    content: "";
+    width: var(--dot-size);
+    height: var(--dot-size);
+    border: 0;
+    border-radius: 999px;
+    background: var(--dot-bg);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .45);
+    cursor: pointer;
+    transition: width .25s ease, background-color .25s ease;
+  }
+
+  .carousel li::scroll-marker:target-current {
+    width: var(--dot-active);
+    background: var(--dot-active-bg);
+  }
+
+  /* ---------- JS 兜底：几何与上面的伪元素一一对应 ---------- */
+  .fallback-buttons button {
+    position: absolute;
+    top: 50%;
+    width: var(--btn-size);
+    height: var(--btn-size);
+    border: 0;
+    border-radius: 50%;
+    background: var(--btn-bg);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    font: inherit;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    translate: 0 -50%;
+    transition: background-color .2s, opacity .2s;
+  }
+
+  .fallback-buttons button:first-child { left: var(--btn-offset); }
+  .fallback-buttons button:last-child { right: var(--btn-offset); }
+
+  .fallback-buttons button:hover { background: var(--btn-bg-hover); }
+
+  .fallback-buttons button:disabled {
+    opacity: .3;
+    cursor: default;
+  }
+
+  .fallback-dots {
+    position: absolute;
+    inset: auto 0 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .fallback-dots button {
+    width: var(--dot-size);
+    height: var(--dot-size);
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: var(--dot-bg);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .45);
+    cursor: pointer;
+    transition: width .25s ease, background-color .25s ease;
+  }
+
+  .fallback-dots button.active {
+    width: var(--dot-active);
+    background: var(--dot-active-bg);
+  }
+
+  /* ---------- 自动播放开关 ---------- */
+  .toolbar {
+    display: flex;
+    justify-content: center;
+    margin: -10px 0 28px;
+  }
+
+  .switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .switch input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+
+  .track {
+    position: relative;
+    flex: none;
+    width: 34px;
+    height: 20px;
+    border-radius: 999px;
+    background: #dee4ef;
+    transition: background-color .2s;
+  }
+
+  .track::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(20, 30, 60, .3);
+    transition: translate .2s;
+  }
+
+  .switch input:checked + .track { background: var(--accent); }
+  .switch input:checked + .track::after { translate: 14px 0; }
+  .switch input:focus-visible + .track { box-shadow: 0 0 0 3px rgba(74, 108, 247, .28); }
+
+  /* ---------- 说明 ---------- */
+  .notes {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: n;
+  }
+
+  .notes li {
+    counter-increment: n;
+    position: relative;
+    margin-bottom: 14px;
+    padding-left: 28px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .notes li::before {
+    content: counter(n);
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: #3b55c9;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 19px;
+    text-align: center;
+  }
+
+  .notes b { color: var(--text); font-weight: 600; }
+
+  @media (max-width: 560px) {
+    body { padding: 36px 16px 64px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>纯CSS实现的跑马灯轮播组件演示案例</h1>
+    <p class="sub">
+      一个 <code>overflow-x: auto</code> 的滚动容器，配上 <code>scroll-snap</code> 就是轮播本体；
+      左右按钮来自 <code>::scroll-button</code>，索引圆点来自 <code>::scroll-marker</code>，
+      没有任何 JS 事件逻辑。
+    </p>
+  </header>
+
+  <div class="frame">
+    <ul class="carousel">
+      <li><img src="./assets/ps1.jpg" alt="时尚大片 1"></li>
+      <li><img src="./assets/ps2.jpg" alt="时尚大片 2"></li>
+      <li><img src="./assets/ps3.jpg" alt="时尚大片 3"></li>
+      <li><img src="./assets/ps4.jpg" alt="时尚大片 4"></li>
+    </ul>
+  </div>
+
+  <div class="toolbar">
+    <label class="switch">
+      <input type="checkbox" id="autoplay">
+      <span class="track"></span>
+      自动播放（4 秒一张）
+    </label>
+  </div>
+
+  <ol class="notes">
+    <li><b>轮播本体只有滚动：</b>容器 <code>grid-auto-flow: column</code> 加 <code>grid-auto-columns: 100%</code>，每张一屏，<code>scroll-snap-type: x mandatory</code> 负责吸附，手指、触控板、键盘都能操作。</li>
+    <li><b>左右按钮是伪元素：</b>容器声明 <code>::scroll-button(left/right)</code> 的样式即可，浏览器自动生成按钮元素、自动处理点击滚动和首尾禁用，<code>:disabled</code> 状态也由浏览器维护。</li>
+    <li><b>索引圆点同理：</b><code>scroll-marker-group: after</code> 让容器生成标记组，每个列表项用自己的 <code>::scroll-marker</code> 当圆点，<code>:target-current</code> 命中当前项，可以把圆点拉长成胶囊。</li>
+    <li><b>兜底不碰主逻辑：</b>Safari 与 Firefox 目前都不支持这两个伪元素，脚本检测 <code>CSS.supports("selector(::scroll-button(left))")</code> 后，才建真实的按钮和圆点，点击走 <code>scrollTo()</code>，滚动时用 <code>scrollLeft</code> 同步高亮。</li>
+    <li><b>两套样式怎么不重复：</b>外层 <code>.frame</code> 用 <code>width: fit-content</code> 收缩到与轮播同宽，兜底元素才和伪元素落在同一个坐标系；按钮尺寸、偏移、底色、圆点尺寸全部抽成 CSS 变量，两份规则只引用变量，不重复写值。</li>
+  </ol>
+</div>
+
+<script type="module">
+  const carousel = document.querySelector(".carousel");
+  const frame = document.querySelector(".frame");
+  const slides = [...carousel.children];
+  const last = slides.length - 1;
+
+  let index = 0;
+
+  const goTo = i => {
+    carousel.scrollTo({
+      left: slides[Math.min(Math.max(i, 0), last)].offsetLeft,
+      behavior: "smooth",
+    });
+  };
+
+  /* 不支持 ::scroll-button 时，建一对真实按钮 */
+  let prevBtn, nextBtn;
+
+  if (!CSS.supports("selector(::scroll-button(left))")) {
+    const bar = document.createElement("div");
+    bar.className = "fallback-buttons";
+    bar.innerHTML = `
+      <button type="button" aria-label="上一张">‹</button>
+      <button type="button" aria-label="下一张">›</button>`;
+    frame.append(bar);
+
+    [prevBtn, nextBtn] = bar.querySelectorAll("button");
+    prevBtn.addEventListener("click", () => goTo(index - 1));
+    nextBtn.addEventListener("click", () => goTo(index + 1));
+  }
+
+  /* 不支持 ::scroll-marker 时，建一排真实圆点 */
+  const dots = [];
+
+  if (!CSS.supports("selector(::scroll-marker)")) {
+    const bar = document.createElement("div");
+    bar.className = "fallback-dots";
+
+    slides.forEach((_, i) => {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.setAttribute("aria-label", `第 ${i + 1} 张`);
+      dot.addEventListener("click", () => goTo(i));
+      bar.append(dot);
+      dots.push(dot);
+    });
+
+    frame.append(bar);
+  }
+
+  /* 滚动时同步索引，顺带处理按钮的禁用态 */
+  const sync = () => {
+    index = Math.round(carousel.scrollLeft / carousel.clientWidth);
+
+    if (prevBtn) prevBtn.disabled = index <= 0;
+    if (nextBtn) nextBtn.disabled = index >= last;
+
+    dots.forEach((dot, i) => dot.classList.toggle("active", i === index));
+  };
+
+  carousel.addEventListener("scroll", sync, { passive: true });
+  sync();
+
+  /* 自动播放：开关打开后每 4 秒前进一张，到末尾回到第一张 */
+  const autoplay = document.getElementById("autoplay");
+  const INTERVAL = 4000;
+
+  let timer = null;
+  let hovering = false;
+
+  const tick = () => {
+    /* 以实际滚动位置为准，避免手动滑动后 index 过期 */
+    index = Math.round(carousel.scrollLeft / carousel.clientWidth);
+    goTo(index >= last ? 0 : index + 1);
+  };
+
+  const pause = () => {
+    clearInterval(timer);
+    timer = null;
+  };
+
+  /* 统一入口：开关关着或鼠标悬停时不起定时器 */
+  const play = () => {
+    pause();
+    if (!autoplay.checked || hovering) return;
+    timer = setInterval(tick, INTERVAL);
+  };
+
+  autoplay.addEventListener("change", play);
+
+  /* 手动滑动后重新计时，别刚滑到一张就被切走 */
+  carousel.addEventListener("pointerdown", play);
+
+  /* 鼠标移入暂停、移出续播；frame 覆盖轮播本体和左右按钮 */
+  frame.addEventListener("pointerenter", e => {
+    if (e.pointerType !== "mouse") return;
+    hovering = true;
+    pause();
+  });
+
+  frame.addEventListener("pointerleave", e => {
+    if (e.pointerType !== "mouse") return;
+    hovering = false;
+    play();
+  });
+</script>
+
+</body>
+</html>
