@@ -75,6 +75,9 @@
     --dot-active: 24px;
     --dot-bg: rgba(255, 255, 255, .5);
     --dot-active-bg: #fff;
+
+    /* anchor 名字必须全局唯一，页面上有多个轮播时各自覆盖 */
+    --anchor: --carousel;
   }
 
   .carousel {
@@ -91,7 +94,7 @@
 
     /* 生成 ::scroll-marker-group，并让滚动按钮能锚定到自己 */
     scroll-marker-group: after;
-    anchor-name: --carousel;
+    anchor-name: var(--anchor);
 
     margin: 0;
     padding: 0;
@@ -118,7 +121,7 @@
   /* ---------- 左右切换：::scroll-button ---------- */
   .carousel::scroll-button(*) {
     position: absolute;
-    position-anchor: --carousel;
+    position-anchor: var(--anchor);
     top: anchor(center);
     width: var(--btn-size);
     height: var(--btn-size);
@@ -328,6 +331,36 @@
 
   .notes b { color: var(--text); font-weight: 600; }
 
+  /* ---------- 无限轮播 ---------- */
+  .demo {
+    margin-top: 42px;
+    padding-top: 30px;
+    border-top: 1px dashed var(--line);
+  }
+
+  .demo h2 {
+    margin: 0 0 10px;
+    font-size: 17px;
+    letter-spacing: -.01em;
+  }
+
+  .demo .sub { margin-bottom: 22px; }
+
+  /* 同一页面第二个轮播，换一个 anchor 名字 */
+  .frame--infinite { --anchor: --carousel-loop; }
+
+  /* 克隆项不生成圆点：圆点永远只对应真实图片，:target-current 才不会对错地方 */
+  .carousel--infinite li.fake::scroll-marker {
+    content: none;
+    display: none;
+  }
+
+  /* 首尾被克隆撑住，按钮实际永远滚不到真边界，禁用态只是瞬时抖动，直接不表现 */
+  .carousel--infinite::scroll-button(*):disabled {
+    opacity: 1;
+    cursor: pointer;
+  }
+
   @media (max-width: 560px) {
     body { padding: 36px 16px 64px; }
   }
@@ -367,8 +400,38 @@
     <li><b>左右按钮是伪元素：</b>容器声明 <code>::scroll-button(left/right)</code> 的样式即可，浏览器自动生成按钮元素、自动处理点击滚动和首尾禁用，<code>:disabled</code> 状态也由浏览器维护。</li>
     <li><b>索引圆点同理：</b><code>scroll-marker-group: after</code> 让容器生成标记组，每个列表项用自己的 <code>::scroll-marker</code> 当圆点，<code>:target-current</code> 命中当前项，可以把圆点拉长成胶囊。</li>
     <li><b>兜底不碰主逻辑：</b>Safari 与 Firefox 目前都不支持这两个伪元素，脚本检测 <code>CSS.supports("selector(::scroll-button(left))")</code> 后，才建真实的按钮和圆点，点击走 <code>scrollTo()</code>，滚动时用 <code>scrollLeft</code> 同步高亮。</li>
-    <li><b>两套样式怎么不重复：</b>外层 <code>.frame</code> 用 <code>width: fit-content</code> 收缩到与轮播同宽，兜底元素才和伪元素落在同一个坐标系；按钮尺寸、偏移、底色、圆点尺寸全部抽成 CSS 变量，两份规则只引用变量，不重复写值。</li>
   </ol>
+
+  <section class="demo">
+    <h2>无限轮播</h2>
+    <p class="sub">
+      滚动容器有物理边界，所以在前面补一张“最后一张的克隆”、后面补一张“第一张的克隆”；
+      滚动停稳后再把位置无动画地挪回对应的真实项——两张图同源，用户看不出跳动。
+    </p>
+
+    <div class="frame frame--infinite">
+      <ul class="carousel carousel--infinite">
+        <!-- 克隆最后一个到开头 -->
+        <li class="fake" aria-hidden="true"><img src="./assets/ps4.jpg" alt=""></li>
+
+        <!-- 真实内容 -->
+        <li><img src="./assets/ps1.jpg" alt="时尚大片 1"></li>
+        <li><img src="./assets/ps2.jpg" alt="时尚大片 2"></li>
+        <li><img src="./assets/ps3.jpg" alt="时尚大片 3"></li>
+        <li><img src="./assets/ps4.jpg" alt="时尚大片 4"></li>
+
+        <!-- 克隆第一个到结尾 -->
+        <li class="fake" aria-hidden="true"><img src="./assets/ps1.jpg" alt=""></li>
+      </ul>
+    </div>
+
+    <ol class="notes">
+      <li><b>克隆的作用只是“顶住边界”：</b>往左滑到第一张时左边还有内容、往右滑到最后一张时右边还有内容，<code>::scroll-button</code> 因此永远不会真的撞到禁用线，无限翻页不必拦截点击。</li>
+      <li><b>圆点不带克隆：</b>克隆项的 <code>::scroll-marker</code> 用 <code>display: none</code> 藏掉，标记组里只剩 4 个真实项，<code>:target-current</code> 才对得上。</li>
+      <li><b>归位必须无动画：</b>容器上的 <code>scroll-behavior: smooth</code> 会传染给 <code>scrollTo()</code>，所以这里临时把 <code>scroll-behavior</code> 置为 <code>auto</code> 再直接写 <code>scrollLeft</code>，写完再还原，中间不出现倒带动画。</li>
+      <li><b>等滚动停稳再归位：</b>拖动过程中换位置会打断手势，所以用 <code>scrollend</code>（不支持的浏览器退化为 <code>scroll</code> 防抖），并且指针还按着时跳过这一次归位。</li>
+    </ol>
+  </section>
 </div>
 
 <script type="module">
@@ -476,6 +539,59 @@
     hovering = false;
     play();
   });
+
+  /* ---------- 无限轮播：克隆顶住边界，停稳后用 JS 归位 ---------- */
+  const inf = document.querySelector(".carousel--infinite");
+
+  if (inf) {
+    const items = [...inf.children];
+    const real = items.slice(1, -1);   /* 去掉首尾两个克隆项 */
+    const tailFake = items[items.length - 1];
+
+    let dragging = false;
+    let idle = 0;
+
+    /* 直接写 scrollLeft 必定无动画：先临时关掉 scroll-behavior，写完还原 */
+    const jump = left => {
+      const prev = inf.style.scrollBehavior;
+      inf.style.scrollBehavior = "auto";
+      void inf.offsetWidth;   /* 强制样式落地，避免被 smooth 抢走 */
+      inf.scrollLeft = left;
+      inf.style.scrollBehavior = prev;
+    };
+
+    /* 停在克隆项上就换成另一端的真实项：两张图同源，看不出跳 */
+    const normalize = () => {
+      if (dragging) return;
+
+      const x = inf.scrollLeft;
+
+      if (Math.abs(x - tailFake.offsetLeft) < 2) {
+        jump(real[0].offsetLeft);            /* 末尾的克隆首项 → 真正的第一张 */
+      } else if (x < 2) {
+        jump(real[real.length - 1].offsetLeft); /* 开头的克隆末项 → 真正的最后一张 */
+      }
+    };
+
+    inf.addEventListener("pointerdown", () => { dragging = true; });
+    window.addEventListener("pointerup", () => { dragging = false; });
+    window.addEventListener("pointercancel", () => { dragging = false; });
+
+    /* 滚动停稳才归位，拖到一半就换位置会把手势打断 */
+    inf.addEventListener("scrollend", () => {
+      clearTimeout(idle);
+      normalize();
+    }, { passive: true });
+
+    /* 没有 scrollend 的浏览器用防抖兜底 */
+    inf.addEventListener("scroll", () => {
+      clearTimeout(idle);
+      idle = setTimeout(normalize, 160);
+    }, { passive: true });
+
+    /* 首屏先落到真正的第一张：HTML 里第一个 li 是克隆项 */
+    jump(real[0].offsetLeft);
+  }
 </script>
 
 </body>
