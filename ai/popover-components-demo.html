@@ -216,19 +216,39 @@
     white-space: nowrap;
   }
 
+  /* 箭头 = 半个方块：渐变切出的实色三角，再整体旋转 45deg 摆正。
+     注意旋转会把渐变方向一起带走，所以四个方位要各配一份渐变方向 */
   .pop-tip::before {
     content: "";
     position: absolute;
     width: 8px;
     height: 8px;
-    background: var(--tip-bg);
     rotate: 45deg;
   }
 
-  .pop-tip[data-placement^="top"]::before    { bottom: -4px; }
-  .pop-tip[data-placement^="bottom"]::before { top: -4px; }
-  .pop-tip[data-placement^="left"]::before   { right: -4px; }
-  .pop-tip[data-placement^="right"]::before  { left: -4px; }
+  /* 气泡在上，箭头朝下：实色留在右下角 */
+  .pop-tip[data-placement^="top"]::before {
+    bottom: -4px;
+    background: linear-gradient(to bottom right, transparent 50%, var(--tip-bg) 50%);
+  }
+
+  /* 气泡在下，箭头朝上：实色留在左上角 */
+  .pop-tip[data-placement^="bottom"]::before {
+    top: -4px;
+    background: linear-gradient(to top left, transparent 50%, var(--tip-bg) 50%);
+  }
+
+  /* 气泡在左，箭头朝右：实色留在右上角 */
+  .pop-tip[data-placement^="left"]::before {
+    right: -4px;
+    background: linear-gradient(to top right, transparent 50%, var(--tip-bg) 50%);
+  }
+
+  /* 气泡在右，箭头朝左：实色留在左下角 */
+  .pop-tip[data-placement^="right"]::before {
+    left: -4px;
+    background: linear-gradient(to bottom left, transparent 50%, var(--tip-bg) 50%);
+  }
 
   .pop-tip[data-placement="top"]::before,
   .pop-tip[data-placement="bottom"]::before {
