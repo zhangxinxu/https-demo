@@ -369,6 +369,49 @@
     color: var(--text-2);
     font-size: 13px;
     line-height: 1.7;
+
+    /* 四条边各留了一次三角位：没有三角的边把半宽留 0，三个点重合即退化，
+       于是一份 path 就能覆盖上下左右四个方位 */
+    --et: 0px;   /* 上边内缩，有三角时等于三角深度 */
+    --er: 0px;   /* 右边内缩 */
+    --eb: 0px;   /* 下边内缩 */
+    --el: 0px;   /* 左边内缩 */
+    --wt: 0px;   /* 上三角半宽 */
+    --wr: 0px;   /* 右三角半宽 */
+    --wb: 0px;   /* 下三角半宽 */
+    --wl: 0px;   /* 左三角半宽 */
+
+    /* 三角在边上的落点：默认居中，topLeft / bottomRight 这类靠边角的方位改这里 */
+    --tx: 50%;   /* 上边三角中心 */
+    --ry: 50%;   /* 右边三角中心 */
+    --bx: 50%;   /* 下边三角中心 */
+    --ly: 50%;   /* 左边三角中心 */
+
+    /* 唯一的一份轮廓：顺时针走一圈，四条边依次处理自己的三角 */
+    --shape: shape(
+      from calc(var(--el) + var(--bub-r)) var(--et),
+      hline to calc(var(--tx) - var(--wt)),
+      line to var(--tx) 0%,
+      line to calc(var(--tx) + var(--wt)) var(--et),
+      hline to calc(100% - var(--er) - var(--bub-r)),
+      curve to calc(100% - var(--er)) calc(var(--et) + var(--bub-r)) with calc(100% - var(--er)) var(--et) from origin,
+      vline to calc(var(--ry) - var(--wr)),
+      line to 100% var(--ry),
+      line to calc(100% - var(--er)) calc(var(--ry) + var(--wr)),
+      vline to calc(100% - var(--eb) - var(--bub-r)),
+      curve to calc(100% - var(--er) - var(--bub-r)) calc(100% - var(--eb)) with calc(100% - var(--er)) calc(100% - var(--eb)) from origin,
+      hline to calc(var(--bx) + var(--wb)),
+      line to var(--bx) 100%,
+      line to calc(var(--bx) - var(--wb)) calc(100% - var(--eb)),
+      hline to calc(var(--el) + var(--bub-r)),
+      curve to var(--el) calc(100% - var(--eb) - var(--bub-r)) with var(--el) calc(100% - var(--eb)) from origin,
+      vline to calc(var(--ly) + var(--wl)),
+      line to 0% var(--ly),
+      line to var(--el) calc(var(--ly) - var(--wl)),
+      vline to calc(var(--et) + var(--bub-r)),
+      curve to calc(var(--el) + var(--bub-r)) var(--et) with var(--el) var(--et) from origin,
+      close
+    );
   }
 
   .bubble b {
@@ -379,89 +422,56 @@
     font-weight: 600;
   }
 
-  /* 给三角那一侧留出位置 */
-  .bubble[data-side="top"]    { padding-top: calc(12px + var(--bub-tip-t)); }
-  .bubble[data-side="bottom"] { padding-bottom: calc(12px + var(--bub-tip-t)); }
-  .bubble[data-side="left"]   { padding-left: calc(16px + var(--bub-tip-t)); }
-  .bubble[data-side="right"]  { padding-right: calc(16px + var(--bub-tip-t)); }
-
-  /* 四段 path 只引用上面那组参数：改 --bub-r / --bub-tip-t / --bub-tip-w 就整体变形，
-     路径全用百分比，同一份 shape 套到任意宽高都不会走样。
-     注意 curve 的控制点默认相对“曲线起点”，要绝对坐标必须显式写 from origin */
+  /* 方位只调整三样：给三角那一侧留内边距、把对应的边内缩、给出三角半宽；
+     靠边角的方位再加一条落点 */
   .bubble[data-side="top"] {
-    --shape: shape(
-      from calc(50% - var(--bub-tip-w)) var(--bub-tip-t),
-      line to 50% 0%,
-      line to calc(50% + var(--bub-tip-w)) var(--bub-tip-t),
-      hline to calc(100% - var(--bub-r)),
-      curve to 100% calc(var(--bub-tip-t) + var(--bub-r)) with 100% var(--bub-tip-t) from origin,
-      vline to calc(100% - var(--bub-r)),
-      curve to calc(100% - var(--bub-r)) 100% with 100% 100% from origin,
-      hline to var(--bub-r),
-      curve to 0% calc(100% - var(--bub-r)) with 0% 100% from origin,
-      vline to calc(var(--bub-tip-t) + var(--bub-r)),
-      curve to var(--bub-r) var(--bub-tip-t) with 0% var(--bub-tip-t) from origin,
-      hline to calc(50% - var(--bub-tip-w)),
-      close
-    );
+    padding-top: calc(12px + var(--bub-tip-t));
+    --et: var(--bub-tip-t);
+    --wt: var(--bub-tip-w);
   }
 
   .bubble[data-side="bottom"] {
-    --shape: shape(
-      from var(--bub-r) 0%,
-      hline to calc(100% - var(--bub-r)),
-      curve to 100% var(--bub-r) with 100% 0% from origin,
-      vline to calc(100% - var(--bub-tip-t) - var(--bub-r)),
-      curve to calc(100% - var(--bub-r)) calc(100% - var(--bub-tip-t)) with 100% calc(100% - var(--bub-tip-t)) from origin,
-      hline to calc(50% + var(--bub-tip-w)),
-      line to 50% 100%,
-      line to calc(50% - var(--bub-tip-w)) calc(100% - var(--bub-tip-t)),
-      hline to var(--bub-r),
-      curve to 0% calc(100% - var(--bub-tip-t) - var(--bub-r)) with 0% calc(100% - var(--bub-tip-t)) from origin,
-      vline to var(--bub-r),
-      curve to var(--bub-r) 0% with 0% 0% from origin,
-      close
-    );
+    padding-bottom: calc(12px + var(--bub-tip-t));
+    --eb: var(--bub-tip-t);
+    --wb: var(--bub-tip-w);
   }
 
   .bubble[data-side="left"] {
-    --shape: shape(
-      from calc(var(--bub-tip-t) + var(--bub-r)) 0%,
-      hline to calc(100% - var(--bub-r)),
-      curve to 100% var(--bub-r) with 100% 0% from origin,
-      vline to calc(100% - var(--bub-r)),
-      curve to calc(100% - var(--bub-r)) 100% with 100% 100% from origin,
-      hline to calc(var(--bub-tip-t) + var(--bub-r)),
-      curve to var(--bub-tip-t) calc(100% - var(--bub-r)) with var(--bub-tip-t) 100% from origin,
-      vline to calc(50% + var(--bub-tip-w)),
-      line to 0% 50%,
-      line to var(--bub-tip-t) calc(50% - var(--bub-tip-w)),
-      vline to var(--bub-r),
-      curve to calc(var(--bub-tip-t) + var(--bub-r)) 0% with var(--bub-tip-t) 0% from origin,
-      close
-    );
+    padding-left: calc(16px + var(--bub-tip-t));
+    --el: var(--bub-tip-t);
+    --wl: var(--bub-tip-w);
   }
 
   .bubble[data-side="right"] {
-    --shape: shape(
-      from var(--bub-r) 0%,
-      hline to calc(100% - var(--bub-tip-t) - var(--bub-r)),
-      curve to calc(100% - var(--bub-tip-t)) var(--bub-r) with calc(100% - var(--bub-tip-t)) 0% from origin,
-      vline to calc(50% - var(--bub-tip-w)),
-      line to 100% 50%,
-      line to calc(100% - var(--bub-tip-t)) calc(50% + var(--bub-tip-w)),
-      vline to calc(100% - var(--bub-r)),
-      curve to calc(100% - var(--bub-tip-t) - var(--bub-r)) 100% with calc(100% - var(--bub-tip-t)) 100% from origin,
-      hline to var(--bub-r),
-      curve to 0% calc(100% - var(--bub-r)) with 0% 100% from origin,
-      vline to var(--bub-r),
-      curve to var(--bub-r) 0% with 0% 0% from origin,
-      close
+    padding-right: calc(16px + var(--bub-tip-t));
+    --er: var(--bub-tip-t);
+    --wr: var(--bub-tip-w);
+  }
+
+  /* 三角贴左上：避开左上圆角；气泡太窄时优先保证不越过右边 */
+  .bubble[data-side="topLeft"] {
+    padding-top: calc(12px + var(--bub-tip-t));
+    --et: var(--bub-tip-t);
+    --wt: var(--bub-tip-w);
+    --tx: min(
+      calc(var(--bub-r) + var(--bub-tip-w)),
+      calc(100% - var(--bub-r) - var(--bub-tip-w))
+    );
+  }
+
+  /* 三角贴右下：同理，取靠右的那个值 */
+  .bubble[data-side="bottomRight"] {
+    padding-bottom: calc(12px + var(--bub-tip-t));
+    --eb: var(--bub-tip-t);
+    --wb: var(--bub-tip-w);
+    --bx: max(
+      calc(var(--bub-r) + var(--bub-tip-w)),
+      calc(100% - var(--bub-r) - var(--bub-tip-w))
     );
   }
 
   /* ② 不支持 border-shape：气泡不描边，白三角用 border 拼，
-     四个方位各内压 1px，避免与气泡边缘之间出现抗锯齿接缝 */
+     每条边各内压 1px，避免与气泡边缘之间出现抗锯齿接缝 */
   .bubble::before {
     content: "";
     position: absolute;
@@ -470,34 +480,31 @@
     border-style: solid;
   }
 
-  .bubble[data-side="top"]::before {
+  /* 位置同样走 --tx / --bx / --ly / --ry，所以 topLeft、bottomRight 自动跟着走 */
+  .bubble[data-side^="top"]::before {
     top: calc(1px - var(--bub-tip-t));
-    left: 50%;
-    translate: -50% 0;
+    left: calc(var(--tx) - var(--bub-tip-w));
     border-width: 0 var(--bub-tip-w) var(--bub-tip-t);
     border-color: transparent transparent var(--bub-bg);
   }
 
-  .bubble[data-side="bottom"]::before {
+  .bubble[data-side^="bottom"]::before {
     bottom: calc(1px - var(--bub-tip-t));
-    left: 50%;
-    translate: -50% 0;
+    left: calc(var(--bx) - var(--bub-tip-w));
     border-width: var(--bub-tip-t) var(--bub-tip-w) 0;
     border-color: var(--bub-bg) transparent transparent;
   }
 
-  .bubble[data-side="left"]::before {
+  .bubble[data-side^="left"]::before {
     left: calc(1px - var(--bub-tip-t));
-    top: 50%;
-    translate: 0 -50%;
+    top: calc(var(--ly) - var(--bub-tip-w));
     border-width: var(--bub-tip-w) var(--bub-tip-t) var(--bub-tip-w) 0;
     border-color: transparent var(--bub-bg) transparent transparent;
   }
 
-  .bubble[data-side="right"]::before {
+  .bubble[data-side^="right"]::before {
     right: calc(1px - var(--bub-tip-t));
-    top: 50%;
-    translate: 0 -50%;
+    top: calc(var(--ry) - var(--bub-tip-w));
     border-width: var(--bub-tip-w) 0 var(--bub-tip-w) var(--bub-tip-t);
     border-color: transparent transparent transparent var(--bub-bg);
   }
@@ -641,9 +648,10 @@
   <section class="block">
     <h2>三、用 shape() 画带三角的浮层</h2>
     <p>
-      三角不再靠伪元素拼，而是直接长在形状路径里。四个方位各一段 <code>shape()</code>，
-      圆角半径、三角高、三角半宽全部抽成变量，路径坐标一律用百分比——
-      所以同一份形状套到不同尺寸的气泡上都不会走样。
+      三角不再靠伪元素拼，而是直接长在形状路径里。整份轮廓只有一段 <code>shape()</code>：
+      每条边都留了一次三角位，没有三角的边把半宽设成 <code>0</code>，三个点重合即退化，
+      所以上下左右、以及靠边角的 <code>topLeft</code> / <code>bottomRight</code> 都能共用同一份路径，
+      只是圆角半径、三角尺寸和三角在边上的落点不同。
       支持 <code>border-shape</code> 时，边框和 <code>box-shadow</code> 都跟着路径走；
       不支持则退回伪元素小三角，这一档气泡不描边，只靠一层投影把白底和背景分开。
       这里没有用 <code>clip-path: shape()</code> 做中间档，因为它连投影一起裁掉，
@@ -669,6 +677,16 @@
       <div class="bubble" data-side="left" style="--bub-w: 176px">
         <b>left</b>
         三角在左侧，窄一些的气泡。
+      </div>
+
+      <div class="bubble" data-side="topLeft" style="--bub-w: 196px">
+        <b>topLeft</b>
+        三角贴左上，避开了左上圆角。
+      </div>
+
+      <div class="bubble" data-side="bottomRight" style="--bub-w: 232px">
+        <b>bottomRight</b>
+        三角贴右下，同一个 shape，只换了落点。
       </div>
     </div>
 
@@ -929,7 +947,7 @@
     const shapeValue = "shape(from 0 0, line to 1px 1px)";
     shapeEnv.textContent = CSS.supports("border-shape: " + shapeValue)
       ? "border-shape + box-shadow"
-      : "伪元素小三角";
+      : "伪元素小三角 + filter: drop-shadow()";
   }
 })();
 </script>
