@@ -430,6 +430,7 @@
       <li><b>圆点不带克隆：</b>克隆项的 <code>::scroll-marker</code> 用 <code>display: none</code> 藏掉，标记组里只剩 4 个真实项，<code>:target-current</code> 才对得上。</li>
       <li><b>归位必须无动画：</b>容器上的 <code>scroll-behavior: smooth</code> 会传染给 <code>scrollTo()</code>，所以这里临时把 <code>scroll-behavior</code> 置为 <code>auto</code> 再直接写 <code>scrollLeft</code>，写完再还原，中间不出现倒带动画。</li>
       <li><b>等滚动停稳再归位：</b>拖动过程中换位置会打断手势，所以用 <code>scrollend</code>（不支持的浏览器退化为 <code>scroll</code> 防抖），并且指针还按着时跳过这一次归位。</li>
+      <li><b>兜底同样照做：</b>不支持伪元素的浏览器由脚本建真实按钮和圆点，按钮不夹取范围（可以滚到克隆项上），圆点点击时下标 <code>+1</code> 跳过头部克隆，高亮用 <code>(索引 - 1) % 总量</code> 取模，停在克隆项上也不会错位；循环仍由同一段归位逻辑完成。</li>
     </ol>
   </section>
 </div>
@@ -591,6 +592,56 @@
 
     /* 首屏先落到真正的第一张：HTML 里第一个 li 是克隆项 */
     jump(real[0].offsetLeft);
+
+    /* ---------- 不支持伪元素时的兜底：真实的按钮和圆点 ---------- */
+    const total = real.length;                       /* 真实图片数量 */
+    const at = () => Math.round(inf.scrollLeft / inf.clientWidth);
+
+    /* 不做首尾夹取，允许滚到克隆项上，循环就交给了 normalize */
+    const infGoTo = i => {
+      const target = items[Math.min(Math.max(i, 0), items.length - 1)];
+      inf.scrollTo({ left: target.offsetLeft, behavior: "smooth" });
+    };
+
+    const infDots = [];
+
+    if (!CSS.supports("selector(::scroll-button(left))")) {
+      const bar = document.createElement("div");
+      bar.className = "fallback-buttons";
+      bar.innerHTML = `
+        <button type="button" aria-label="上一张">‹</button>
+        <button type="button" aria-label="下一张">›</button>`;
+      inf.parentElement.append(bar);
+
+      const [prev, next] = bar.querySelectorAll("button");
+      prev.addEventListener("click", () => infGoTo(at() - 1));
+      next.addEventListener("click", () => infGoTo(at() + 1));
+    }
+
+    if (!CSS.supports("selector(::scroll-marker)")) {
+      const bar = document.createElement("div");
+      bar.className = "fallback-dots";
+
+      real.forEach((_, i) => {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.setAttribute("aria-label", `第 ${i + 1} 张`);
+        dot.addEventListener("click", () => infGoTo(i + 1));  /* +1：第 0 项是克隆项 */
+        bar.append(dot);
+        infDots.push(dot);
+      });
+
+      inf.parentElement.append(bar);
+    }
+
+    /* 取模换算：停在克隆项上也能落到正确的圆点，不用等归位 */
+    const infSync = () => {
+      const current = ((at() - 1) % total + total) % total;
+      infDots.forEach((dot, i) => dot.classList.toggle("active", i === current));
+    };
+
+    inf.addEventListener("scroll", infSync, { passive: true });
+    infSync();
   }
 </script>
 
