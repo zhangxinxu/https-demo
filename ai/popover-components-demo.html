@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>适用于任意元素的悬停popover组件演示页面</title>
+<style>
+  :root {
+    --brand: #1677ff;
+    --brand-soft: #e8f1ff;
+    --text: #1f2329;
+    --text-2: #646a73;
+    --text-3: #8f959e;
+    --line: #e5e6eb;
+    --bg: #f7f8fa;
+    --shadow-pop: 0 6px 16px 0 rgba(0, 0, 0, .08),
+                  0 3px 6px -4px rgba(0, 0, 0, .12),
+                  0 9px 28px 8px rgba(0, 0, 0, .05);
+    --tip-bg: rgba(0, 0, 0, .85);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; }
+
+  body {
+    padding: 48px 20px 96px;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    margin: 0 0 10px;
+    font-size: clamp(21px, 3.4vw, 28px);
+    letter-spacing: -.02em;
+  }
+
+  .lead {
+    margin: 0;
+    color: var(--text-2);
+    line-height: 1.8;
+  }
+
+  code {
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--brand-soft);
+    color: #0958d9;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12.5px;
+  }
+
+  /* 当前走的是哪条兼容路径 */
+  .env {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .env li {
+    padding: 4px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--text-2);
+    font-size: 12.5px;
+  }
+
+  .env b {
+    margin-left: 4px;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .block {
+    margin-top: 26px;
+    padding: 22px 24px;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 8px 24px -18px rgba(0, 0, 0, .3);
+  }
+
+  .block > h2 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    letter-spacing: -.01em;
+  }
+
+  .block > p {
+    margin: 0 0 18px;
+    color: var(--text-2);
+    font-size: 13.5px;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+  }
+
+  .row + .row { margin-top: 12px; }
+
+  .row .label {
+    flex: none;
+    min-width: 88px;
+    color: var(--text-3);
+    font-size: 12.5px;
+  }
+
+  .tag {
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: #f2f3f5;
+    color: var(--text-3);
+    font-size: 12px;
+  }
+
+  /* 触发元素 */
+  .textbtn {
+    padding: 2px 0;
+    border: 0;
+    border-bottom: 1px dashed #9db9e8;
+    background: none;
+    color: #0958d9;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .textbtn:hover { color: var(--brand); border-bottom-color: var(--brand); }
+
+  .hl {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--brand-soft);
+    color: #0958d9;
+    cursor: pointer;
+  }
+
+  .btn {
+    height: 32px;
+    padding: 0 15px;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    background: #fff;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+    transition: color .2s, border-color .2s;
+  }
+
+  .btn:hover { color: var(--brand); border-color: var(--brand); }
+
+  /* ---------- 气泡本体 ---------- */
+  /* popover 元素自带 inset:0 / margin:auto / border / padding，先统一重置 */
+  .pop-card,
+  .pop-tip {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    border: 0;
+    overflow: visible;   /* UA 给了 overflow:auto，会把箭头裁掉 */
+    font: inherit;
+  }
+
+  /* 卡片式（对齐 AntD Popover） */
+  .pop-card {
+    width: max-content;
+    max-width: 300px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: var(--shadow-pop);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .pop-card h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .pop-card ul {
+    margin: 0;
+    padding: 0 0 0 18px;
+    color: var(--text-2);
+  }
+
+  .pop-card li { margin: 2px 0; }
+
+  /* 文字提示式（对齐 AntD Tooltip） */
+  .pop-tip {
+    width: max-content;
+    max-width: 300px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: var(--tip-bg);
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: nowrap;
+  }
+
+  .pop-tip::before {
+    content: "";
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: var(--tip-bg);
+    rotate: 45deg;
+  }
+
+  .pop-tip[data-placement^="top"]::before    { bottom: -4px; }
+  .pop-tip[data-placement^="bottom"]::before { top: -4px; }
+  .pop-tip[data-placement^="left"]::before   { right: -4px; }
+  .pop-tip[data-placement^="right"]::before  { left: -4px; }
+
+  .pop-tip[data-placement="top"]::before,
+  .pop-tip[data-placement="bottom"]::before {
+    left: 50%;
+    margin-left: -4px;
+  }
+
+  .pop-tip[data-placement="topLeft"]::before,
+  .pop-tip[data-placement="bottomLeft"]::before { left: 12px; }
+
+  .pop-tip[data-placement="topRight"]::before,
+  .pop-tip[data-placement="bottomRight"]::before { right: 12px; }
+
+  .pop-tip[data-placement="left"]::before,
+  .pop-tip[data-placement="right"]::before {
+    top: 50%;
+    margin-top: -4px;
+  }
+
+  .pop-tip[data-placement="leftTop"]::before,
+  .pop-tip[data-placement="rightTop"]::before { top: 12px; }
+
+  .pop-tip[data-placement="leftBottom"]::before,
+  .pop-tip[data-placement="rightBottom"]::before { bottom: 12px; }
+
+  /* ---------- 无 popover 支持时的降级 ---------- */
+  .pop-fallback { display: none; }
+  .pop-fallback.is-open { display: block; }
+
+  /* ---------- CSS 锚点定位 ---------- */
+  /* anchor() 无参时使用 position-anchor 指定的锚点，这里由脚本按元素写入唯一名字 */
+  .pop-anchor[data-placement="top"]    { bottom: calc(anchor(top) + 8px);    left: anchor(center); translate: -50% 0; }
+  .pop-anchor[data-placement="bottom"] { top: calc(anchor(bottom) + 8px);    left: anchor(center); translate: -50% 0; }
+
+  .pop-anchor[data-placement="topLeft"]     { bottom: calc(anchor(top) + 8px); left: anchor(left); }
+  .pop-anchor[data-placement="topRight"]    { bottom: calc(anchor(top) + 8px); right: anchor(right); }
+  .pop-anchor[data-placement="bottomLeft"]  { top: calc(anchor(bottom) + 8px); left: anchor(left); }
+  .pop-anchor[data-placement="bottomRight"] { top: calc(anchor(bottom) + 8px); right: anchor(right); }
+
+  .pop-anchor[data-placement="left"]       { right: calc(anchor(left) + 8px);  top: anchor(center); translate: 0 -50%; }
+  .pop-anchor[data-placement="right"]      { left: calc(anchor(right) + 8px);  top: anchor(center); translate: 0 -50%; }
+
+  .pop-anchor[data-placement="leftTop"]      { right: calc(anchor(left) + 8px); top: anchor(top); }
+  .pop-anchor[data-placement="leftBottom"]   { right: calc(anchor(left) + 8px); bottom: anchor(bottom); }
+  .pop-anchor[data-placement="rightTop"]     { left: calc(anchor(right) + 8px); top: anchor(top); }
+  .pop-anchor[data-placement="rightBottom"]  { left: calc(anchor(right) + 8px); bottom: anchor(bottom); }
+
+  /* ---------- 12 方位示意 ---------- */
+  .placements {
+    display: grid;
+    grid-template-areas:
+      ".    tl     top    tr     ."
+      "lt   .      .      .      rt"
+      "left .      .      .      right"
+      "lb   .      .      .      rb"
+      ".    bl     bottom br     .";
+    grid-template-columns: repeat(5, minmax(60px, 1fr));
+    gap: 12px;
+    max-width: 620px;
+    margin: 0 auto;
+  }
+
+  .pl {
+    height: 40px;
+    padding: 0 10px;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    background: #fff;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+    transition: color .2s, border-color .2s, box-shadow .2s;
+  }
+
+  .pl:hover {
+    color: var(--brand);
+    border-color: var(--brand);
+  }
+
+  .pl[data-placement="topLeft"]     { grid-area: tl; }
+  .pl[data-placement="top"]         { grid-area: top; }
+  .pl[data-placement="topRight"]    { grid-area: tr; }
+  .pl[data-placement="leftTop"]     { grid-area: lt; }
+  .pl[data-placement="left"]        { grid-area: left; }
+  .pl[data-placement="leftBottom"]  { grid-area: lb; }
+  .pl[data-placement="rightTop"]    { grid-area: rt; }
+  .pl[data-placement="right"]       { grid-area: right; }
+  .pl[data-placement="rightBottom"] { grid-area: rb; }
+  .pl[data-placement="bottomLeft"]  { grid-area: bl; }
+  .pl[data-placement="bottom"]      { grid-area: bottom; }
+  .pl[data-placement="bottomRight"] { grid-area: br; }
+
+  .foot {
+    margin-top: 26px;
+    color: var(--text-3);
+    font-size: 12.5px;
+    line-height: 1.9;
+  }
+
+  @media (max-width: 560px) {
+    body { padding: 32px 14px 72px; }
+    .block { padding: 18px 16px; }
+    .row { flex-direction: column; align-items: flex-start; }
+    .placements { gap: 8px; }
+    .pl { height: 36px; padding: 0 6px; font-size: 12.5px; }
+  }
+</style>
+</head>
+<body>
+
+<main class="page">
+  <header>
+    <h1>适用于任意元素的悬停 Popover</h1>
+    <p class="lead">
+      引入即初始化：扫描页面上所有 <code>interestfor</code>，浏览器原生支持就交给浏览器，
+      不支持（例如普通 <code>div</code>，或兼容性不足）则补上 <code>popover</code> 属性并接管鼠标悬停；
+      定位优先走 CSS 锚点定位，退化时用 JS 算 <code>left</code> / <code>top</code>。
+    </p>
+
+    <ul class="env">
+      <li>interestfor：<b id="env-interest">检测中</b></li>
+      <li>popover：<b id="env-popover">检测中</b></li>
+      <li>锚点定位：<b id="env-anchor">检测中</b></li>
+    </ul>
+  </header>
+
+  <section class="block">
+    <h2>一、interestfor 基础案例</h2>
+    <p>三个触发元素分别覆盖：链接语义触发、普通 <code>span</code> 触发、自带 <code>popover</code> 与需要自动补 <code>popover</code> 两种目标。</p>
+
+    <div class="row">
+      <span class="label">自带 popover</span>
+      <button type="button" class="textbtn" interestfor="pop-books">我的著作</button>
+      <span class="tag">目标写好了 popover 属性，脚本不重复设置</span>
+
+      <div id="pop-books" class="pop-card" popover>
+        <h3>我的著作</h3>
+        <ul>
+          <li>CSS世界</li>
+          <li>CSS选择器世界</li>
+          <li>CSS新世界</li>
+          <li>HTML并不简单</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="label">普通 span 触发</span>
+      <span class="hl" interestfor="pop-books-2" data-placement="right">把鼠标放上来</span>
+      <span class="tag">目标没有 popover，由脚本补上；方位 right</span>
+
+      <div id="pop-books-2" class="pop-card">
+        <h3>我的著作</h3>
+        <ul>
+          <li>CSS世界</li>
+          <li>CSS选择器世界</li>
+          <li>CSS新世界</li>
+          <li>HTML并不简单</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="label">按钮 + 方位</span>
+      <button type="button" class="btn" interestfor="pop-books-3" data-placement="bottomLeft">我的著作</button>
+      <span class="tag">data-placement="bottomLeft"</span>
+
+      <div id="pop-books-3" class="pop-card">
+        <h3>我的著作</h3>
+        <ul>
+          <li>CSS世界</li>
+          <li>CSS选择器世界</li>
+          <li>CSS新世界</li>
+          <li>HTML并不简单</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>二、Tooltip 文字提示：12 个方位</h2>
+    <p>
+      这些按钮只写了 <code>interestfor=""</code> 和原生 <code>title</code>。组件会把 <code>title</code> 的文字搬进新建的气泡，
+      回填 <code>interestfor</code> 的 id，然后把 <code>title</code> 改成 <code>data-title</code>，浏览器原生的黑框提示就不会再出现。
+    </p>
+
+    <div class="placements">
+      <button type="button" class="pl" interestfor="" title="上方·左对齐（topLeft）" data-placement="topLeft">TL</button>
+      <button type="button" class="pl" interestfor="" title="上方·居中（top）" data-placement="top">Top</button>
+      <button type="button" class="pl" interestfor="" title="上方·右对齐（topRight）" data-placement="topRight">TR</button>
+
+      <button type="button" class="pl" interestfor="" title="左侧·顶部对齐（leftTop）" data-placement="leftTop">LT</button>
+      <button type="button" class="pl" interestfor="" title="左侧·居中（left）" data-placement="left">Left</button>
+      <button type="button" class="pl" interestfor="" title="左侧·底部对齐（leftBottom）" data-placement="leftBottom">LB</button>
+
+      <button type="button" class="pl" interestfor="" title="右侧·顶部对齐（rightTop）" data-placement="rightTop">RT</button>
+      <button type="button" class="pl" interestfor="" title="右侧·居中（right）" data-placement="right">Right</button>
+      <button type="button" class="pl" interestfor="" title="右侧·底部对齐（rightBottom）" data-placement="rightBottom">RB</button>
+
+      <button type="button" class="pl" interestfor="" title="下方·左对齐（bottomLeft）" data-placement="bottomLeft">BL</button>
+      <button type="button" class="pl" interestfor="" title="下方·居中（bottom）" data-placement="bottom">Bottom</button>
+      <button type="button" class="pl" interestfor="" title="下方·右对齐（bottomRight）" data-placement="bottomRight">BR</button>
+    </div>
+  </section>
+
+  <p class="foot">
+    用法：把 <code>data-placement</code> 写在下标 12 种方位任选其一；气泡内容写成任意元素并给它一个 id，
+    触发元素写上 <code>interestfor="那个 id"</code> 即可。不写 <code>popover</code> 属性、不写事件、不写定位样式。
+  </p>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- 环境能力检测 ---------- */
+  const hasInterest = "interestForElement" in HTMLElement.prototype;
+  const hasPopover = typeof HTMLElement.prototype.showPopover === "function";
+  const hasAnchor = !!(window.CSS && CSS.supports &&
+    CSS.supports("anchor-name: --x") && CSS.supports("position-anchor: --x"));
+
+  /* 原生 interest 也要靠锚点定位，两样都具备才完全交给浏览器 */
+  const nativeInterest = hasInterest && hasAnchor;
+
+  const PLACEMENTS = new Set([
+    "top", "topLeft", "topRight",
+    "bottom", "bottomLeft", "bottomRight",
+    "left", "leftTop", "leftBottom",
+    "right", "rightTop", "rightBottom"
+  ]);
+
+  const GAP = 8;    /* 气泡与触发元素的距离 */
+  const EDGE = 8;   /* 离视口边缘的最小留白 */
+
+  let seq = 0;
+  const openSet = new Set();
+
+  const isOpen = el => hasPopover
+    ? el.matches(":popover-open")
+    : el.classList.contains("is-open");
+
+  const normalizePlacement = value => PLACEMENTS.has(value) ? value : "top";
+
+  /* ---------- JS 兜底定位 ---------- */
+  function place(el) {
+    const invoker = el.__invoker;
+    if (!invoker) return;
+
+    const rect = invoker.getBoundingClientRect();
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    const placement = el.dataset.placement;
+
+    let left = 0;
+    let top = 0;
+
+    if (placement === "top" || placement === "topLeft" || placement === "topRight") {
+      top = rect.top - h - GAP;
+      left = placement === "top" ? rect.left + rect.width / 2 - w / 2
+        : placement === "topLeft" ? rect.left
+        : rect.right - w;
+    } else if (placement === "bottom" || placement === "bottomLeft" || placement === "bottomRight") {
+      top = rect.bottom + GAP;
+      left = placement === "bottom" ? rect.left + rect.width / 2 - w / 2
+        : placement === "bottomLeft" ? rect.left
+        : rect.right - w;
+    } else if (placement === "left" || placement === "leftTop" || placement === "leftBottom") {
+      left = rect.left - w - GAP;
+      top = placement === "left" ? rect.top + rect.height / 2 - h / 2
+        : placement === "leftTop" ? rect.top
+        : rect.bottom - h;
+    } else {
+      left = rect.right + GAP;
+      top = placement === "right" ? rect.top + rect.height / 2 - h / 2
+        : placement === "rightTop" ? rect.top
+        : rect.bottom - h;
+    }
+
+    const viewW = document.documentElement.clientWidth;
+    const viewH = document.documentElement.clientHeight;
+
+    left = Math.max(EDGE, Math.min(left, viewW - w - EDGE));
+    top = Math.max(EDGE, Math.min(top, viewH - h - EDGE));
+
+    /* 降级元素是 absolute，坐标系是文档；popover 在顶层，坐标系是视口 */
+    if (el.classList.contains("pop-fallback")) {
+      left += window.scrollX;
+      top += window.scrollY;
+    }
+
+    el.style.left = Math.round(left) + "px";
+    el.style.top = Math.round(top) + "px";
+  }
+
+  function refreshOpen() {
+    if (hasAnchor) return;
+    openSet.forEach(el => {
+      if (isOpen(el)) place(el);
+      else openSet.delete(el);
+    });
+  }
+
+  /* ---------- 显隐 ---------- */
+  function openPop(el) {
+    if (!isOpen(el)) {
+      if (hasPopover) {
+        try {
+          el.showPopover();
+        } catch (err) {
+          return;
+        }
+      } else {
+        el.classList.add("is-open");
+      }
+    }
+
+    openSet.add(el);
+    if (!hasAnchor) place(el);
+  }
+
+  function closePop(el) {
+    if (isOpen(el)) {
+      if (hasPopover) {
+        try {
+          el.hidePopover();
+        } catch (err) { /* 已经关了 */ }
+      } else {
+        el.classList.remove("is-open");
+      }
+    }
+    openSet.delete(el);
+  }
+
+  /* ---------- 绑事件（原生不支持 interestfor 时） ---------- */
+  function bindHover(invoker, target) {
+    let enterTimer = 0;
+    let leaveTimer = 0;
+
+    const enter = () => {
+      clearTimeout(leaveTimer);
+      clearTimeout(enterTimer);
+      enterTimer = setTimeout(() => openPop(target), 60);
+    };
+
+    const leave = () => {
+      clearTimeout(enterTimer);
+      clearTimeout(leaveTimer);
+      leaveTimer = setTimeout(() => closePop(target), 80);
+    };
+
+    invoker.addEventListener("mouseenter", enter);
+    invoker.addEventListener("mouseleave", leave);
+    invoker.addEventListener("focus", enter);
+    invoker.addEventListener("blur", leave);
+
+    /* 指针移进气泡本身时先别关，方便划词、复制 */
+    target.addEventListener("mouseenter", () => clearTimeout(leaveTimer));
+    target.addEventListener("mouseleave", leave);
+  }
+
+  /* ---------- 初始化单个触发元素 ---------- */
+  function setup(invoker) {
+    if (invoker.__popBound) return;
+
+    const target = document.getElementById(invoker.getAttribute("interestfor"));
+    if (!target) return;
+
+    invoker.__popBound = true;
+    target.__invoker = invoker;
+
+    /* 1. 目标没有 popover 属性就补上 */
+    if (hasPopover) {
+      if (!target.hasAttribute("popover")) target.setAttribute("popover", "manual");
+    } else {
+      /* 2. 连 popover 都不支持：自己管层级与显隐（absolute 相对文档排版，
+           这里一并交给脚本按文档坐标定位，避免 fixed 在滚动时脱节） */
+      target.classList.add("pop-fallback");
+      target.style.position = "absolute";
+      target.style.zIndex = "9999";
+    }
+
+    /* 3. 方位：以下标为准，其次看目标自己 */
+    const placement = normalizePlacement(invoker.dataset.placement || target.dataset.placement);
+    target.dataset.placement = placement;
+
+    /* 4. 优先 CSS 锚点定位：锚点名必须唯一，因此按元素写行内 */
+    if (hasAnchor) {
+      const name = "--pop-" + (++seq);
+      invoker.style.anchorName = name;
+      target.style.positionAnchor = name;
+      target.classList.add("pop-anchor");
+    }
+
+    /* 5. 原生不处理就接管悬停 */
+    if (!nativeInterest) bindHover(invoker, target);
+  }
+
+  /* ---------- Tooltip：把 title 变成气泡内容 ---------- */
+  function toTooltip(invoker) {
+    const text = invoker.getAttribute("title");
+    if (!text) return false;
+
+    const id = "pop-tip-" + (++seq);
+    const tip = document.createElement("div");
+    tip.id = id;
+    tip.className = "pop-tip";
+    tip.setAttribute("role", "tooltip");
+    tip.textContent = text;
+    document.body.appendChild(tip);
+
+    invoker.setAttribute("interestfor", id);
+    invoker.setAttribute("data-title", text);
+    invoker.removeAttribute("title");
+    return true;
+  }
+
+  /* ---------- 扫描 ---------- */
+  function handle(el) {
+    if (el.__popBound) return;
+    if (!el.getAttribute("interestfor") && !toTooltip(el)) return;
+    setup(el);
+  }
+
+  function scan(root) {
+    if (root.nodeType === 1 && root.matches("[interestfor]")) handle(root);
+    if (!root.querySelectorAll) return;
+    root.querySelectorAll("[interestfor]").forEach(handle);
+  }
+
+  /* ---------- 启动 ---------- */
+  scan(document);
+
+  /* 后插入的节点也照顾到 */
+  new MutationObserver(records => {
+    records.forEach(record => {
+      record.addedNodes.forEach(node => {
+        if (node.nodeType === 1) scan(node);
+      });
+    });
+  }).observe(document.body, { childList: true, subtree: true });
+
+  window.addEventListener("scroll", refreshOpen, { passive: true, capture: true });
+  window.addEventListener("resize", refreshOpen);
+
+  /* 页面上的状态徽标 */
+  const envInterest = document.getElementById("env-interest");
+  const envPopover = document.getElementById("env-popover");
+  const envAnchor = document.getElementById("env-anchor");
+
+  if (envInterest) envInterest.textContent = nativeInterest ? "原生支持" : "JS 绑定悬停";
+  if (envPopover) envPopover.textContent = hasPopover ? "原生支持" : "JS 手动显隐";
+  if (envAnchor) envAnchor.textContent = hasAnchor ? "CSS anchor()" : "JS 计算 left/top";
+})();
+</script>
+
+</body>
+</html>
