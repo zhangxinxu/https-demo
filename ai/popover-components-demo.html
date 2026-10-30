@@ -364,8 +364,14 @@
     padding: 12px 16px;
     border-radius: var(--bub-r);
     background: var(--bub-bg);
-    /* 这一档没有边框，投影用 drop-shadow，白三角才能一起吃到阴影 */
-    filter: drop-shadow(0 5px 11px rgba(16, 24, 40, .18));
+    /* 这一档没有边框，投影用 drop-shadow，白三角才能一起吃到阴影。
+       单个向下偏移的阴影会让朝上的三角完全没边，所以拆成几层叠加：
+       先四周勾一圈，再补上、下两侧，最后叠一层主投影 */
+    filter:
+      drop-shadow(0 0 1px rgba(16, 24, 40, .14))
+      drop-shadow(0 -1px 3px rgba(16, 24, 40, .06))
+      drop-shadow(0 2px 5px rgba(16, 24, 40, .06))
+      drop-shadow(0 10px 18px rgba(16, 24, 40, .1));
     color: var(--text-2);
     font-size: 13px;
     line-height: 1.7;
