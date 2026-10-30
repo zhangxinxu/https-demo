@@ -341,6 +341,190 @@
   .pl[data-placement="bottom"]      { grid-area: bottom; }
   .pl[data-placement="bottomRight"] { grid-area: br; }
 
+  /* ---------- 案例三：用 shape() 画带三角的浮层 ---------- */
+  .shapes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 36px 28px;
+    justify-content: center;
+    align-items: center;
+    padding: 18px 6px 10px;
+  }
+
+  .bubble {
+    /* 一组可复用的形状参数：圆角 + 三角高 + 三角半宽 */
+    --bub-r: 10px;
+    --bub-tip-t: 8px;
+    --bub-tip-w: 8px;
+    --bub-bg: #fff;
+    --bub-line: #d9d9d9;
+
+    position: relative;
+    width: var(--bub-w, 200px);
+    padding: 12px 16px;
+    border-radius: var(--bub-r);
+    background: var(--bub-bg);
+    /* 这一档没有边框，投影用 drop-shadow，白三角才能一起吃到阴影 */
+    filter: drop-shadow(0 5px 11px rgba(16, 24, 40, .18));
+    color: var(--text-2);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .bubble b {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* 给三角那一侧留出位置 */
+  .bubble[data-side="top"]    { padding-top: calc(12px + var(--bub-tip-t)); }
+  .bubble[data-side="bottom"] { padding-bottom: calc(12px + var(--bub-tip-t)); }
+  .bubble[data-side="left"]   { padding-left: calc(16px + var(--bub-tip-t)); }
+  .bubble[data-side="right"]  { padding-right: calc(16px + var(--bub-tip-t)); }
+
+  /* 四段 path 只引用上面那组参数：改 --bub-r / --bub-tip-t / --bub-tip-w 就整体变形，
+     路径全用百分比，同一份 shape 套到任意宽高都不会走样。
+     注意 curve 的控制点默认相对“曲线起点”，要绝对坐标必须显式写 from origin */
+  .bubble[data-side="top"] {
+    --shape: shape(
+      from calc(50% - var(--bub-tip-w)) var(--bub-tip-t),
+      line to 50% 0%,
+      line to calc(50% + var(--bub-tip-w)) var(--bub-tip-t),
+      hline to calc(100% - var(--bub-r)),
+      curve to 100% calc(var(--bub-tip-t) + var(--bub-r)) with 100% var(--bub-tip-t) from origin,
+      vline to calc(100% - var(--bub-r)),
+      curve to calc(100% - var(--bub-r)) 100% with 100% 100% from origin,
+      hline to var(--bub-r),
+      curve to 0% calc(100% - var(--bub-r)) with 0% 100% from origin,
+      vline to calc(var(--bub-tip-t) + var(--bub-r)),
+      curve to var(--bub-r) var(--bub-tip-t) with 0% var(--bub-tip-t) from origin,
+      hline to calc(50% - var(--bub-tip-w)),
+      close
+    );
+  }
+
+  .bubble[data-side="bottom"] {
+    --shape: shape(
+      from var(--bub-r) 0%,
+      hline to calc(100% - var(--bub-r)),
+      curve to 100% var(--bub-r) with 100% 0% from origin,
+      vline to calc(100% - var(--bub-tip-t) - var(--bub-r)),
+      curve to calc(100% - var(--bub-r)) calc(100% - var(--bub-tip-t)) with 100% calc(100% - var(--bub-tip-t)) from origin,
+      hline to calc(50% + var(--bub-tip-w)),
+      line to 50% 100%,
+      line to calc(50% - var(--bub-tip-w)) calc(100% - var(--bub-tip-t)),
+      hline to var(--bub-r),
+      curve to 0% calc(100% - var(--bub-tip-t) - var(--bub-r)) with 0% calc(100% - var(--bub-tip-t)) from origin,
+      vline to var(--bub-r),
+      curve to var(--bub-r) 0% with 0% 0% from origin,
+      close
+    );
+  }
+
+  .bubble[data-side="left"] {
+    --shape: shape(
+      from calc(var(--bub-tip-t) + var(--bub-r)) 0%,
+      hline to calc(100% - var(--bub-r)),
+      curve to 100% var(--bub-r) with 100% 0% from origin,
+      vline to calc(100% - var(--bub-r)),
+      curve to calc(100% - var(--bub-r)) 100% with 100% 100% from origin,
+      hline to calc(var(--bub-tip-t) + var(--bub-r)),
+      curve to var(--bub-tip-t) calc(100% - var(--bub-r)) with var(--bub-tip-t) 100% from origin,
+      vline to calc(50% + var(--bub-tip-w)),
+      line to 0% 50%,
+      line to var(--bub-tip-t) calc(50% - var(--bub-tip-w)),
+      vline to var(--bub-r),
+      curve to calc(var(--bub-tip-t) + var(--bub-r)) 0% with var(--bub-tip-t) 0% from origin,
+      close
+    );
+  }
+
+  .bubble[data-side="right"] {
+    --shape: shape(
+      from var(--bub-r) 0%,
+      hline to calc(100% - var(--bub-tip-t) - var(--bub-r)),
+      curve to calc(100% - var(--bub-tip-t)) var(--bub-r) with calc(100% - var(--bub-tip-t)) 0% from origin,
+      vline to calc(50% - var(--bub-tip-w)),
+      line to 100% 50%,
+      line to calc(100% - var(--bub-tip-t)) calc(50% + var(--bub-tip-w)),
+      vline to calc(100% - var(--bub-r)),
+      curve to calc(100% - var(--bub-tip-t) - var(--bub-r)) 100% with calc(100% - var(--bub-tip-t)) 100% from origin,
+      hline to var(--bub-r),
+      curve to 0% calc(100% - var(--bub-r)) with 0% 100% from origin,
+      vline to var(--bub-r),
+      curve to var(--bub-r) 0% with 0% 0% from origin,
+      close
+    );
+  }
+
+  /* ② 不支持 border-shape：气泡不描边，白三角用 border 拼，
+     四个方位各内压 1px，避免与气泡边缘之间出现抗锯齿接缝 */
+  .bubble::before {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+  }
+
+  .bubble[data-side="top"]::before {
+    top: calc(1px - var(--bub-tip-t));
+    left: 50%;
+    translate: -50% 0;
+    border-width: 0 var(--bub-tip-w) var(--bub-tip-t);
+    border-color: transparent transparent var(--bub-bg);
+  }
+
+  .bubble[data-side="bottom"]::before {
+    bottom: calc(1px - var(--bub-tip-t));
+    left: 50%;
+    translate: -50% 0;
+    border-width: var(--bub-tip-t) var(--bub-tip-w) 0;
+    border-color: var(--bub-bg) transparent transparent;
+  }
+
+  .bubble[data-side="left"]::before {
+    left: calc(1px - var(--bub-tip-t));
+    top: 50%;
+    translate: 0 -50%;
+    border-width: var(--bub-tip-w) var(--bub-tip-t) var(--bub-tip-w) 0;
+    border-color: transparent var(--bub-bg) transparent transparent;
+  }
+
+  .bubble[data-side="right"]::before {
+    right: calc(1px - var(--bub-tip-t));
+    top: 50%;
+    translate: 0 -50%;
+    border-width: var(--bub-tip-w) 0 var(--bub-tip-w) var(--bub-tip-t);
+    border-color: transparent transparent transparent var(--bub-bg);
+  }
+
+  /* ① 支持 border-shape：边框沿路径描边，box-shadow 也贴着形状走 */
+  @supports (border-shape: shape(from 0 0, line to 1px 1px)) {
+    .bubble {
+      /* 只有这一档才描边：边框会跟着路径（含三角）一起画 */
+      border: 1px solid var(--bub-line);
+      border-shape: var(--shape);
+      /* 有形状了，投影回到 box-shadow，它同样贴着路径走 */
+      filter: none;
+      box-shadow: 0 8px 20px -8px rgba(16, 24, 40, .3);
+    }
+
+    .bubble::before { display: none; }
+  }
+
+  .shape-env {
+    margin: 20px 0 0;
+    color: var(--text-3);
+    font-size: 12.5px;
+    text-align: center;
+  }
+
+  .shape-env b { color: var(--brand); font-weight: 600; }
+
   .foot {
     margin-top: 26px;
     color: var(--text-3);
@@ -452,6 +636,43 @@
       <button type="button" class="pl" interestfor="" title="下方·居中（bottom）" data-placement="bottom">Bottom</button>
       <button type="button" class="pl" interestfor="" title="下方·右对齐（bottomRight）" data-placement="bottomRight">BR</button>
     </div>
+  </section>
+
+  <section class="block">
+    <h2>三、用 shape() 画带三角的浮层</h2>
+    <p>
+      三角不再靠伪元素拼，而是直接长在形状路径里。四个方位各一段 <code>shape()</code>，
+      圆角半径、三角高、三角半宽全部抽成变量，路径坐标一律用百分比——
+      所以同一份形状套到不同尺寸的气泡上都不会走样。
+      支持 <code>border-shape</code> 时，边框和 <code>box-shadow</code> 都跟着路径走；
+      不支持则退回伪元素小三角，这一档气泡不描边，只靠一层投影把白底和背景分开。
+      这里没有用 <code>clip-path: shape()</code> 做中间档，因为它连投影一起裁掉，
+      只适合纯色无阴影的背景。
+    </p>
+
+    <div class="shapes">
+      <div class="bubble" data-side="top" style="--bub-w: 168px">
+        <b>top</b>
+        最小的一档，三角在顶部。
+      </div>
+
+      <div class="bubble" data-side="right" style="--bub-w: 258px">
+        <b>right</b>
+        最宽的一档，三角在右侧中间，圆角和三角都不受宽度影响。
+      </div>
+
+      <div class="bubble" data-side="bottom" style="--bub-w: 210px">
+        <b>bottom</b>
+        三角朝下，内容多一点，高度自然撑开。
+      </div>
+
+      <div class="bubble" data-side="left" style="--bub-w: 176px">
+        <b>left</b>
+        三角在左侧，窄一些的气泡。
+      </div>
+    </div>
+
+    <p class="shape-env">当前命中：<b id="shape-env">检测中</b></p>
   </section>
 
   <p class="foot">
@@ -701,6 +922,15 @@
   if (envInterest) envInterest.textContent = nativeInterest ? "原生支持" : "JS 绑定悬停";
   if (envPopover) envPopover.textContent = hasPopover ? "原生支持" : "JS 手动显隐";
   if (envAnchor) envAnchor.textContent = hasAnchor ? "CSS anchor()" : "JS 计算 left/top";
+
+  /* 案例三命中哪一层降级 */
+  const shapeEnv = document.getElementById("shape-env");
+  if (shapeEnv) {
+    const shapeValue = "shape(from 0 0, line to 1px 1px)";
+    shapeEnv.textContent = CSS.supports("border-shape: " + shapeValue)
+      ? "border-shape + box-shadow"
+      : "伪元素小三角";
+  }
 })();
 </script>
 
