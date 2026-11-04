@@ -138,6 +138,11 @@
 
   /* 组件样式见 ./assets/ui-dialog.css */
 
+  /* 案例1：打开/关闭的动效交给视图过渡，组件自带的 keyframes 动画让位 */
+  #intro-dialog[open] {
+    animation: none;
+  }
+
   /* ---------- 图片查看器 ---------- */
   dialog.viewer {
     width: 100vw;
@@ -148,7 +153,7 @@
     padding: 0;
     border: 0;
     border-radius: 0;
-    background: rgba(8, 10, 16, .93);
+    background: rgba(0, 0, 0, .6);
     color: #fff;
     overflow: hidden;
   }
@@ -156,14 +161,10 @@
   dialog.viewer[open] {
     display: grid;
     place-items: center;
-    animation: viewer-in .2s ease;
   }
 
-  dialog.viewer::backdrop { background: #000; }
-
-  @keyframes viewer-in {
-    from { opacity: 0; }
-  }
+  /* 蒙层由 dialog 自己的半透明背景给，::backdrop 再压一层就过黑了 */
+  dialog.viewer::backdrop { background: transparent; }
 
   dialog.viewer img {
     display: block;
@@ -172,17 +173,6 @@
     object-fit: contain;
     border-radius: 6px;
     box-shadow: 0 24px 60px -20px rgba(0, 0, 0, .85);
-  }
-
-  dialog.viewer img.is-in {
-    animation: viewer-img-in .28s ease;
-  }
-
-  @keyframes viewer-img-in {
-    from {
-      opacity: 0;
-      transform: scale(.96);
-    }
   }
 
   .viewer-close,
@@ -298,8 +288,8 @@
       <button type="button" class="btn" data-open="demo-basic">完整参数</button>
       <button type="button" class="btn" data-open="demo-plain">无标题</button>
       <button type="button" class="btn" data-open="demo-danger">危险按钮</button>
-      <button type="button" class="btn btn-primary" id="btn-alert">Dialog.alert()</button>
-      <button type="button" class="btn" id="btn-confirm">Dialog.confirm()</button>
+      <button type="button" class="btn btn-primary" id="btn-alert">dialog.alert()</button>
+      <button type="button" class="btn" id="btn-confirm">dialog.confirm()</button>
     </div>
 
     <p class="hint">
@@ -343,78 +333,131 @@
 
 <script type="module">
   /* Safari 的 polyfill 由 ui-dialog.js 内部按需动态加载，这里不用管 */
-  import Dialog from './assets/ui-dialog.js';
+  import dialog from './assets/ui-dialog.js';
+
+  /* 不支持视图过渡的浏览器直接执行，页面逻辑不用写两份 */
+  function startViewTransition(callback) {
+    if (!document.startViewTransition) {
+      callback();
+      return null;
+    }
+
+    return document.startViewTransition(callback);
+  }
 
   /* =========================================================
-   * 页面交互
+   * 案例一：按钮 → 弹框，关闭再缩回按钮
    * =======================================================*/
+  (function introDialog() {
+    const button = document.getElementById('btn-intro');
+    const el = document.getElementById('intro-dialog');
+    const NAME = 'intro-dialog';
 
-  /* 案例一 */
-  document.getElementById('btn-intro').addEventListener('click', function () {
-    document.getElementById('intro-dialog').showModal();
-  });
+    /* 组件内部调的也是 el.close()，覆写实例方法就能接管所有关闭入口 */
+    const nativeClose = el.close.bind(el);
 
-  /* 案例三：按 data-open 打开页面上写好的 dialog */
-  document.querySelectorAll('[data-open]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var dialog = document.getElementById(btn.dataset.open);
-      if (dialog) dialog.showModal();
-    });
-  });
+    button.addEventListener('click', function () {
+      /* 起点是按钮，回调里把过渡名交给弹框 */
+      button.style.viewTransitionName = NAME;
 
-  document.getElementById('btn-alert').addEventListener('click', function () {
-    Dialog.alert('这是一条 alert 提示，只有一个「确定」按钮。', {
-      title: 'Dialog.alert()'
-    });
-  });
-
-  document.getElementById('btn-confirm').addEventListener('click', function () {
-    Dialog.confirm('确定要继续这个操作吗？点 × 或按 Esc 会返回 false。', {
-      title: 'Dialog.confirm()'
-    }).then(function (ok) {
-      Dialog.alert(ok ? '你点了确定' : '你取消了', {
-        title: '返回结果',
-        buttons: [{ type: 'primary', value: '好' }]
+      startViewTransition(function () {
+        button.style.viewTransitionName = '';
+        el.style.viewTransitionName = NAME;
+        el.showModal();
       });
     });
-  });
 
-  /* 案例二：图片查看器 */
+    el.close = function () {
+      const transition = startViewTransition(function () {
+        el.style.viewTransitionName = '';
+        button.style.viewTransitionName = NAME;
+        nativeClose();
+      });
+
+      const restore = function () { button.style.viewTransitionName = ''; };
+
+      if (transition) transition.finished.then(restore, restore);
+      else restore();
+    };
+
+    /* Esc 是浏览器直接关的，拦下来走带过渡的 close() */
+    el.addEventListener('cancel', function (e) {
+      e.preventDefault();
+      el.close();
+    });
+  })();
+
+  /* =========================================================
+   * 案例二：图片查看器
+   * =======================================================*/
   (function imageViewer() {
-    var viewer = document.getElementById('viewer');
-    var img = document.getElementById('viewer-img');
-    var thumbs = Array.prototype.slice.call(document.querySelectorAll('[is-preview]'));
+    const viewer = document.getElementById('viewer');
+    const viewerImg = document.getElementById('viewer-img');
+    const thumbs = Array.prototype.slice.call(document.querySelectorAll('[is-preview]'));
+    const NAME = 'preview-img';
 
     if (!viewer || !thumbs.length) return;
 
-    var index = 0;
+    let index = 0;
 
-    function show(i) {
-      index = (i + thumbs.length) % thumbs.length;
+    function setImage(i) {
+      index = i;
+      viewerImg.src = thumbs[i].currentSrc || thumbs[i].src;
+      viewerImg.alt = thumbs[i].alt || '';
+    }
 
-      img.classList.remove('is-in');
-      img.src = thumbs[index].currentSrc || thumbs[index].src;
-      img.alt = thumbs[index].alt || '';
+    function open(i) {
+      const thumb = thumbs[i];
 
-      /* 强制重排，让动画每次切换都能重播 */
-      void img.offsetWidth;
-      img.classList.add('is-in');
+      setImage(i);
+
+      /* 起点是缩略图，回调里把过渡名交给大图 */
+      thumb.style.viewTransitionName = NAME;
+
+      startViewTransition(function () {
+        thumb.style.viewTransitionName = '';
+        viewerImg.style.viewTransitionName = NAME;
+        viewer.showModal();
+      });
+    }
+
+    function close() {
+      const thumb = thumbs[index];
+
+      const transition = startViewTransition(function () {
+        viewerImg.style.viewTransitionName = '';
+        thumb.style.viewTransitionName = NAME;
+        viewer.close();
+      });
+
+      const restore = function () { thumb.style.viewTransitionName = ''; };
+
+      if (transition) transition.finished.then(restore, restore);
+      else restore();
+    }
+
+    /* 左右切换也走视图过渡，两张图交叉淡化 */
+    function show(next) {
+      startViewTransition(function () {
+        setImage((next + thumbs.length) % thumbs.length);
+      });
     }
 
     thumbs.forEach(function (thumb, i) {
-      thumb.addEventListener('click', function () {
-        show(i);
-        viewer.showModal();
-      });
+      thumb.addEventListener('click', function () { open(i); });
     });
 
     viewer.addEventListener('click', function (e) {
-      if (e.target === viewer) viewer.close();
+      if (e.target === viewer) close();
     });
 
-    viewer.querySelector('.viewer-close').addEventListener('click', function () {
-      viewer.close();
+    /* Esc 交给带过渡的 close */
+    viewer.addEventListener('cancel', function (e) {
+      e.preventDefault();
+      close();
     });
+
+    viewer.querySelector('.viewer-close').addEventListener('click', close);
 
     viewer.querySelector('.viewer-prev').addEventListener('click', function (e) {
       e.stopPropagation();
@@ -436,6 +479,33 @@
       }
     });
   })();
+
+  /* =========================================================
+   * 案例三：组件参数、alert 与 confirm
+   * =======================================================*/
+  document.querySelectorAll('[data-open]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const target = document.getElementById(btn.dataset.open);
+      if (target) target.showModal();
+    });
+  });
+
+  document.getElementById('btn-alert').addEventListener('click', function () {
+    dialog.alert('这是一条 alert 提示，只有一个「确定」按钮。', {
+      title: 'dialog.alert()'
+    });
+  });
+
+  document.getElementById('btn-confirm').addEventListener('click', function () {
+    dialog.confirm('确定要继续这个操作吗？点 × 或按 Esc 会返回 false。', {
+      title: 'dialog.confirm()'
+    }).then(function (ok) {
+      dialog.alert(ok ? '你点了确定' : '你取消了', {
+        title: '返回结果',
+        buttons: [{ type: 'primary', value: '好' }]
+      });
+    });
+  });
 </script>
 
 </body>
