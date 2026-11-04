@@ -381,7 +381,6 @@
 
     el.close = function () {
       /* 关闭不再做「缩回按钮」的几何 morph：
-         弹框快照被压到按钮尺寸时内容会糊成一团，按钮本身还要先从 root 快照里剥出来，看着闪。
          这里只保留弹框自己的淡出，干净利落 */
       startViewTransition(function () {
         nativeClose();
