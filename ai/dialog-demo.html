@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>dialog元素构建对话框、模态框组件演示页面</title>
+<!-- 组件样式 -->
+<link rel="stylesheet" href="./assets/ui-dialog.css">
 <style>
   :root {
     --brand: #1677ff;
@@ -15,11 +17,7 @@
     --text-3: #8f959e;
     --line: #d9d9d9;
     --bg: #f7f8fa;
-    --radius: 8px;
     --shadow-card: 0 1px 2px rgba(0, 0, 0, .04), 0 8px 24px -18px rgba(0, 0, 0, .3);
-    --shadow-modal: 0 6px 16px 0 rgba(0, 0, 0, .08),
-                    0 3px 6px -4px rgba(0, 0, 0, .12),
-                    0 9px 28px 8px rgba(0, 0, 0, .05);
   }
 
   * { box-sizing: border-box; }
@@ -138,137 +136,7 @@
     box-shadow: 0 14px 26px -14px rgba(16, 24, 40, .5);
   }
 
-  /* ---------- ui-dialog 组件（AntD Modal 风格） ---------- */
-  dialog.ui-dialog {
-    width: 520px;
-    max-width: min(92vw, 520px);
-    max-height: 86vh;
-    margin: 12vh auto;
-    padding: 0;
-    border: 0;
-    border-radius: var(--radius);
-    background: #fff;
-    box-shadow: var(--shadow-modal);
-    color: var(--text);
-    overflow: hidden;
-  }
-
-  dialog.ui-dialog[open] {
-    animation: ui-dialog-in .22s ease;
-  }
-
-  dialog.ui-dialog::backdrop {
-    background: rgba(0, 0, 0, .45);
-  }
-
-  @keyframes ui-dialog-in {
-    from {
-      opacity: 0;
-      transform: translateY(-12px) scale(.98);
-    }
-  }
-
-  .ui-modal {
-    display: flex;
-    flex-direction: column;
-    max-height: 86vh;
-  }
-
-  .ui-modal-head {
-    position: relative;
-    flex: none;
-    padding: 20px 24px 10px;
-  }
-
-  .ui-modal-title {
-    margin: 0;
-    padding-right: 32px;
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 1.5;
-  }
-
-  .ui-modal-close {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    width: 28px;
-    height: 28px;
-    border: 0;
-    border-radius: 6px;
-    background: none;
-    color: var(--text-3);
-    font-size: 18px;
-    line-height: 1;
-    cursor: pointer;
-    transition: background-color .2s, color .2s;
-  }
-
-  .ui-modal-close:hover {
-    background: #f2f3f5;
-    color: var(--text);
-  }
-
-  .ui-modal-body {
-    flex: 1 1 auto;
-    padding: 20px 24px;
-    overflow: auto;
-    color: var(--text-2);
-    font-size: 14px;
-    line-height: 1.8;
-  }
-
-  /* 有标题区时，上间距已经由标题区给过了 */
-  .ui-modal-head + .ui-modal-body { padding-top: 0; }
-
-  .ui-modal-body > :first-child { margin-top: 0; }
-  .ui-modal-body > :last-child { margin-bottom: 0; }
-  .ui-modal-body p { margin: 0 0 10px; }
-
-  .ui-modal-foot {
-    display: flex;
-    flex: none;
-    flex-direction: row-reverse;
-    justify-content: flex-start;
-    gap: 8px;
-    padding: 0 24px 20px;
-  }
-
-  .ui-btn {
-    height: 32px;
-    padding: 0 15px;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    font: inherit;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color .2s, border-color .2s, color .2s;
-  }
-
-  .ui-btn-primary {
-    background: var(--brand);
-    color: #fff;
-  }
-
-  .ui-btn-primary:hover { background: var(--brand-hover); }
-
-  .ui-btn-danger {
-    background: var(--danger);
-    color: #fff;
-  }
-
-  .ui-btn-danger:hover { background: var(--danger-hover); }
-
-  .ui-btn-normal {
-    border-color: var(--line);
-    background: #fff;
-    color: var(--text);
-  }
-
-  .ui-btn-normal:hover {
-    border-color: var(--brand);
-    color: var(--brand);
-  }
+  /* 组件样式见 ./assets/ui-dialog.css */
 
   /* ---------- 图片查看器 ---------- */
   dialog.viewer {
@@ -434,6 +302,12 @@
       <button type="button" class="btn" id="btn-confirm">Dialog.confirm()</button>
     </div>
 
+    <p class="hint">
+      组件本体在 <code>assets/ui-dialog.js</code>（ESM），样式在 <code>assets/ui-dialog.css</code>，页面只负责摆按钮。
+      Safari 至今不支持 <code>customElements.define(…, { extends: 'dialog' })</code>，
+      组件内部探测到不支持时才会去动态加载 <code>assets/safari-polyfill.min.js</code>。
+    </p>
+
     <dialog is="ui-dialog" id="demo-basic" data-params="{
       title: '我是标题',
       closable: true,
@@ -467,210 +341,9 @@
   </section>
 </main>
 
-<script>
-(function () {
-  'use strict';
-
-  /* =========================================================
-   * ui-dialog 组件
-   * =======================================================*/
-
-  /* 支持三种文案，未知类型回落到 primary */
-  var BUTTON_TYPES = ['primary', 'danger', 'normal'];
-
-  /* data-params 里可能有函数，所以不能用 JSON.parse，用 Function 兜一层 */
-  function parseParams(raw) {
-    if (!raw) return {};
-    try {
-      return new Function('return (' + raw + ')')();
-    } catch (err) {
-      console.warn('[ui-dialog] data-params 解析失败：', err);
-      return {};
-    }
-  }
-
-  function normalize(params) {
-    var p = params || {};
-    return {
-      title: typeof p.title === 'string' ? p.title : '',
-      closable: p.closable !== false,
-      buttons: Array.isArray(p.buttons) ? p.buttons : [{}, {}]
-    };
-  }
-
-  function render(el, params) {
-    if (el.__uiContent === undefined) el.__uiContent = el.innerHTML;
-
-    el.innerHTML = '';
-    el.classList.add('ui-dialog');
-
-    var modal = document.createElement('div');
-    modal.className = 'ui-modal';
-
-    /* 标题区：有标题或者允许关闭就渲染 */
-    if (params.title || params.closable) {
-      var head = document.createElement('div');
-      head.className = 'ui-modal-head';
-
-      if (params.title) {
-        var title = document.createElement('h3');
-        title.className = 'ui-modal-title';
-        title.textContent = params.title;
-        head.append(title);
-      }
-
-      if (params.closable) {
-        var closeBtn = document.createElement('button');
-        closeBtn.type = 'button';
-        closeBtn.className = 'ui-modal-close';
-        closeBtn.setAttribute('aria-label', '关闭');
-        closeBtn.textContent = '×';
-        closeBtn.addEventListener('click', function () { el.close(); });
-        head.append(closeBtn);
-      }
-
-      modal.append(head);
-    }
-
-    /* 内容区 */
-    var body = document.createElement('div');
-    body.className = 'ui-modal-body';
-    body.innerHTML = el.__uiContent;
-    modal.append(body);
-
-    /* 按钮区：数组顺序进 DOM，CSS 里 row-reverse 让第一个落在最右边 */
-    if (params.buttons.length) {
-      var foot = document.createElement('div');
-      foot.className = 'ui-modal-foot';
-
-      params.buttons.forEach(function (item, index) {
-        item = item || {};
-
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'ui-btn ui-btn-' + (BUTTON_TYPES.indexOf(item.type) > -1 ? item.type : 'primary');
-        btn.textContent = item.value || (index === 0 ? '确定' : '取消');
-
-        btn.addEventListener('click', function () {
-          var result = typeof item.events === 'function' ? item.events(btn, el, index) : undefined;
-          /* 回调返回 false 可以拦下自动关闭 */
-          if (result !== false) el.close();
-        });
-
-        foot.append(btn);
-      });
-
-      modal.append(foot);
-    }
-
-    el.append(modal);
-  }
-
-  function init(el, params) {
-    if (el.__uiInited) return;
-    el.__uiInited = true;
-
-    el.__uiParams = normalize(params || parseParams(el.getAttribute('data-params')));
-    render(el, el.__uiParams);
-
-    /* 点遮罩关闭：target 是 dialog 自身才说明点在了 ::backdrop 上 */
-    el.addEventListener('click', function (e) {
-      if (e.target === el && el.__uiParams.closable) el.close();
-    });
-  }
-
-  /* ---------- 自定义内置元素 ---------- */
-  var UIDialog = null;
-
-  try {
-    UIDialog = class extends HTMLDialogElement {
-      connectedCallback() {
-        init(this);
-      }
-    };
-
-    customElements.define('ui-dialog', UIDialog, { extends: 'dialog' });
-
-    /* 有些浏览器接受 define，但 createElement 的 is 不生效（Safari），探测一下 */
-    if (!(document.createElement('dialog', { is: 'ui-dialog' }) instanceof UIDialog)) {
-      UIDialog = null;
-    }
-  } catch (err) {
-    UIDialog = null;
-  }
-
-  /* 无论能不能升级，都扫一遍；init 是幂等的 */
-  function scan(root) {
-    root.querySelectorAll('dialog[is="ui-dialog"]').forEach(function (el) { init(el); });
-  }
-
-  scan(document);
-
-  new MutationObserver(function (records) {
-    records.forEach(function (record) {
-      record.addedNodes.forEach(function (node) {
-        if (node.nodeType !== 1) return;
-        if (node.matches && node.matches('dialog[is="ui-dialog"]')) init(node);
-        if (node.querySelectorAll) scan(node);
-      });
-    });
-  }).observe(document.body, { childList: true, subtree: true });
-
-  /* ---------- 对外类：Dialog.alert / Dialog.confirm ---------- */
-  function createDialog(content, params) {
-    var el = document.createElement('dialog', { is: 'ui-dialog' });
-    el.setAttribute('is', 'ui-dialog');
-    el.__uiContent = content;
-    init(el, params);
-    document.body.append(el);
-    el.showModal();
-    return el;
-  }
-
-  class Dialog {
-    static alert(content, options) {
-      var opts = options || {};
-
-      return new Promise(function (resolve) {
-        var el = createDialog(content, {
-          title: opts.title === undefined ? '提示' : opts.title,
-          closable: opts.closable !== false,
-          buttons: opts.buttons || [{ type: 'primary', value: '确定' }]
-        });
-
-        el.addEventListener('close', function () {
-          el.remove();
-          resolve();
-        }, { once: true });
-      });
-    }
-
-    static confirm(content, options) {
-      var opts = options || {};
-
-      return new Promise(function (resolve) {
-        var confirmed = false;
-
-        var el = createDialog(content, {
-          title: opts.title === undefined ? '确认' : opts.title,
-          closable: opts.closable !== false,
-          buttons: opts.buttons || [
-            { type: 'primary', value: '确定', events: function () { confirmed = true; } },
-            { type: 'normal', value: '取消', events: function () { confirmed = false; } }
-          ]
-        });
-
-        /* 点 ×、按 Esc、点遮罩都会走到这里，统一按「未确认」收尾 */
-        el.addEventListener('close', function () {
-          el.remove();
-          resolve(confirmed);
-        }, { once: true });
-      });
-    }
-  }
-
-  /* 作为模块使用时，把这一行换成 export default Dialog 即可 */
-  window.Dialog = Dialog;
+<script type="module">
+  /* Safari 的 polyfill 由 ui-dialog.js 内部按需动态加载，这里不用管 */
+  import Dialog from './assets/ui-dialog.js';
 
   /* =========================================================
    * 页面交互
@@ -763,7 +436,6 @@
       }
     });
   })();
-})();
 </script>
 
 </body>

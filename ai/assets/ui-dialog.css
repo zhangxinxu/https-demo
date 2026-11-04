@@ -1,0 +1,142 @@
+/* =========================================================
+ * ui-dialog.css —— <dialog is="ui-dialog"> 弹框组件样式（AntD Modal 风格）
+ * 配合 assets/ui-dialog.js（ESM）使用
+ * =======================================================*/
+
+dialog.ui-dialog {
+  width: 520px;
+  max-width: min(92vw, 520px);
+  max-height: 86vh;
+  margin: 12vh auto;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 6px 16px 0 rgba(0, 0, 0, .08),
+              0 3px 6px -4px rgba(0, 0, 0, .12),
+              0 9px 28px 8px rgba(0, 0, 0, .05);
+  color: #1f2329;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+dialog.ui-dialog[open] {
+  animation: ui-dialog-in .22s ease;
+}
+
+dialog.ui-dialog::backdrop {
+  background: rgba(0, 0, 0, .45);
+}
+
+@keyframes ui-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(.98);
+  }
+}
+
+.ui-modal {
+  display: flex;
+  flex-direction: column;
+  max-height: 86vh;
+}
+
+.ui-modal-head {
+  position: relative;
+  flex: none;
+  padding: 20px 24px 10px;
+}
+
+.ui-modal-title {
+  margin: 0;
+  padding-right: 32px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.ui-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: #8f959e;
+  font: inherit;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color .2s, color .2s;
+}
+
+.ui-modal-close:hover {
+  background: #f2f3f5;
+  color: #1f2329;
+}
+
+.ui-modal-body {
+  flex: 1 1 auto;
+  padding: 20px 24px;
+  overflow: auto;
+  color: #646a73;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* 有标题区时，上间距已经由标题区给过了 */
+.ui-modal-head + .ui-modal-body { padding-top: 0; }
+
+.ui-modal-body > :first-child { margin-top: 0; }
+.ui-modal-body > :last-child { margin-bottom: 0; }
+.ui-modal-body p { margin: 0 0 10px; }
+
+/* 数组顺序即从左到右的顺序，整组靠右 */
+.ui-modal-foot {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 24px 20px;
+}
+
+.ui-btn {
+  height: 32px;
+  padding: 0 15px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color .2s, border-color .2s, color .2s;
+}
+
+.ui-btn-primary {
+  background: #1677ff;
+  color: #fff;
+}
+
+.ui-btn-primary:hover { background: #4096ff; }
+
+.ui-btn-danger {
+  background: #ff4d4f;
+  color: #fff;
+}
+
+.ui-btn-danger:hover { background: #ff7875; }
+
+.ui-btn-normal {
+  border-color: #d9d9d9;
+  background: #fff;
+  color: #1f2329;
+}
+
+.ui-btn-normal:hover {
+  border-color: #1677ff;
+  color: #1677ff;
+}
