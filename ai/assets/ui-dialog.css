@@ -8,6 +8,7 @@ dialog.ui-dialog {
   max-width: min(92vw, 520px);
   height: fit-content;
   inset: 0;
+  bottom: 10vh;
   margin: auto;
   padding: 0;
   border: 0;
