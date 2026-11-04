@@ -6,8 +6,9 @@
 dialog.ui-dialog {
   width: 520px;
   max-width: min(92vw, 520px);
-  max-height: 86vh;
-  margin: 12vh auto;
+  height: fit-content;
+  inset: 0;
+  margin: auto;
   padding: 0;
   border: 0;
   border-radius: 8px;
@@ -64,6 +65,25 @@ dialog.ui-dialog[open]::backdrop {
   dialog.ui-dialog[open]::backdrop {
     background-color: transparent;
   }
+}
+
+/* ---------- 普通弹框：show() 打开，没有 ::backdrop，也不在 top layer ---------- */
+
+/* 超大 outline 铺出全屏遮罩 */
+dialog.ui-dialog:not(:modal) {
+  position: fixed;
+  z-index: 999;
+  outline: 99vmax solid rgba(0, 0, 0, .65);
+}
+
+/* 透明层铺满视口，把「点遮罩」的点击接住（点击目标仍是 dialog 自身） */
+dialog.ui-dialog:not(:modal)::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-color: #0000;
+  z-index: -1;
+  touch-action: none;
 }
 
 .ui-modal {

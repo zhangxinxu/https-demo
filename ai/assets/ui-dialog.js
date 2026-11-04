@@ -10,12 +10,17 @@
  * Safari 至今不支持 customized built-in elements，
  * 这里探测到不支持时才动态加载 ./safari-polyfill.min.js（顶层 await，保证先于 define 执行）。
  *
- * 声明式：
+ * 声明式（普通弹框，用 show() 打开，非模态）：
  *   <dialog is="ui-dialog" data-params="{ title: '标题', buttons: [{ type: 'primary', value: '好' }] }">
  *     内容
  *   </dialog>
  *
- * 命令式：
+ *   document.getElementById('x').show();
+ *
+ * show() 没有 ::backdrop，遮罩和点击拦截由 ui-dialog.css 里的
+ * outline 大法 + 透明 ::after 层负责，见 :not(:modal) 那两条规则。
+ *
+ * 命令式（alert / confirm 内部用 showModal()，是真模态）：
  *   Dialog.alert(content, options)            返回 Promise<void>
  *   Dialog.confirm(content, options)          返回 Promise<boolean>
  *
@@ -129,11 +134,6 @@ function init(el, params) {
 
   el.__uiParams = normalize(params || parseParams(el.getAttribute('data-params')));
   render(el, el.__uiParams);
-
-  /* 点遮罩关闭：target 是 dialog 自身才说明点在了 ::backdrop 上 */
-  el.addEventListener('click', (e) => {
-    if (e.target === el && el.__uiParams.closable) el.close();
-  });
 }
 
 /* 探测原生是否支持 customized built-in elements（Safari 会抛错） */

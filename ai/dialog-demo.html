@@ -471,7 +471,7 @@
   document.querySelectorAll('[data-open]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       const target = document.getElementById(btn.dataset.open);
-      if (target) target.showModal();
+      if (target) target.show();
     });
   });
 
