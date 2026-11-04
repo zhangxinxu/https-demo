@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dialog元素构建对话框、模态框组件演示页面</title>
+<style>
+  :root {
+    --brand: #1677ff;
+    --brand-hover: #4096ff;
+    --danger: #ff4d4f;
+    --danger-hover: #ff7875;
+    --text: #1f2329;
+    --text-2: #646a73;
+    --text-3: #8f959e;
+    --line: #d9d9d9;
+    --bg: #f7f8fa;
+    --radius: 8px;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .04), 0 8px 24px -18px rgba(0, 0, 0, .3);
+    --shadow-modal: 0 6px 16px 0 rgba(0, 0, 0, .08),
+                    0 3px 6px -4px rgba(0, 0, 0, .12),
+                    0 9px 28px 8px rgba(0, 0, 0, .05);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; }
+
+  body {
+    padding: 48px 20px 96px;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    margin: 0 0 10px;
+    font-size: clamp(21px, 3.4vw, 28px);
+    letter-spacing: -.02em;
+  }
+
+  .lead {
+    margin: 0;
+    color: var(--text-2);
+    line-height: 1.8;
+  }
+
+  code {
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: #eef4ff;
+    color: #0958d9;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12.5px;
+  }
+
+  .block {
+    margin-top: 26px;
+    padding: 22px 24px;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: var(--shadow-card);
+  }
+
+  .block > h2 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    letter-spacing: -.01em;
+  }
+
+  .block > p {
+    margin: 0 0 18px;
+    color: var(--text-2);
+    font-size: 13.5px;
+  }
+
+  /* ---------- 页面按钮 ---------- */
+  .btn {
+    height: 32px;
+    padding: 0 15px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+    transition: color .2s, border-color .2s, background-color .2s;
+  }
+
+  .btn:hover {
+    color: var(--brand);
+    border-color: var(--brand);
+  }
+
+  .btn-primary {
+    border-color: var(--brand);
+    background: var(--brand);
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    border-color: var(--brand-hover);
+    background: var(--brand-hover);
+    color: #fff;
+  }
+
+  .btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* ---------- 缩略图 ---------- */
+  .thumbs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .thumbs img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: zoom-in;
+    transition: transform .25s, box-shadow .25s;
+  }
+
+  .thumbs img:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 26px -14px rgba(16, 24, 40, .5);
+  }
+
+  /* ---------- ui-dialog 组件（AntD Modal 风格） ---------- */
+  dialog.ui-dialog {
+    width: 520px;
+    max-width: min(92vw, 520px);
+    max-height: 86vh;
+    margin: 12vh auto;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius);
+    background: #fff;
+    box-shadow: var(--shadow-modal);
+    color: var(--text);
+    overflow: hidden;
+  }
+
+  dialog.ui-dialog[open] {
+    animation: ui-dialog-in .22s ease;
+  }
+
+  dialog.ui-dialog::backdrop {
+    background: rgba(0, 0, 0, .45);
+  }
+
+  @keyframes ui-dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(-12px) scale(.98);
+    }
+  }
+
+  .ui-modal {
+    display: flex;
+    flex-direction: column;
+    max-height: 86vh;
+  }
+
+  .ui-modal-head {
+    position: relative;
+    flex: none;
+    padding: 20px 24px 10px;
+  }
+
+  .ui-modal-title {
+    margin: 0;
+    padding-right: 32px;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  .ui-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--text-3);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color .2s, color .2s;
+  }
+
+  .ui-modal-close:hover {
+    background: #f2f3f5;
+    color: var(--text);
+  }
+
+  .ui-modal-body {
+    flex: 1 1 auto;
+    padding: 20px 24px;
+    overflow: auto;
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  /* 有标题区时，上间距已经由标题区给过了 */
+  .ui-modal-head + .ui-modal-body { padding-top: 0; }
+
+  .ui-modal-body > :first-child { margin-top: 0; }
+  .ui-modal-body > :last-child { margin-bottom: 0; }
+  .ui-modal-body p { margin: 0 0 10px; }
+
+  .ui-modal-foot {
+    display: flex;
+    flex: none;
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 0 24px 20px;
+  }
+
+  .ui-btn {
+    height: 32px;
+    padding: 0 15px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color .2s, border-color .2s, color .2s;
+  }
+
+  .ui-btn-primary {
+    background: var(--brand);
+    color: #fff;
+  }
+
+  .ui-btn-primary:hover { background: var(--brand-hover); }
+
+  .ui-btn-danger {
+    background: var(--danger);
+    color: #fff;
+  }
+
+  .ui-btn-danger:hover { background: var(--danger-hover); }
+
+  .ui-btn-normal {
+    border-color: var(--line);
+    background: #fff;
+    color: var(--text);
+  }
+
+  .ui-btn-normal:hover {
+    border-color: var(--brand);
+    color: var(--brand);
+  }
+
+  /* ---------- 图片查看器 ---------- */
+  dialog.viewer {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: rgba(8, 10, 16, .93);
+    color: #fff;
+    overflow: hidden;
+  }
+
+  dialog.viewer[open] {
+    display: grid;
+    place-items: center;
+    animation: viewer-in .2s ease;
+  }
+
+  dialog.viewer::backdrop { background: #000; }
+
+  @keyframes viewer-in {
+    from { opacity: 0; }
+  }
+
+  dialog.viewer img {
+    display: block;
+    max-width: 88vw;
+    max-height: 84vh;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 24px 60px -20px rgba(0, 0, 0, .85);
+  }
+
+  dialog.viewer img.is-in {
+    animation: viewer-img-in .28s ease;
+  }
+
+  @keyframes viewer-img-in {
+    from {
+      opacity: 0;
+      transform: scale(.96);
+    }
+  }
+
+  .viewer-close,
+  .viewer-nav {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .14);
+    color: #fff;
+    font: inherit;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color .2s;
+  }
+
+  .viewer-close:hover,
+  .viewer-nav:hover { background: rgba(255, 255, 255, .26); }
+
+  .viewer-close {
+    top: 20px;
+    right: 24px;
+    font-size: 20px;
+  }
+
+  .viewer-nav {
+    top: 50%;
+    translate: 0 -50%;
+  }
+
+  .viewer-prev { left: 24px; }
+  .viewer-next { right: 24px; }
+
+  /* 也是 .block 的直接子元素，加一级权重压过 .block > p */
+  .block > .hint {
+    margin: 14px 0 0;
+    color: var(--text-3);
+    font-size: 12.5px;
+  }
+
+  @media (max-width: 560px) {
+    body { padding: 32px 14px 72px; }
+    .block { padding: 18px 16px; }
+    .thumbs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .viewer-prev { left: 10px; }
+    .viewer-next { right: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<main class="page">
+  <header>
+    <h1>dialog 元素构建对话框、模态框</h1>
+    <p class="lead">
+      用原生 <code>&lt;dialog&gt;</code> 的 <code>showModal()</code> 拿顶层遮罩、焦点管理和 Esc 关闭，
+      再用 <code>is="ui-dialog"</code> 把内置元素升级成组件，剩下的只是 UI 和参数。
+    </p>
+  </header>
+
+  <section class="block">
+    <h2>一、常规信息弹框</h2>
+    <p>原生 dialog 加一层 AntD 风格的结构，右下角放一个确认按钮。</p>
+
+    <button type="button" class="btn btn-primary" id="btn-intro">查看《CSS新世界》介绍</button>
+
+    <dialog is="ui-dialog" id="intro-dialog" data-params="{
+      title: '关于《CSS新世界》',
+      closable: true,
+      buttons: [{ type: 'primary', value: '确认' }]
+    }">
+      <p>《CSS新世界》是张鑫旭在《CSS世界》《CSS选择器世界》之后写的第三本 CSS 专著，2021 年由人民邮电出版社出版。</p>
+      <p>全书围绕 CSS 近年新增的能力展开：Grid 布局、<code>clip-path</code> 剪裁、滤镜与混合模式、滚动行为、逻辑属性、自定义属性与 <code>@property</code>、颜色函数等等。</p>
+      <p>写法上延续了他一贯的风格——每个特性都配可运行的实例和兼容性说明，适合已经会写 CSS、想系统补齐新特性的人。</p>
+    </dialog>
+  </section>
+
+  <section class="block">
+    <h2>二、点击图片查看大图</h2>
+    <p>缩略图只挂一个自定义属性，点开后在满屏 dialog 里看大图，支持左右切换与键盘方向键。</p>
+
+    <div class="thumbs">
+      <img is-preview="ps" src="./assets/ps1.jpg" alt="时尚大片 1">
+      <img is-preview="ps" src="./assets/ps2.jpg" alt="时尚大片 2">
+      <img is-preview="ps" src="./assets/ps3.jpg" alt="时尚大片 3">
+      <img is-preview="ps" src="./assets/ps4.jpg" alt="时尚大片 4">
+    </div>
+
+    <p class="hint">点击缩略图打开；点遮罩、按 Esc 或右上角关闭；← → 切换。</p>
+
+    <dialog class="viewer" id="viewer">
+      <img id="viewer-img" src="./assets/ps1.jpg" alt="">
+      <button type="button" class="viewer-close" aria-label="关闭">×</button>
+      <button type="button" class="viewer-nav viewer-prev" aria-label="上一张">‹</button>
+      <button type="button" class="viewer-nav viewer-next" aria-label="下一张">›</button>
+    </dialog>
+  </section>
+
+  <section class="block">
+    <h2>三、改造成组件：is="ui-dialog"</h2>
+    <p>
+      给 dialog 写上 <code>is="ui-dialog"</code>，再用 <code>data-params</code> 传参，
+      只认 <code>title</code>、<code>closable</code>、<code>buttons</code> 三个字段。
+      按钮支持 <code>primary</code> / <code>danger</code> / <code>normal</code> 三种类型、自定义文案和点击回调。
+    </p>
+
+    <div class="btn-row">
+      <button type="button" class="btn" data-open="demo-basic">完整参数</button>
+      <button type="button" class="btn" data-open="demo-plain">无标题</button>
+      <button type="button" class="btn" data-open="demo-danger">危险按钮</button>
+      <button type="button" class="btn btn-primary" id="btn-alert">Dialog.alert()</button>
+      <button type="button" class="btn" id="btn-confirm">Dialog.confirm()</button>
+    </div>
+
+    <dialog is="ui-dialog" id="demo-basic" data-params="{
+      title: '我是标题',
+      closable: true,
+      buttons: [
+        { type: 'primary', value: '知道了' },
+        { type: 'normal', value: '关闭' }
+      ]
+    }">
+      <p>三个参数：<code>title</code> 管标题，<code>closable</code> 管右上角关闭按钮，<code>buttons</code> 管底部按钮。</p>
+      <p>按钮的 <code>type</code> 决定颜色，<code>value</code> 决定文案，<code>events</code> 是点击回调。</p>
+    </dialog>
+
+    <dialog is="ui-dialog" id="demo-plain" data-params="{
+      title: '',
+      closable: false,
+      buttons: [{ type: 'normal', value: '我知道啦' }]
+    }">
+      <p>没有标题、也没有右上角关闭按钮，只能点底部按钮离开（Esc 是 dialog 的原生行为，仍然有效）。</p>
+    </dialog>
+
+    <dialog is="ui-dialog" id="demo-danger" data-params="{
+      title: '删除确认',
+      closable: true,
+      buttons: [
+        { type: 'danger', value: '删除', events: function (btn, dialog) { console.log('执行删除', btn, dialog); } },
+        { type: 'normal' }
+      ]
+    }">
+      <p>第一个按钮是 <code>danger</code>，第二个没写 <code>value</code>，按位置默认成「取消」。</p>
+    </dialog>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  /* =========================================================
+   * ui-dialog 组件
+   * =======================================================*/
+
+  /* 支持三种文案，未知类型回落到 primary */
+  var BUTTON_TYPES = ['primary', 'danger', 'normal'];
+
+  /* data-params 里可能有函数，所以不能用 JSON.parse，用 Function 兜一层 */
+  function parseParams(raw) {
+    if (!raw) return {};
+    try {
+      return new Function('return (' + raw + ')')();
+    } catch (err) {
+      console.warn('[ui-dialog] data-params 解析失败：', err);
+      return {};
+    }
+  }
+
+  function normalize(params) {
+    var p = params || {};
+    return {
+      title: typeof p.title === 'string' ? p.title : '',
+      closable: p.closable !== false,
+      buttons: Array.isArray(p.buttons) ? p.buttons : [{}, {}]
+    };
+  }
+
+  function render(el, params) {
+    if (el.__uiContent === undefined) el.__uiContent = el.innerHTML;
+
+    el.innerHTML = '';
+    el.classList.add('ui-dialog');
+
+    var modal = document.createElement('div');
+    modal.className = 'ui-modal';
+
+    /* 标题区：有标题或者允许关闭就渲染 */
+    if (params.title || params.closable) {
+      var head = document.createElement('div');
+      head.className = 'ui-modal-head';
+
+      if (params.title) {
+        var title = document.createElement('h3');
+        title.className = 'ui-modal-title';
+        title.textContent = params.title;
+        head.append(title);
+      }
+
+      if (params.closable) {
+        var closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'ui-modal-close';
+        closeBtn.setAttribute('aria-label', '关闭');
+        closeBtn.textContent = '×';
+        closeBtn.addEventListener('click', function () { el.close(); });
+        head.append(closeBtn);
+      }
+
+      modal.append(head);
+    }
+
+    /* 内容区 */
+    var body = document.createElement('div');
+    body.className = 'ui-modal-body';
+    body.innerHTML = el.__uiContent;
+    modal.append(body);
+
+    /* 按钮区：数组顺序进 DOM，CSS 里 row-reverse 让第一个落在最右边 */
+    if (params.buttons.length) {
+      var foot = document.createElement('div');
+      foot.className = 'ui-modal-foot';
+
+      params.buttons.forEach(function (item, index) {
+        item = item || {};
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'ui-btn ui-btn-' + (BUTTON_TYPES.indexOf(item.type) > -1 ? item.type : 'primary');
+        btn.textContent = item.value || (index === 0 ? '确定' : '取消');
+
+        btn.addEventListener('click', function () {
+          var result = typeof item.events === 'function' ? item.events(btn, el, index) : undefined;
+          /* 回调返回 false 可以拦下自动关闭 */
+          if (result !== false) el.close();
+        });
+
+        foot.append(btn);
+      });
+
+      modal.append(foot);
+    }
+
+    el.append(modal);
+  }
+
+  function init(el, params) {
+    if (el.__uiInited) return;
+    el.__uiInited = true;
+
+    el.__uiParams = normalize(params || parseParams(el.getAttribute('data-params')));
+    render(el, el.__uiParams);
+
+    /* 点遮罩关闭：target 是 dialog 自身才说明点在了 ::backdrop 上 */
+    el.addEventListener('click', function (e) {
+      if (e.target === el && el.__uiParams.closable) el.close();
+    });
+  }
+
+  /* ---------- 自定义内置元素 ---------- */
+  var UIDialog = null;
+
+  try {
+    UIDialog = class extends HTMLDialogElement {
+      connectedCallback() {
+        init(this);
+      }
+    };
+
+    customElements.define('ui-dialog', UIDialog, { extends: 'dialog' });
+
+    /* 有些浏览器接受 define，但 createElement 的 is 不生效（Safari），探测一下 */
+    if (!(document.createElement('dialog', { is: 'ui-dialog' }) instanceof UIDialog)) {
+      UIDialog = null;
+    }
+  } catch (err) {
+    UIDialog = null;
+  }
+
+  /* 无论能不能升级，都扫一遍；init 是幂等的 */
+  function scan(root) {
+    root.querySelectorAll('dialog[is="ui-dialog"]').forEach(function (el) { init(el); });
+  }
+
+  scan(document);
+
+  new MutationObserver(function (records) {
+    records.forEach(function (record) {
+      record.addedNodes.forEach(function (node) {
+        if (node.nodeType !== 1) return;
+        if (node.matches && node.matches('dialog[is="ui-dialog"]')) init(node);
+        if (node.querySelectorAll) scan(node);
+      });
+    });
+  }).observe(document.body, { childList: true, subtree: true });
+
+  /* ---------- 对外类：Dialog.alert / Dialog.confirm ---------- */
+  function createDialog(content, params) {
+    var el = document.createElement('dialog', { is: 'ui-dialog' });
+    el.setAttribute('is', 'ui-dialog');
+    el.__uiContent = content;
+    init(el, params);
+    document.body.append(el);
+    el.showModal();
+    return el;
+  }
+
+  class Dialog {
+    static alert(content, options) {
+      var opts = options || {};
+
+      return new Promise(function (resolve) {
+        var el = createDialog(content, {
+          title: opts.title === undefined ? '提示' : opts.title,
+          closable: opts.closable !== false,
+          buttons: opts.buttons || [{ type: 'primary', value: '确定' }]
+        });
+
+        el.addEventListener('close', function () {
+          el.remove();
+          resolve();
+        }, { once: true });
+      });
+    }
+
+    static confirm(content, options) {
+      var opts = options || {};
+
+      return new Promise(function (resolve) {
+        var confirmed = false;
+
+        var el = createDialog(content, {
+          title: opts.title === undefined ? '确认' : opts.title,
+          closable: opts.closable !== false,
+          buttons: opts.buttons || [
+            { type: 'primary', value: '确定', events: function () { confirmed = true; } },
+            { type: 'normal', value: '取消', events: function () { confirmed = false; } }
+          ]
+        });
+
+        /* 点 ×、按 Esc、点遮罩都会走到这里，统一按「未确认」收尾 */
+        el.addEventListener('close', function () {
+          el.remove();
+          resolve(confirmed);
+        }, { once: true });
+      });
+    }
+  }
+
+  /* 作为模块使用时，把这一行换成 export default Dialog 即可 */
+  window.Dialog = Dialog;
+
+  /* =========================================================
+   * 页面交互
+   * =======================================================*/
+
+  /* 案例一 */
+  document.getElementById('btn-intro').addEventListener('click', function () {
+    document.getElementById('intro-dialog').showModal();
+  });
+
+  /* 案例三：按 data-open 打开页面上写好的 dialog */
+  document.querySelectorAll('[data-open]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var dialog = document.getElementById(btn.dataset.open);
+      if (dialog) dialog.showModal();
+    });
+  });
+
+  document.getElementById('btn-alert').addEventListener('click', function () {
+    Dialog.alert('这是一条 alert 提示，只有一个「确定」按钮。', {
+      title: 'Dialog.alert()'
+    });
+  });
+
+  document.getElementById('btn-confirm').addEventListener('click', function () {
+    Dialog.confirm('确定要继续这个操作吗？点 × 或按 Esc 会返回 false。', {
+      title: 'Dialog.confirm()'
+    }).then(function (ok) {
+      Dialog.alert(ok ? '你点了确定' : '你取消了', {
+        title: '返回结果',
+        buttons: [{ type: 'primary', value: '好' }]
+      });
+    });
+  });
+
+  /* 案例二：图片查看器 */
+  (function imageViewer() {
+    var viewer = document.getElementById('viewer');
+    var img = document.getElementById('viewer-img');
+    var thumbs = Array.prototype.slice.call(document.querySelectorAll('[is-preview]'));
+
+    if (!viewer || !thumbs.length) return;
+
+    var index = 0;
+
+    function show(i) {
+      index = (i + thumbs.length) % thumbs.length;
+
+      img.classList.remove('is-in');
+      img.src = thumbs[index].currentSrc || thumbs[index].src;
+      img.alt = thumbs[index].alt || '';
+
+      /* 强制重排，让动画每次切换都能重播 */
+      void img.offsetWidth;
+      img.classList.add('is-in');
+    }
+
+    thumbs.forEach(function (thumb, i) {
+      thumb.addEventListener('click', function () {
+        show(i);
+        viewer.showModal();
+      });
+    });
+
+    viewer.addEventListener('click', function (e) {
+      if (e.target === viewer) viewer.close();
+    });
+
+    viewer.querySelector('.viewer-close').addEventListener('click', function () {
+      viewer.close();
+    });
+
+    viewer.querySelector('.viewer-prev').addEventListener('click', function (e) {
+      e.stopPropagation();
+      show(index - 1);
+    });
+
+    viewer.querySelector('.viewer-next').addEventListener('click', function (e) {
+      e.stopPropagation();
+      show(index + 1);
+    });
+
+    viewer.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft') {
+        show(index - 1);
+        e.preventDefault();
+      } else if (e.key === 'ArrowRight') {
+        show(index + 1);
+        e.preventDefault();
+      }
+    });
+  })();
+})();
+</script>
+
+</body>
+</html>
