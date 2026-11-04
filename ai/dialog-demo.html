@@ -171,8 +171,6 @@
   .viewer-close,
   .viewer-nav {
     position: absolute;
-    display: grid;
-    place-items: center;
     width: 40px;
     height: 40px;
     padding: 0;
@@ -180,8 +178,7 @@
     border-radius: 50%;
     background: rgba(255, 255, 255, .14);
     color: #fff;
-    font: inherit;
-    font-size: 22px;
+    font-size: 0;
     line-height: 1;
     cursor: pointer;
     transition: background-color .2s;
@@ -193,12 +190,49 @@
   .viewer-close {
     top: 20px;
     right: 24px;
-    font-size: 20px;
   }
+
+  /* 关闭：两条线段旋转拼成 ×，不看字形，绝对居中 */
+  .viewer-close::before,
+  .viewer-close::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 14px;
+    height: 2px;
+    border-radius: 1px;
+    background: currentColor;
+  }
+
+  .viewer-close::before { rotate: 45deg; }
+  .viewer-close::after { rotate: -45deg; }
 
   .viewer-nav {
     top: 50%;
     translate: 0 -50%;
+  }
+
+  /* 前后箭头：两条边框转 45°，顶点偏出去的那点距离再补回来 */
+  .viewer-nav::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-top: 2px solid currentColor;
+    border-right: 2px solid currentColor;
+    position: absolute;
+    inset: 0;
+    margin: auto;
+  }
+
+  .viewer-prev::before {
+    rotate: -135deg;
+    translate: 2px 0;
+  }
+
+  .viewer-next::before {
+    rotate: 45deg;
+    translate: -2px 0;
   }
 
   .viewer-prev { left: 24px; }
@@ -263,9 +297,9 @@
 
     <dialog class="viewer" id="viewer">
       <img id="viewer-img" src="./assets/ps1.jpg" alt="">
-      <button type="button" class="viewer-close" aria-label="关闭">×</button>
-      <button type="button" class="viewer-nav viewer-prev" aria-label="上一张">‹</button>
-      <button type="button" class="viewer-nav viewer-next" aria-label="下一张">›</button>
+      <button type="button" class="viewer-close">关闭</button>
+      <button type="button" class="viewer-nav viewer-prev">上一张</button>
+      <button type="button" class="viewer-nav viewer-next">下一张</button>
     </dialog>
   </section>
 
