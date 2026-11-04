@@ -20,20 +20,49 @@ dialog.ui-dialog {
   font-size: 14px;
   line-height: 1.6;
   overflow: hidden;
+
+  /* 关闭态：opacity / transform 是过渡终点，
+     display 和 overlay 用 allow-discrete，才能等动画播完再真正从顶层移除 */
+  opacity: 0;
+  transform: scale(.96);
+  transition:
+    opacity .2s ease-out,
+    transform .3s ease-out,
+    overlay .2s ease-out allow-discrete,
+    display .2s ease-out allow-discrete;
 }
 
 dialog.ui-dialog[open] {
-  animation: ui-dialog-in .22s ease;
+  opacity: 1;
+  transform: none;
 }
 
-dialog.ui-dialog::backdrop {
-  background: rgba(0, 0, 0, .45);
-}
-
-@keyframes ui-dialog-in {
-  from {
+/* 打开前的那一帧，必须写在 [open] 规则之后，权重一样靠顺序覆盖。
+   起始位置高一点点，打开时往下沉到位 */
+@starting-style {
+  dialog.ui-dialog[open] {
     opacity: 0;
-    transform: translateY(-12px) scale(.98);
+    transform: translateY(-8px) scale(.96);
+  }
+}
+
+/* 遮罩跟着一起淡入淡出 */
+dialog.ui-dialog::backdrop {
+  background-color: transparent;
+  transition:
+    background-color .2s ease-out,
+    overlay .2s ease-out allow-discrete,
+    display .2s ease-out allow-discrete;
+}
+
+dialog.ui-dialog[open]::backdrop {
+  background-color: rgba(0, 0, 0, .45);
+}
+
+/* 伪元素的起始样式没法嵌套在上面的选择器里，只能单独写 */
+@starting-style {
+  dialog.ui-dialog[open]::backdrop {
+    background-color: transparent;
   }
 }
 

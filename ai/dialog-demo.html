@@ -136,25 +136,6 @@
     box-shadow: 0 14px 26px -14px rgba(16, 24, 40, .5);
   }
 
-  /* 组件样式见 ./assets/ui-dialog.css */
-
-  /* 案例1：打开/关闭的动效交给视图过渡，组件自带的 keyframes 动画让位 */
-  #intro-dialog[open] {
-    animation: none;
-  }
-
-  /* 关闭时弹框快速淡出，不跟着做几何形变 */
-  ::view-transition-old(intro-dialog) {
-    animation: intro-dialog-out .18s ease both;
-  }
-
-  @keyframes intro-dialog-out {
-    to {
-      opacity: 0;
-      transform: scale(.98);
-    }
-  }
-
   /* ---------- 图片查看器 ---------- */
   dialog.viewer {
     width: 100vw;
