@@ -293,7 +293,6 @@
 
     <dialog is="ui-dialog" id="demo-basic" data-params="{
       title: '我是标题',
-      closable: true,
       buttons: [
         { type: 'primary', value: '知道了' },
         { type: 'normal', value: '关闭' }
@@ -304,7 +303,6 @@
     </dialog>
 
     <dialog is="ui-dialog" id="demo-plain" data-params="{
-      title: '',
       closable: false,
       buttons: [{ type: 'normal', value: '我知道啦' }]
     }">
@@ -313,7 +311,6 @@
 
     <dialog is="ui-dialog" id="demo-danger" data-params="{
       title: '删除确认',
-      closable: true,
       buttons: [
         { type: 'danger', value: '删除', events: function (btn, dialog) { console.log('执行删除', btn, dialog); } },
         { type: 'normal' }
