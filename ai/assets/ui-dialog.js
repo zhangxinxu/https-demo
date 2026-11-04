@@ -1,38 +1,40 @@
 /**
- * ui-dialog.js（ESM）—— 把 <dialog is="ui-dialog"> 升级成 AntD 风格的弹框组件
+ * ui-dialog.js（ESM）—— <dialog is="ui-dialog"> 弹框组件
  *
  * 引入：
  *   <link rel="stylesheet" href="./assets/ui-dialog.css">
  *   <script type="module">
- *     import Dialog from './assets/ui-dialog.js';
+ *     import dialog from './assets/ui-dialog.js';
  *   </script>
  *
- * Safari 至今不支持 customized built-in elements，
- * 这里探测到不支持时才动态加载 ./safari-polyfill.min.js（顶层 await，保证先于 define 执行）。
- *
- * 声明式（普通弹框，用 show() 打开，非模态）：
- *   <dialog is="ui-dialog" data-params="{ title: '标题', buttons: [{ type: 'primary', value: '好' }] }">
- *     内容
- *   </dialog>
- *
+ * 声明式：普通弹框，用 show() 打开，非模态
+ *   <dialog is="ui-dialog" data-params="{ title: '标题' }">内容</dialog>
  *   document.getElementById('x').show();
  *
- * show() 没有 ::backdrop，遮罩和点击拦截由 ui-dialog.css 里的
- * outline 大法 + 透明 ::after 层负责，见 :not(:modal) 那两条规则。
+ *   show() 没有 ::backdrop，遮罩和「点遮罩关闭」靠 ui-dialog.css 里
+ *   :not(:modal) 的 outline + 透明 ::after 那两条规则。
  *
- * 命令式（alert / confirm 内部用 showModal()，是真模态）：
- *   Dialog.alert(content, options)            返回 Promise<void>
- *   Dialog.confirm(content, options)          返回 Promise<boolean>
+ * 命令式：内部走 showModal()，是真模态
+ *   dialog.alert(content, options)      Promise<void>
+ *   dialog.confirm(content, options)    Promise<boolean>
  *
- * data-params 只认三个字段，可只写需要覆盖的：
- *   title    {String}  默认 ''，空字符串表示不显示标题
- *   closable {Boolean} 默认 true，是否显示右上角关闭按钮（同时决定点遮罩能否关闭）
- *   buttons  {Array}   默认 [{}, {}]，每一项 { type, value, events }
+ * 关闭方式交给原生 closedby 属性，浏览器不支持时由组件补上：
+ *   closedby="any"   点遮罩、Esc 都能关
+ *   closedby="none"  Esc 也关不掉
+ *   不写              等同于 closable，Esc 能关，点遮罩不关
+ *
+ * data-params，可只写需要覆盖的字段：
+ *   title    String  默认 ''，空串表示不显示标题
+ *   closable Boolean 默认 true，控制右上角关闭按钮
+ *   buttons  Array   默认 [{}, {}]，每项 { type, value, events }
  *            type   'primary'（默认，蓝色）| 'danger'（红色）| 'normal'（白底灰边）
  *            value  按钮文案，缺省时第一个是「确定」，其余是「取消」
- *            events 点击回调 (btn, dialog, index)，返回 false 可以阻止自动关闭
+ *            events 点击回调 (btn, el, index)，返回 false 可以阻止自动关闭
  *
  * 按钮按数组顺序从左到右排列，整组靠右。
+ *
+ * 兼容：Safari 不支持 customized built-in elements，
+ * 探测到不支持时才用顶层 await 动态加载 ./safari-polyfill.min.js，保证先于 define 执行。
  */
 
 const BUTTON_TYPES = ['primary', 'danger', 'normal'];
@@ -127,6 +129,36 @@ function render(el, params) {
   el.append(modal);
 }
 
+/* closedby 三种取值，不写时等同于 closable */
+function getClosedBy(el) {
+  const value = el.getAttribute('closedby');
+
+  return value === 'any' || value === 'none' ? value : 'closable';
+}
+
+/*
+ * closedby 的原生实现（Chrome 134+ 起）覆盖「Esc 关闭」和模态下的「点遮罩关闭」，
+ * Safari、Firefox 还没跟上，这里补齐同样的行为。
+ */
+function setupClosedBy(el) {
+  const native = 'closedBy' in HTMLDialogElement.prototype;
+
+  el.addEventListener('click', (e) => {
+    /* 只认 dialog 自身，内部元素冒泡上来的点击不算 */
+    if (e.target !== el) return;
+
+    /* 模态弹框在支持 closedby 的浏览器里由原生接管，不用重复处理 */
+    if (native && el.matches(':modal')) return;
+
+    if (getClosedBy(el) === 'any') el.close();
+  });
+
+  /* closedby="none" 时 Esc 不该关；原生支持的话 cancel 压根不会派发，这条只服务不支持的浏览器 */
+  el.addEventListener('cancel', (e) => {
+    if (getClosedBy(el) === 'none') e.preventDefault();
+  });
+}
+
 function init(el, params) {
   /* 声明式升级和命令式创建都会进来，用标记保证只渲染一次 */
   if (el.__uiInited) return;
@@ -134,6 +166,8 @@ function init(el, params) {
 
   el.__uiParams = normalize(params || parseParams(el.getAttribute('data-params')));
   render(el, el.__uiParams);
+
+  setupClosedBy(el);
 }
 
 /* 探测原生是否支持 customized built-in elements（Safari 会抛错） */
@@ -228,7 +262,7 @@ class Dialog {
         ]
       });
 
-      /* 点 ×、按 Esc、点遮罩都会走到这里，统一按「未确认」收尾 */
+      /* 点 ×、按 Esc 都会走到这里，统一按「未确认」收尾 */
       el.addEventListener('close', () => {
         el.remove();
         resolve(confirmed);

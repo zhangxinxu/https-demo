@@ -297,16 +297,17 @@
         { type: 'primary', value: '知道了' },
         { type: 'normal', value: '关闭' }
       ]
-    }">
+    }" closedby="any">
       <p>三个参数：<code>title</code> 管标题，<code>closable</code> 管右上角关闭按钮，<code>buttons</code> 管底部按钮。</p>
       <p>按钮的 <code>type</code> 决定颜色，<code>value</code> 决定文案，<code>events</code> 是点击回调。</p>
+      <p>设置了<code>closedby="any"</code>，点击蒙层也可以关闭。</p>
     </dialog>
 
     <dialog is="ui-dialog" id="demo-plain" data-params="{
       closable: false,
       buttons: [{ type: 'normal', value: '我知道啦' }]
-    }">
-      <p>没有标题、也没有右上角关闭按钮，只能点底部按钮离开（Esc 是 dialog 的原生行为，仍然有效）。</p>
+    }" closedby="none">
+      <p>没有标题、也没有右上角关闭按钮，只能点底部按钮离开（设置了closedby="none"，Esc 也无法关闭）。</p>
     </dialog>
 
     <dialog is="ui-dialog" id="demo-danger" data-params="{
