@@ -278,9 +278,9 @@
     </p>
 
     <div class="btn-row">
-      <button type="button" class="btn" data-open="demo-basic">完整参数</button>
-      <button type="button" class="btn" data-open="demo-plain">无标题</button>
-      <button type="button" class="btn" data-open="demo-danger">危险按钮</button>
+      <button type="button" class="btn" id="btn-basic" title="show()方法显示">完整参数</button>
+      <button type="button" class="btn" id="btn-plain" title="open=true显示">无标题</button>
+      <button type="button" class="btn" id="btn-danger" title="setAttribute显示">危险按钮</button>
       <button type="button" class="btn btn-primary" id="btn-alert">dialog.alert()</button>
       <button type="button" class="btn" id="btn-confirm">dialog.confirm()</button>
     </div>
@@ -469,11 +469,17 @@
   /* =========================================================
    * 案例三：组件参数、alert 与 confirm
    * =======================================================*/
-  document.querySelectorAll('[data-open]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      const target = document.getElementById(btn.dataset.open);
-      if (target) target.show();
-    });
+  /* 三种打开方式：show() / open = true / setAttribute('open', 'open') */
+  document.getElementById('btn-basic').addEventListener('click', function () {
+    document.getElementById('demo-basic').show();
+  });
+
+  document.getElementById('btn-plain').addEventListener('click', function () {
+    document.getElementById('demo-plain').open = true;
+  });
+
+  document.getElementById('btn-danger').addEventListener('click', function () {
+    document.getElementById('demo-danger').setAttribute('open', 'open');
   });
 
   document.getElementById('btn-alert').addEventListener('click', function () {
