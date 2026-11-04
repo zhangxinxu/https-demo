@@ -143,6 +143,18 @@
     animation: none;
   }
 
+  /* 关闭时弹框快速淡出，不跟着做几何形变 */
+  ::view-transition-old(intro-dialog) {
+    animation: intro-dialog-out .18s ease both;
+  }
+
+  @keyframes intro-dialog-out {
+    to {
+      opacity: 0;
+      transform: scale(.98);
+    }
+  }
+
   /* ---------- 图片查看器 ---------- */
   dialog.viewer {
     width: 100vw;
@@ -346,7 +358,7 @@
   }
 
   /* =========================================================
-   * 案例一：按钮 → 弹框，关闭再缩回按钮
+   * 案例一：打开时从按钮放大，关闭时快速淡出
    * =======================================================*/
   (function introDialog() {
     const button = document.getElementById('btn-intro');
@@ -368,16 +380,12 @@
     });
 
     el.close = function () {
-      const transition = startViewTransition(function () {
-        el.style.viewTransitionName = '';
-        button.style.viewTransitionName = NAME;
+      /* 关闭不再做「缩回按钮」的几何 morph：
+         弹框快照被压到按钮尺寸时内容会糊成一团，按钮本身还要先从 root 快照里剥出来，看着闪。
+         这里只保留弹框自己的淡出，干净利落 */
+      startViewTransition(function () {
         nativeClose();
       });
-
-      const restore = function () { button.style.viewTransitionName = ''; };
-
-      if (transition) transition.finished.then(restore, restore);
-      else restore();
     };
 
     /* Esc 是浏览器直接关的，拦下来走带过渡的 close() */
