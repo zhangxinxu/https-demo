@@ -107,6 +107,7 @@ dialog.ui-dialog:not(:modal)::after {
   line-height: 1.5;
 }
 
+/* × 用两条渐变色带画出来：不依赖字体，也没有字形下沉和基线偏移，天然居中 */
 .ui-modal-close {
   position: absolute;
   top: 16px;
@@ -116,17 +117,22 @@ dialog.ui-dialog:not(:modal)::after {
   padding: 0;
   border: 0;
   border-radius: 6px;
-  background: none;
   color: #8f959e;
-  font-family: system-ui, sans-serif;
-  font-size: 18px;
-  line-height: 0.9;
+  font-size: 0;
   cursor: pointer;
   transition: background-color .2s, color .2s;
+  background-color: transparent;
+  background-image:
+    linear-gradient(45deg, transparent 45%, currentColor 45% 55%, transparent 0%),
+    linear-gradient(-45deg, transparent 45%, currentColor 45% 55%, transparent 0%);
+  background-size: 11px 11px;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
+/* 只改底色，不能再用 background 简写，否则会把上面的背景图清掉 */
 .ui-modal-close:hover {
-  background: #f2f3f5;
+  background-color: #f2f3f5;
   color: #1f2329;
 }
 

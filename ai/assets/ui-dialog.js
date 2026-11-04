@@ -86,8 +86,7 @@ function render(el, params) {
       const closeBtn = document.createElement('button');
       closeBtn.type = 'button';
       closeBtn.className = 'ui-modal-close';
-      closeBtn.setAttribute('aria-label', '关闭');
-      closeBtn.textContent = '×';
+      closeBtn.textContent = '关闭';
       closeBtn.addEventListener('click', () => el.close());
       head.append(closeBtn);
     }
