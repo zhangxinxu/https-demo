@@ -500,6 +500,9 @@
         viewerImg.style.viewTransitionName = NAME;
         viewer.showModal();
       });
+
+      /* 压一条自己的历史记录，系统返回键退掉的就是这一条，不会离开页面 */
+      history.pushState({ viewer: true }, '');
     }
 
     function close() {
@@ -517,6 +520,27 @@
       else restore();
     }
 
+    /* 页面上的关闭入口统一走这里：先退历史，由 popstate 去执行真正的关闭，
+       这样「点关闭」和「按返回」走的是同一条路，不会多留一条历史记录 */
+    let waitingBack = false;
+
+    function requestClose() {
+      if (waitingBack) return;
+
+      if (history.state && history.state.viewer) {
+        waitingBack = true;
+        history.back();
+        return;
+      }
+
+      close();
+    }
+
+    window.addEventListener('popstate', function () {
+      waitingBack = false;
+      if (viewer.open) close();
+    });
+
     /* 左右切换也走视图过渡，两张图交叉淡化 */
     function show(next) {
       startViewTransition(function () {
@@ -529,16 +553,16 @@
     });
 
     viewer.addEventListener('click', function (e) {
-      if (e.target === viewer) close();
+      if (e.target === viewer) requestClose();
     });
 
-    /* Esc 交给带过渡的 close */
+    /* Esc 和返回键落到同一个关闭流程 */
     viewer.addEventListener('cancel', function (e) {
       e.preventDefault();
-      close();
+      requestClose();
     });
 
-    viewer.querySelector('.viewer-close').addEventListener('click', close);
+    viewer.querySelector('.viewer-close').addEventListener('click', requestClose);
 
     viewer.querySelector('.viewer-prev').addEventListener('click', function (e) {
       e.stopPropagation();
