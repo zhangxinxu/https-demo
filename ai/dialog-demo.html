@@ -114,6 +114,102 @@
     gap: 10px;
   }
 
+  /* ---------- 案例一：popover 弹框（样式独立，不复用组件那套类名） ---------- */
+  .intro-pop {
+    width: 460px;
+    max-width: min(92vw, 460px);
+    padding: 0;
+    border: 0;
+    border-radius: 14px;
+    background: #fff;
+    color: var(--text);
+    box-shadow: 0 24px 60px -24px rgba(16, 24, 40, .45);
+
+    /* 关闭态就是过渡终点：淡出 + 往上收 5px。
+       display / overlay 用 allow-discrete，动画播完才真正出顶层 */
+    opacity: 0;
+    translate: 0 -5px;
+    transition:
+      opacity .2s ease-out,
+      translate .25s ease-out,
+      overlay .25s ease-out allow-discrete,
+      display .25s ease-out allow-discrete;
+  }
+
+  /* 打开态显式给 display，不依赖浏览器对 dialog 和 popover 两套隐藏规则的叠加 */
+  .intro-pop:popover-open {
+    display: block;
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  /* 打开的那一帧从上方 5px 处往下沉到位 */
+  @starting-style {
+    .intro-pop:popover-open {
+      opacity: 0;
+      translate: 0 -5px;
+    }
+  }
+
+  /* 遮罩跟着一起淡入淡出 */
+  .intro-pop::backdrop {
+    background-color: transparent;
+    transition:
+      background-color .2s ease-out,
+      overlay .25s ease-out allow-discrete,
+      display .25s ease-out allow-discrete;
+  }
+
+  .intro-pop:popover-open::backdrop {
+    background-color: rgba(15, 23, 42, .45);
+  }
+
+  /* 伪元素的起始样式没法嵌套在上面那条规则里，只能单独写 */
+  @starting-style {
+    .intro-pop:popover-open::backdrop {
+      background-color: transparent;
+    }
+  }
+
+  .intro-pop-title {
+    margin: 0;
+    padding: 22px 24px 8px;
+    font-size: 16px;
+    letter-spacing: -.01em;
+  }
+
+  .intro-pop-body { padding: 0 24px; }
+
+  .intro-pop-body p {
+    margin: 0 0 10px;
+    color: var(--text-2);
+    font-size: 13.5px;
+    line-height: 1.8;
+  }
+
+  .intro-pop-body > p:last-child { margin-bottom: 0; }
+
+  .intro-pop-foot {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 24px 20px;
+  }
+
+  /* 弹框里的按钮也单独一套，跟页面 .btn 无关 */
+  .intro-pop-btn {
+    height: 32px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--brand);
+    color: #fff;
+    font: inherit;
+    cursor: pointer;
+    transition: background-color .2s;
+  }
+
+  .intro-pop-btn:hover { background: var(--brand-hover); }
+
   /* ---------- 缩略图 ---------- */
   .thumbs {
     display: grid;
@@ -266,19 +362,21 @@
   </header>
 
   <section class="block">
-    <h2>一、常规信息弹框</h2>
-    <p>原生 dialog 加一层 AntD 风格的结构，右下角放一个确认按钮。</p>
+    <h2>一、popover 弹框</h2>
+    <p>给 dialog 加 <code>popover</code> 属性，打开和关闭全交给 popover API，一行 JS 都不用写。</p>
 
-    <button type="button" class="btn btn-primary" id="btn-intro">查看《CSS新世界》介绍</button>
+    <button type="button" class="btn btn-primary" popovertarget="intro-dialog">查看《CSS新世界》介绍</button>
 
-    <dialog is="ui-dialog" id="intro-dialog" data-params="{
-      title: '关于《CSS新世界》',
-      closable: true,
-      buttons: [{ type: 'primary', value: '确认' }]
-    }">
-      <p>《CSS新世界》是张鑫旭在《CSS世界》《CSS选择器世界》之后写的第三本 CSS 专著，2021 年由人民邮电出版社出版。</p>
-      <p>全书围绕 CSS 近年新增的能力展开：Grid 布局、<code>clip-path</code> 剪裁、滤镜与混合模式、滚动行为、逻辑属性、自定义属性与 <code>@property</code>、颜色函数等等。</p>
-      <p>写法上延续了他一贯的风格——每个特性都配可运行的实例和兼容性说明，适合已经会写 CSS、想系统补齐新特性的人。</p>
+    <dialog class="intro-pop" id="intro-dialog" popover>
+      <h3 class="intro-pop-title">关于《CSS新世界》</h3>
+      <div class="intro-pop-body">
+        <p>《CSS新世界》是张鑫旭在《CSS世界》《CSS选择器世界》之后写的第三本 CSS 专著，2021 年由人民邮电出版社出版。</p>
+        <p>全书围绕 CSS 近年新增的能力展开：Grid 布局、<code>clip-path</code> 剪裁、滤镜与混合模式、滚动行为、逻辑属性、自定义属性与 <code>@property</code>、颜色函数等等。</p>
+        <p>写法上延续了他一贯的风格——每个特性都配可运行的实例和兼容性说明，适合已经会写 CSS、想系统补齐新特性的人。</p>
+      </div>
+      <div class="intro-pop-foot">
+        <button type="button" class="intro-pop-btn" popovertarget="intro-dialog" popovertargetaction="hide">确认</button>
+      </div>
     </dialog>
   </section>
 
@@ -369,43 +467,6 @@
 
     return document.startViewTransition(callback);
   }
-
-  /* =========================================================
-   * 案例一：打开时从按钮放大，关闭时快速淡出
-   * =======================================================*/
-  (function introDialog() {
-    const button = document.getElementById('btn-intro');
-    const el = document.getElementById('intro-dialog');
-    const NAME = 'intro-dialog';
-
-    /* 组件内部调的也是 el.close()，覆写实例方法就能接管所有关闭入口 */
-    const nativeClose = el.close.bind(el);
-
-    button.addEventListener('click', function () {
-      /* 起点是按钮，回调里把过渡名交给弹框 */
-      button.style.viewTransitionName = NAME;
-
-      startViewTransition(function () {
-        button.style.viewTransitionName = '';
-        el.style.viewTransitionName = NAME;
-        el.showModal();
-      });
-    });
-
-    el.close = function () {
-      /* 关闭不再做「缩回按钮」的几何 morph：
-         这里只保留弹框自己的淡出，干净利落 */
-      startViewTransition(function () {
-        nativeClose();
-      });
-    };
-
-    /* Esc 是浏览器直接关的，拦下来走带过渡的 close() */
-    el.addEventListener('cancel', function (e) {
-      e.preventDefault();
-      el.close();
-    });
-  })();
 
   /* =========================================================
    * 案例二：图片查看器
