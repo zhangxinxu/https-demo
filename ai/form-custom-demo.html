@@ -589,14 +589,20 @@
    * 输入框外观自己写，面板配色覆盖 flatpickr 自带的类名
    * =======================================================*/
   .ui-date {
-    --icon-calendar: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M5 1a1 1 0 0 1 1 1v1h4V2a1 1 0 1 1 2 0v1h.5A2.5 2.5 0 0 1 15 5.5v8A2.5 2.5 0 0 1 12.5 16h-9A2.5 2.5 0 0 1 1 13.5v-8A2.5 2.5 0 0 1 3.5 3H4V2a1 1 0 0 1 1-1Zm8.5 6h-11v6.5a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V7Z'/%3E%3C/svg%3E");
+    --icon-calendar: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%238f959e' d='M5 1a1 1 0 0 1 1 1v1h4V2a1 1 0 1 1 2 0v1h.5A2.5 2.5 0 0 1 15 5.5v8A2.5 2.5 0 0 1 12.5 16h-9A2.5 2.5 0 0 1 1 13.5v-8A2.5 2.5 0 0 1 3.5 3H4V2a1 1 0 0 1 1-1Zm8.5 6h-11v6.5a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V7Z'/%3E%3C/svg%3E");
+    --icon-clock: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg fill='none' stroke='%238f959e' stroke-width='1.5' stroke-linecap='round'%3E%3Ccircle cx='8' cy='8' r='6.25'/%3E%3Cpath d='M8 4.6V8l2.6 1.6'/%3E%3C/g%3E%3C/svg%3E");
 
     width: 160px;
     height: 32px;
-    padding: 0 10px;
+    padding: 0 30px 0 10px;
     border: 1px solid var(--line);
     border-radius: 6px;
     background-color: #fff;
+    /* 图标自己画在右侧：日期给日历，时间给钟表，各家显示就都一样了 */
+    background-image: var(--icon-calendar);
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px auto;
     color: var(--text);
     font: inherit;
     font-variant-numeric: tabular-nums;
@@ -606,7 +612,11 @@
 
   .ui-date[type='datetime-local'] { width: 190px; }
   .ui-date[type='month'] { width: 130px; }
-  .ui-date[type='time'] { width: 110px; }
+
+  .ui-date[type='time'] {
+    width: 110px;
+    background-image: var(--icon-clock);
+  }
 
   .ui-date:hover { border-color: #c9cdd4; }
 
@@ -622,27 +632,11 @@
     cursor: not-allowed;
   }
 
-  /* 原生图标还是原来的位置和尺寸，只是换了个样式、并且不吃点击：
-     点它等于点输入框，交给 flatpickr 处理，不会弹出原生浮层 */
+  /* 原生日历图标藏掉，位置让给我们自己画的背景图 */
+  .ui-date::-webkit-calendar-picker-indicator { display: none; }
+
+  /* 里面那串日期文字，去掉原生自带的内边距，和 10px 的 padding 对齐 */
   .ui-date::-webkit-datetime-edit { padding: 0; }
-
-  .ui-date::-webkit-calendar-picker-indicator {
-    width: 16px;
-    height: 16px;
-    margin-left: 6px;
-    padding: 0;
-    background: none;
-    background-color: var(--text-3);
-    -webkit-mask: var(--icon-calendar) center / 100% no-repeat;
-    mask: var(--icon-calendar) center / 100% no-repeat;
-    opacity: 1;
-    pointer-events: none;
-  }
-
-  .ui-date:hover::-webkit-calendar-picker-indicator,
-  .ui-date:focus::-webkit-calendar-picker-indicator {
-    background-color: var(--brand);
-  }
 
   /* ---------- flatpickr 面板：把默认的深蓝主题换成页面这套色 ---------- */
   .flatpickr-calendar {
@@ -945,9 +939,9 @@
       <code>month</code> 是 <code>Y-m</code>、<code>time</code> 是 <code>H:i</code>），否则赋值时会被原生输入框当成非法值丢掉。
     </p>
     <p class="hint">
-      加了 <code>readonly</code> 之后，Chrome、Firefox 干脆就不显示原生日历图标了，「点图标弹原生浮层」的问题自己消失；
-      万一某个内核还留着图标，<code>::-webkit-calendar-picker-indicator</code> 上的 <code>pointer-events: none</code>
-      会让点击落到输入框上。没 JS 时输入框不是只读，图标照旧显示，所以那套图标样式仍然有用。
+      图标干脆不依赖原生：<code>::-webkit-calendar-picker-indicator</code> 直接 <code>display: none</code>，
+      右侧用 <code>background</code> 画一个——日期给日历、<code>type="time"</code> 给钟表。
+      这样各家看到的图标一样，点哪儿都是点输入框，也不会冒出原生浮层。
     </p>
     <p class="hint">
       面板没有现成的变量可配，直接覆盖 flatpickr 的类名（<code>.flatpickr-day.selected</code>、<code>.flatpickr-calendar</code> 等），
