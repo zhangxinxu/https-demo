@@ -473,6 +473,112 @@
     opacity: 0;
   }
 
+  /* =========================================================
+   * 四、下拉框：select
+   * 支持 appearance: base-select 的内核，连下拉面板一起自定义；
+   * 不支持的，就只改 select 本身，点开还是系统默认的下拉
+   * =======================================================*/
+  .ui-select {
+    --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath fill='%238f959e' d='M145.659 68.949a12.874 12.874 0 0 0-18.473 0L99.479 97.233 71.772 68.949a12.874 12.874 0 0 0-18.473 0c-5.099 5.208-5.099 13.648 0 18.857l46.18 47.14 46.181-47.14c5.099-5.208 5.099-13.649-.001-18.857z'/%3E%3C/svg%3E");
+
+    width: 200px;
+    height: 32px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background-color: #fff;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+    transition: border-color .2s, box-shadow .2s;
+  }
+
+  .ui-select:disabled {
+    background-color: var(--bg);
+    color: var(--text-3);
+    cursor: not-allowed;
+  }
+
+  /* 收起状态显示的是「选中的那一项」，占位项是灰字 */
+  .ui-select:has(option[value='']:checked) { color: var(--text-3); }
+
+  .ui-select option:disabled { color: var(--text-3); }
+
+  @supports (appearance: base-select) {
+    .ui-select {
+      appearance: base-select;
+      padding: 0;
+      line-height: 30px;
+    }
+
+    .ui-select:not(:disabled):hover { border-color: #c9cdd4; }
+
+    .ui-select:open,
+    .ui-select:focus-visible {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(22, 119, 255, .15);
+    }
+
+    /* 箭头：换掉自带的 picker 图标，展开时翻转 */
+    .ui-select::picker-icon {
+      content: '';
+      width: 18px;
+      height: 18px;
+      margin-inline: auto 8px;
+      background: var(--select-arrow) no-repeat center / 100%;
+      transition: rotate .2s;
+    }
+
+    .ui-select:open::picker-icon { rotate: 180deg; }
+
+    /* 下拉面板 */
+    .ui-select::picker(select) {
+      appearance: base-select;
+      margin-block: 4px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 6px 20px -8px rgba(0, 0, 0, .3);
+      opacity: 0;
+      transition: opacity .15s allow-discrete;
+    }
+
+    .ui-select::picker(select):popover-open { opacity: 1; }
+
+    @starting-style {
+      .ui-select::picker(select):popover-open { opacity: 0; }
+    }
+
+    /* 选项：和 select 自身的文字对齐，悬停、选中各一套底色 */
+    .ui-select option {
+      padding: 0 12px;
+      line-height: 30px;
+      border-radius: 4px;
+    }
+
+    .ui-select option:hover { background-color: var(--fill); }
+
+    .ui-select option:checked {
+      background-color: var(--brand-soft);
+      color: #0958d9;
+    }
+
+    /* 选中态已经有底色，自带的对勾就不要了 */
+    .ui-select option::checkmark { display: none; }
+  }
+
+  @supports not (appearance: base-select) {
+    .ui-select {
+      appearance: none;
+      padding: 0 32px 0 12px;
+      background-image: var(--select-arrow);
+      background-repeat: no-repeat;
+      background-position: right 6px center;
+      background-size: 18px auto;
+    }
+  }
+
 </style>
 </head>
 <body>
@@ -564,6 +670,49 @@
     </p>
     <p class="hint">
       改 <code>mask-size</code> 的平铺宽度、输入框的宽高，就能得到不同大小、不同疏密的评分，参见第二个评分效果。
+    </p>
+  </section>
+
+  <!-- ========== 四、下拉框 ========== -->
+  <section class="block">
+    <h2>四、下拉框选择</h2>
+    <p>
+      支持 <code>appearance: base-select</code> 的内核（如 Chrome 135+）能把下拉面板一起自定义；
+      不支持的，就只改 <code>select</code> 本身，点开仍是系统默认的下拉。
+    </p>
+
+    <div class="row">
+      <select class="ui-select" aria-label="城市">
+        <option value="" selected disabled>请选择城市</option>
+        <option>北京</option>
+        <option>上海</option>
+        <option>广州</option>
+        <option>深圳</option>
+        <option>杭州</option>
+        <option disabled>成都（暂未开通）</option>
+      </select>
+
+      <select class="ui-select" aria-label="城市（已选）">
+        <option>北京</option>
+        <option selected>上海</option>
+        <option>广州</option>
+        <option>深圳</option>
+      </select>
+
+      <select class="ui-select" aria-label="城市（禁用）" disabled>
+        <option selected>北京</option>
+        <option>上海</option>
+      </select>
+    </div>
+
+    <p class="hint">
+      支持 <code>base-select</code> 时，<code>select</code> 变成一个可控的按钮：箭头是 <code>::picker-icon</code>，
+      下拉面板是 <code>::picker(select)</code>，里面的每一项就是 <code>option</code>，
+      选中、悬停、禁用都能各给一套样式，展开收起还能用 <code>@starting-style</code> 加个淡入。
+    </p>
+    <p class="hint">
+      不支持时只能 <code>appearance: none</code> 后自己补箭头，所以 <code>select</code> 和选项的左右内边距要对得上：
+      面板里的 <code>option</code> 也是收起状态显示的那一行，两边写一样的 <code>padding</code>，文字才不会跳。
     </p>
   </section>
 </main>
