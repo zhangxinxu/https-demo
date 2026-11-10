@@ -934,19 +934,9 @@
     </div>
 
     <p class="hint">
-      接管方式：<code>type</code> 保持原样，只加个 <code>readonly</code>，点击和键盘都交给 flatpickr；
-      但格式必须和原生值一致（<code>date</code> 是 <code>Y-m-d</code>、<code>datetime-local</code> 要写成 <code>Y-m-d\TH:i</code>、
-      <code>month</code> 是 <code>Y-m</code>、<code>time</code> 是 <code>H:i</code>），否则赋值时会被原生输入框当成非法值丢掉。
-    </p>
-    <p class="hint">
-      图标干脆不依赖原生：<code>::-webkit-calendar-picker-indicator</code> 直接 <code>display: none</code>，
-      右侧用 <code>background</code> 画一个——日期给日历、<code>type="time"</code> 给钟表。
-      这样各家看到的图标一样，点哪儿都是点输入框，也不会冒出原生浮层。
-    </p>
-    <p class="hint">
-      面板没有现成的变量可配，直接覆盖 flatpickr 的类名（<code>.flatpickr-day.selected</code>、<code>.flatpickr-calendar</code> 等），
-      把默认的深蓝换成页面这套主题色；所以它自己的 CSS 要在本页样式之前引入。另外它没有「周」面板，<code>week</code> 就没接，
-      「月份」用的是 monthSelect 插件。
+      输入框保持原生 <code>type</code>、加个 <code>readonly</code>，交互交给 flatpickr，日期格式按原生写；
+      原生日历图标藏掉，右侧图标自己用 <code>background</code> 画（日期给日历、时间给钟表），各家看到的一样；
+      面板配色直接覆盖 flatpickr 的类名即可。
     </p>
   </section>
 
