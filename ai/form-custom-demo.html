@@ -298,6 +298,7 @@
     background: none;
     cursor: pointer;
     appearance: none;
+    overflow: hidden; /* 裁掉滑块往左拉出来的那条填充带 */
   }
 
   .ui-range::-webkit-slider-runnable-track {
@@ -306,21 +307,41 @@
     background: var(--fill);
   }
 
+  /* Chrome 没有「已填充进度」的伪元素，这里用 border-shape 让滑块自己带一条：
+     第一个形状是外轮廓（盒子 + 往左 2000px、6px 高的条），第二个是盒子本身，
+     两者围出来的正是左边那条填充带，超出的部分由 overflow: hidden 裁掉 */
   .ui-range::-webkit-slider-thumb {
     width: 16px;
     height: 16px;
     margin-top: -5px;
-    border: 0;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(16, 24, 40, .28), 0 0 0 1px rgba(16, 24, 40, .06);
     appearance: none;
-    transition: box-shadow .2s;
+    border: 0;
+    border-style: solid;
+    border-color: var(--brand);
+
+    /* border-shape 会让 border-radius 失效，圆用径向渐变画，两种情况都正常 */
+    background: radial-gradient(circle closest-side, #fff 0 92%, #e5e6eb 92% 100%);
+
+    border-shape:
+      polygon(-2000px 5px, 0 5px, 0 0, 16px 0, 16px 16px, 0 16px, 0 11px, -2000px 11px)
+      polygon(0 0, 16px 0, 16px 16px, 0 16px);
   }
 
-  .ui-range:hover::-webkit-slider-thumb,
-  .ui-range:focus-visible::-webkit-slider-thumb {
-    box-shadow: 0 1px 3px rgba(16, 24, 40, .28), 0 0 0 4px rgba(22, 119, 255, .15);
+  /* 悬停时把把手的描边换成品牌色，只影响圆那一块 */
+  .ui-range:not(:disabled):hover::-webkit-slider-thumb {
+    background: radial-gradient(circle closest-side, #fff 0 92%, var(--brand) 92% 100%);
+  }
+
+  /* 不支持 border-shape 的内核：靠页面底部那几行 JS 把进度写进 --percent，用轨道渐变画填充 */
+  @supports not (border-shape: polygon(0 0, 100% 0, 100% 100%)) {
+    .ui-range::-webkit-slider-runnable-track {
+      background: linear-gradient(to right, var(--brand) calc(var(--percent, 0) * 100%), var(--fill) 0);
+    }
+
+    .ui-range::-webkit-slider-thumb {
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(16, 24, 40, .28);
+    }
   }
 
   .ui-range::-moz-range-track {
@@ -341,45 +362,63 @@
     border: 0;
     border-radius: 50%;
     background: #fff;
-    box-shadow: 0 1px 3px rgba(16, 24, 40, .28), 0 0 0 1px rgba(16, 24, 40, .06);
+    box-shadow: 0 1px 3px rgba(16, 24, 40, .28);
   }
 
   .ui-range:disabled { cursor: not-allowed; opacity: .5; }
 
-  /* 评星：radio 倒序排列 + row-reverse，:checked ~ label 就能点亮左边若干颗星 */
+  /* 评星：由 range 派生。整块用 mask 镂成 5 颗星，
+     左半区的填充条由滑块伪元素往左拉出来，超出输入框的部分被 mask 裁掉，不需要 JS */
   .ui-rate {
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: flex-end;
-    gap: 2px;
-  }
+    --star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2.5l2.95 5.98 6.6.96-4.78 4.66 1.13 6.57L12 17.56l-5.9 3.11 1.13-6.57L2.45 9.44l6.6-.96L12 2.5z'/%3E%3C/svg%3E");
 
-  .ui-rate input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .ui-rate label {
-    width: 24px;
+    width: 120px; /* 5 颗 × 24px */
     height: 24px;
-    background: #dfe1e6;
+    margin: 0;
+    background: none;
     cursor: pointer;
-    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-    transition: background-color .2s;
+    appearance: none;
+    mask: var(--star) repeat-x left center / 24px 24px;
   }
 
-  .ui-rate input:checked ~ label { background: var(--warning); }
+  /* 未点亮：灰星 */
+  .ui-rate::-webkit-slider-runnable-track {
+    height: 100%;
+    background: #dfe1e6;
+  }
 
-  /* 鼠标掠过时按悬停位置预览，所以写在 :checked 后面 */
-  .ui-rate label:hover,
-  .ui-rate label:hover ~ label { background: #ffd666; }
+  /* 滑块本身只留 1px 当定位点，用它的阴影往左铺一条足够长的金色条子，
+     超出输入框的部分由上面的 mask 裁掉 */
+  .ui-rate::-webkit-slider-thumb {
+    width: 1px;
+    height: 100%;
+    margin: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: -999em 0 0 999em var(--warning);
+  }
 
-  .ui-rate input:focus-visible + label {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
+  .ui-rate:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+  }
+
+  /* Firefox 有现成的进度伪元素，用不着这段 trick */
+  .ui-rate::-moz-range-track {
+    height: 100%;
+    background: #dfe1e6;
+  }
+
+  .ui-rate::-moz-range-progress {
+    height: 100%;
+    background: var(--warning);
+  }
+
+  .ui-rate::-moz-range-thumb {
+    width: 0;
+    height: 0;
+    border: 0;
+    opacity: 0;
   }
 
   /* =========================================================
@@ -543,7 +582,7 @@
   <!-- ========== 三、范围选择、评星 ========== -->
   <section class="block">
     <h2>三、范围选择元素</h2>
-    <p>轨道和滑块分别对应 <code>::-webkit-slider-runnable-track</code> 和 <code>::-webkit-slider-thumb</code>，Firefox 另有一套。</p>
+    <p>轨道和滑块分别对应 <code>::-webkit-slider-runnable-track</code> 和 <code>::-webkit-slider-thumb</code>，Chrome 没有现成的「已填充进度」伪元素。</p>
 
     <div class="row">
       <input class="ui-range" type="range" min="0" max="100" value="60">
@@ -551,25 +590,20 @@
       <input class="ui-range" type="range" min="0" max="100" value="30" disabled>
     </div>
 
+    <p class="hint">
+      左半区的填充交给 <code>border-shape</code>：滑块的外轮廓故意往左拉 2000px，和第二个形状（盒子本身）围出那条填充带，
+      超出输入框的部分由 <code>overflow: hidden</code> 裁掉，不用回传进度；
+      不支持 <code>border-shape</code> 的内核，由页面底部的几行 JS 把进度写进 <code>--percent</code>，交给轨道渐变去画。
+    </p>
+
     <div class="row">
-      <div class="ui-rate">
-        <input type="radio" name="demo-rate" id="rate-5" aria-label="5 分">
-        <label for="rate-5"></label>
-        <input type="radio" name="demo-rate" id="rate-4" aria-label="4 分" checked>
-        <label for="rate-4"></label>
-        <input type="radio" name="demo-rate" id="rate-3" aria-label="3 分">
-        <label for="rate-3"></label>
-        <input type="radio" name="demo-rate" id="rate-2" aria-label="2 分">
-        <label for="rate-2"></label>
-        <input type="radio" name="demo-rate" id="rate-1" aria-label="1 分">
-        <label for="rate-1"></label>
-      </div>
-      <span class="val">评星</span>
+      <input class="ui-rate" type="range" max="5" step="0.5" value="4" aria-label="评分">
+      <input class="ui-rate" type="range" max="5" value="2" disabled aria-label="评分（禁用）">
     </div>
 
     <p class="hint">
-      评星是 range 的衍生组件：radio 按 5→1 倒序写，容器 <code>flex-direction: row-reverse</code> 把顺序翻回来，
-      <code>input:checked ~ label</code> 就正好点亮左边的若干颗星，不需要 JS。
+      评星是 range 的衍生组件：整块输入框用 <code>mask</code> 镂成 5 颗星，未点亮的是轨道底色；
+      滑块只留 1px 当定位点，用它的阴影往左铺一条金色条子，超出输入框的部分被 <code>mask</code> 裁掉，同样不需要 JS。
     </p>
   </section>
 
@@ -633,6 +667,23 @@
     </p>
   </section>
 </main>
+
+<script>
+  /* border-shape 不支持的内核（Firefox、旧版 Chrome）：把进度写进 --percent，轨道渐变自己去画填充 */
+  if (!CSS.supports('border-shape', 'polygon(0 0, 100% 0, 100% 100%)')) {
+    document.querySelectorAll('.ui-range').forEach(function (el) {
+      const min = Number(el.min) || 0;
+      const max = Number(el.max) || 100;
+
+      const sync = function () {
+        el.style.setProperty('--percent', (el.value - min) / (max - min));
+      };
+
+      el.addEventListener('input', sync);
+      sync();
+    });
+  }
+</script>
 
 </body>
 </html>
