@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>表单控件元素的自定义演示页面 - 第二章</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/plugins/monthSelect/style.css">
 <style>
   :root {
     --brand: #1677ff;
@@ -583,13 +585,13 @@
   }
 
   /* =========================================================
-   * 五、日期选择：date / datetime-local / month / week / time
-   * 只改输入框本身和它右侧的图标，点开的日期浮层还是系统的
+   * 五、日期选择：用 flatpickr 接管，浮层不再用系统默认的
+   * 输入框外观自己写，面板配色覆盖 flatpickr 自带的类名
    * =======================================================*/
   .ui-date {
     --icon-calendar: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M5 1a1 1 0 0 1 1 1v1h4V2a1 1 0 1 1 2 0v1h.5A2.5 2.5 0 0 1 15 5.5v8A2.5 2.5 0 0 1 12.5 16h-9A2.5 2.5 0 0 1 1 13.5v-8A2.5 2.5 0 0 1 3.5 3H4V2a1 1 0 0 1 1-1Zm8.5 6h-11v6.5a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V7Z'/%3E%3C/svg%3E");
 
-    width: 190px;
+    width: 160px;
     height: 32px;
     padding: 0 10px;
     border: 1px solid var(--line);
@@ -599,15 +601,11 @@
     font: inherit;
     font-variant-numeric: tabular-nums;
     accent-color: var(--brand);
-    cursor: pointer;
     transition: border-color .2s, box-shadow .2s;
   }
 
-  .ui-date[type='datetime-local'] { width: 210px; }
-
-  .ui-date[type='month'],
-  .ui-date[type='week'] { width: 150px; }
-
+  .ui-date[type='datetime-local'] { width: 190px; }
+  .ui-date[type='month'] { width: 130px; }
   .ui-date[type='time'] { width: 110px; }
 
   .ui-date:hover { border-color: #c9cdd4; }
@@ -624,13 +622,10 @@
     cursor: not-allowed;
   }
 
-  /* 里面那串日期文字，去掉原生自带的内边距，和 border 的 10px 对齐 */
-  .ui-date::-webkit-datetime-edit {
-    padding: 0;
-  }
+  /* 原生图标还是原来的位置和尺寸，只是换了个样式、并且不吃点击：
+     点它等于点输入框，交给 flatpickr 处理，不会弹出原生浮层 */
+  .ui-date::-webkit-datetime-edit { padding: 0; }
 
-  /* 右侧图标：先干掉原生图标，再用遮罩取形状、背景色上色，
-     和上面 select 的箭头一个套路 */
   .ui-date::-webkit-calendar-picker-indicator {
     width: 16px;
     height: 16px;
@@ -641,7 +636,7 @@
     -webkit-mask: var(--icon-calendar) center / 100% no-repeat;
     mask: var(--icon-calendar) center / 100% no-repeat;
     opacity: 1;
-    cursor: pointer;
+    pointer-events: none;
   }
 
   .ui-date:hover::-webkit-calendar-picker-indicator,
@@ -649,7 +644,106 @@
     background-color: var(--brand);
   }
 
-  .ui-date:disabled::-webkit-calendar-picker-indicator { cursor: not-allowed; }
+  /* ---------- flatpickr 面板：把默认的深蓝主题换成页面这套色 ---------- */
+  .flatpickr-calendar {
+    border-radius: 10px;
+    box-shadow: 0 8px 24px -10px rgba(0, 0, 0, .3);
+    font-family: inherit;
+  }
+
+  /* 自带的那个小三角，和圆角阴影不搭，去掉 */
+  .flatpickr-calendar::before,
+  .flatpickr-calendar::after { display: none; }
+
+  .flatpickr-months .flatpickr-month,
+  .flatpickr-current-month .flatpickr-monthDropdown-months,
+  .flatpickr-current-month input.cur-year { color: var(--text); }
+
+  .flatpickr-current-month .flatpickr-monthDropdown-months:hover,
+  .flatpickr-current-month input.cur-year:hover { background: var(--fill); }
+
+  .flatpickr-months .flatpickr-prev-month svg,
+  .flatpickr-months .flatpickr-next-month svg { fill: var(--text-3); }
+
+  .flatpickr-months .flatpickr-prev-month:hover svg,
+  .flatpickr-months .flatpickr-next-month:hover svg { fill: var(--brand); }
+
+  span.flatpickr-weekday {
+    color: var(--text-3);
+    font-weight: 400;
+  }
+
+  .flatpickr-day {
+    border-radius: 6px;
+    color: var(--text);
+  }
+
+  .flatpickr-day:hover,
+  .flatpickr-day:focus {
+    border-color: var(--fill);
+    background: var(--fill);
+  }
+
+  .flatpickr-day.today {
+    border-color: var(--brand);
+    color: var(--brand);
+  }
+
+  .flatpickr-day.selected,
+  .flatpickr-day.selected:hover,
+  .flatpickr-day.selected:focus {
+    border-color: var(--brand);
+    background: var(--brand);
+    color: #fff;
+  }
+
+  .flatpickr-day.flatpickr-disabled,
+  .flatpickr-day.prevMonthDay,
+  .flatpickr-day.nextMonthDay {
+    color: var(--text-3);
+    opacity: .6;
+  }
+
+  /* 时间面板 */
+  .flatpickr-time input,
+  .flatpickr-time .flatpickr-am-pm { color: var(--text); font-size: 14px; }
+
+  .flatpickr-time input:hover,
+  .flatpickr-time input:focus,
+  .flatpickr-time .flatpickr-am-pm:hover,
+  .flatpickr-time .flatpickr-am-pm:focus { background: var(--fill); }
+
+  .flatpickr-time .flatpickr-time-separator,
+  .flatpickr-time .arrowUp::after,
+  .flatpickr-time .arrowDown::after { color: var(--text-3); }
+
+  /* 顶部年月的字号，默认 135% 在这个面板里太抢戏 */
+  .flatpickr-current-month {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* monthSelect 插件：月份也是「选中给底色」这一套 */
+  .flatpickr-monthSelect-month {
+    border-radius: 6px;
+    color: var(--text);
+  }
+
+  .flatpickr-monthSelect-month:hover,
+  .flatpickr-monthSelect-month:focus { background: var(--fill); }
+
+  .flatpickr-monthSelect-month.today {
+    border-color: var(--brand);
+    color: var(--brand);
+  }
+
+  .flatpickr-monthSelect-month.selected,
+  .flatpickr-monthSelect-month.selected:hover,
+  .flatpickr-monthSelect-month.selected:focus {
+    border-color: var(--brand);
+    background: var(--brand);
+    color: #fff;
+  }
 
   /* =========================================================
    * 六、颜色选择：input[type="color"]
@@ -830,8 +924,8 @@
   <section class="block">
     <h2>五、日期选择</h2>
     <p>
-      各种日期类型共用一套外观：改的是 <code>::-webkit-calendar-picker-indicator</code>（右侧图标）
-      和 <code>::-webkit-datetime-edit</code>（里面那串日期文字），点开的日期浮层仍然是系统的。
+      原生日期浮层各家差别太大（Safari、Firefox 尤其难看），这里用 <code>flatpickr</code> 接管输入框：
+      输入框外观还是自己写，点开的面板由 flatpickr 来画，各家看到的都是同一套界面。
     </p>
 
     <div class="row">
@@ -841,21 +935,24 @@
 
     <div class="row">
       <input class="ui-date" type="month" value="2026-11" aria-label="月份">
-      <input class="ui-date" type="week" value="2026-W46" aria-label="周">
       <input class="ui-date" type="time" value="12:30" aria-label="时间">
       <input class="ui-date" type="date" value="2026-11-10" disabled aria-label="日期（禁用）">
     </div>
 
     <p class="hint">
-      图标和上面 select 的箭头一个套路：<code>background: none</code> 干掉原生图标，再用 <code>mask</code> 取形状、
-      <code>background-color</code> 上色，所以悬停、聚焦时能直接换成品牌色。
+      接管方式：<code>type</code> 保持原样，只加个 <code>readonly</code>，点击和键盘都交给 flatpickr；
+      但格式必须和原生值一致（<code>date</code> 是 <code>Y-m-d</code>、<code>datetime-local</code> 要写成 <code>Y-m-d\TH:i</code>、
+      <code>month</code> 是 <code>Y-m</code>、<code>time</code> 是 <code>H:i</code>），否则赋值时会被原生输入框当成非法值丢掉。
     </p>
     <p class="hint">
-      浮层本身改不了，但里面的主色（选中日期的高亮）能用 <code>accent-color</code> 跟着换成本页的品牌色。
+      加了 <code>readonly</code> 之后，Chrome、Firefox 干脆就不显示原生日历图标了，「点图标弹原生浮层」的问题自己消失；
+      万一某个内核还留着图标，<code>::-webkit-calendar-picker-indicator</code> 上的 <code>pointer-events: none</code>
+      会让点击落到输入框上。没 JS 时输入框不是只读，图标照旧显示，所以那套图标样式仍然有用。
     </p>
     <p class="hint">
-      Firefox 没有这套伪元素，日历图标换不掉，只能改输入框本身，甚至不支持 <code>type="week"</code>，会退化成普通文本框；
-      另外 <code>datetime-local</code> 的值里带个 <code>T</code>，那是 HTML 规定的格式，不是笔误。
+      面板没有现成的变量可配，直接覆盖 flatpickr 的类名（<code>.flatpickr-day.selected</code>、<code>.flatpickr-calendar</code> 等），
+      把默认的深蓝换成页面这套主题色；所以它自己的 CSS 要在本页样式之前引入。另外它没有「周」面板，<code>week</code> 就没接，
+      「月份」用的是 monthSelect 插件。
     </p>
   </section>
 
@@ -915,6 +1012,39 @@
       sync();
     });
   }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/zh.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/plugins/monthSelect/index.js" defer></script>
+<script>
+  /* 日期浮层交给 flatpickr 接管：type 保持原样，只把输入框变只读，
+     值也还是原生格式，所以外观不会因为换类型而抖一下 */
+  document.addEventListener('DOMContentLoaded', function () {
+    /* CDN 没加载成功就什么都不做，输入框本来就是原生的 */
+    if (!window.flatpickr) return;
+
+    /* 格式要和原生值一一对应，否则 flatpickr 赋值时会被原生输入框当成非法值丢掉 */
+    const CONFIG = {
+      date: { dateFormat: 'Y-m-d' },
+      'datetime-local': { enableTime: true, time_24hr: true, dateFormat: 'Y-m-d\\TH:i' },
+      month: { plugins: [monthSelectPlugin({ shorthand: true, dateFormat: 'Y-m' })] },
+      time: { enableTime: true, noCalendar: true, time_24hr: true, dateFormat: 'H:i' }
+    };
+
+    document.querySelectorAll('.ui-date').forEach(function (el) {
+      const type = el.getAttribute('type');
+      const config = CONFIG[type];
+
+      if (!config) return;
+
+      flatpickr(el, Object.assign({ locale: 'zh', disableMobile: true }, config));
+
+      /* flatpickr 内部会把 type 强制写成 text（setupInputs 里写死的），
+         这里再改回原生类型，输入框的外观和值的格式就都不变 */
+      el.type = type;
+    });
+  });
 </script>
 
 </body>
