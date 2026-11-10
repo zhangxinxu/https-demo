@@ -308,8 +308,8 @@
   }
 
   /* Chrome 没有「已填充进度」的伪元素，这里用 border-shape 让滑块自己带一条：
-     第一个形状是外轮廓（盒子 + 往左 2000px、6px 高的条），第二个是盒子本身，
-     两者围出来的正是左边那条填充带，超出的部分由 overflow: hidden 裁掉 */
+     外轮廓是一条往左 2000px 的 6px 填充带，顺着把手的圆走一圈（左下、右下两处是圆的弧），
+     内轮廓就是把手那个圆；两个形状相减，只剩左边那条填充带 */
   .ui-range::-webkit-slider-thumb {
     width: 18px;
     height: 18px;
@@ -324,8 +324,14 @@
     background: radial-gradient(#fff 0 8px, var(--border-color) 8px 9px, transparent 0);
 
     border-shape:
-      polygon(-2000px 5px, 0 5px, 0 0, 16px 0, 16px 16px, 0 16px, 0 11px, -2000px 11px)
-      polygon(0 0, 16px 0, 16px 16px, 0 16px);
+      shape(
+        from -2000px 6px,
+        hline to 0.5px,
+        arc to 0.5px 12px of 9px cw large,
+        hline to -2000px,
+        close
+      )
+      circle(50%);
   }
 
   /* 悬停时把把手的描边换成品牌色，只影响圆那一块 */
@@ -595,8 +601,9 @@
     </div>
 
     <p class="hint">
-      左半区的填充交给 <code>border-shape</code>：滑块的外轮廓故意往左拉 2000px，和第二个形状（盒子本身）围出那条填充带，
-      超出输入框的部分由 <code>overflow: hidden</code> 裁掉，不用回传进度；
+      左半区的填充交给 <code>border-shape</code>：外轮廓用 <code>shape()</code> 画一条往左 2000px 的 6px 带子，
+      顺着把手那个圆拐过去，内轮廓就是一个 <code>circle()</code>，两个形状相减只剩填充带；
+      超出输入框的部分由 <code>overflow: hidden</code> 裁掉，不用回传进度。
       不支持 <code>border-shape</code> 的内核，由页面底部的几行 JS 把进度写进 <code>--percent</code>，交给轨道渐变去画。
     </p>
 
