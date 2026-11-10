@@ -520,14 +520,19 @@
       box-shadow: 0 0 0 3px rgba(22, 119, 255, .15);
     }
 
-    /* 箭头：换掉自带的 picker 图标 */
+    /* 箭头：换掉自带的 picker 图标。
+       形状交给 mask，颜色交给 background-color，展开时直接换蓝，不用再备一张图 */
     .ui-select::picker-icon {
       content: '';
       width: 18px;
       height: 18px;
       margin-right: 8px;
-      background: var(--select-arrow) no-repeat center / 18px 18px;
+      background-color: var(--text-3);
+      mask: var(--select-arrow) center / 18px 18px no-repeat;
+      transition: background-color .2s;
     }
+
+    .ui-select:open::picker-icon { background-color: var(--brand); }
 
     /* 下拉面板 */
     .ui-select::picker(select) {
@@ -707,6 +712,7 @@
       支持 <code>base-select</code> 时，<code>select</code> 变成一个可控的按钮：箭头是 <code>::picker-icon</code>，
       下拉面板是 <code>::picker(select)</code>，里面的每一项就是 <code>option</code>，
       选中、悬停、禁用都能各给一套样式，展开收起还能用 <code>@starting-style</code> 加个淡入。
+      箭头用了 <code>mask</code> 取形状、<code>background-color</code> 上色，所以展开时换个颜色就是蓝色箭头。
     </p>
     <p class="hint">
       不支持时只能 <code>appearance: none</code> 后自己补箭头，所以 <code>select</code> 和选项的左右内边距要对得上：
