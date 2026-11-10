@@ -298,7 +298,11 @@
     background: none;
     cursor: pointer;
     appearance: none;
-    overflow: hidden; /* 裁掉滑块往左拉出来的那条填充带 */
+    /* 裁掉滑块往左拉出来的那条填充带。用 clip + 4px 余量而不是 hidden：
+       24px 高的框会正好把把手那个往下偏 1px、带 2px 模糊的阴影切平 */
+    overflow: hidden;
+    overflow: clip;
+    overflow-clip-margin: 4px;
   }
 
   .ui-range::-webkit-slider-runnable-track {
@@ -335,6 +339,27 @@
     
     border-radius: 50%;
     box-shadow: 0 1px 2px rgba(16, 24, 40, .28);
+  }
+
+  /* 带子是 thumb 画的，而 Blink 里 thumb 是 track 的子元素，所以在 track 上挂 clip-path 能连带子一起裁：
+     只把「轨道那 6px 高」的左上、左下两个角挖成 R3 圆弧（和轨道自己的圆角对齐），
+     上下各多留 20px（18px 高的 thumb + 阴影 + 输入框那 4px 余量），右侧和把手都原样保留 */
+  @supports (border-shape: none) {
+    .ui-range::-webkit-slider-runnable-track {
+      clip-path: shape(
+        from 0 -20px,
+        line to 100% -20px,
+        line to 100% calc(100% + 20px),
+        line to 0 calc(100% + 20px),
+        /* 收到轨道下边，从 3px 处沿半圆绕回轨道上边，把左下、左上两个角挖掉 */
+        line to 0 100%,
+        line to 3px 100%,
+        arc to 0 50% of 3px cw,
+        arc to 3px 0 of 3px cw,
+        line to 0 0,
+        close
+      );
+    }
   }
 
   /* 悬停时把把手的描边换成品牌色，只影响圆那一块 */
