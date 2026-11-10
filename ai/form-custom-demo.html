@@ -173,10 +173,12 @@
 
   /* =========================================================
    * 二、单选框、复选框，以及派生的开关
-   * 三个都是 appearance: none 之后自己画，input 上不能放伪元素
+   * checkbox / radio 这类表单控件在 appearance: none 之后是支持伪元素的，
+   * 对勾、圆点、滑块都交给伪元素画
    * =======================================================*/
   .ui-checkbox,
   .ui-radio {
+    position: relative;
     flex: none;
     width: 16px;
     height: 16px;
@@ -194,17 +196,46 @@
   .ui-checkbox:hover,
   .ui-radio:hover { border-color: var(--brand); }
 
-  /* 对勾没有伪元素可用，用背景图（内联 SVG）画，居中不挑字体 */
   .ui-checkbox:checked {
     border-color: var(--brand);
-    background: var(--brand) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.6 8.4l3 3 5.8-6.4' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px 12px no-repeat;
+    background-color: var(--brand);
   }
 
-  /* 圆点用径向渐变画，中间 8px 实心 */
-  .ui-radio:checked {
-    border-color: var(--brand);
-    background-image: radial-gradient(circle, var(--brand) 0 4px, transparent 4.5px);
+  .ui-radio:checked { border-color: var(--brand); }
+
+  /* 对勾：两条边框转 45°，未选中时缩成 0 藏起来 */
+  .ui-checkbox::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    translate: 0 -1px;
+    width: 3px;
+    height: 7px;
+    border-right: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    rotate: 45deg;
+    scale: 0;
+    transition: scale .15s;
   }
+
+  .ui-checkbox:checked::after { scale: 1; }
+
+  /* 单选圆点：白底上的品牌色实心圆，选中才从 0 弹出来 */
+  .ui-radio::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--brand);
+    scale: 0;
+    transition: scale .15s;
+  }
+
+  .ui-radio:checked::after { scale: 1; }
 
   .ui-checkbox:disabled,
   .ui-radio:disabled {
@@ -218,12 +249,11 @@
     background-color: #d5d8de;
   }
 
-  .ui-radio:checked:disabled {
-    background-image: radial-gradient(circle, var(--text-3) 0 4px, transparent 4.5px);
-  }
+  .ui-radio:checked:disabled::after { background: var(--text-3); }
 
-  /* 开关：轨道 + 一颗用径向渐变画的白圆点，切换时挪 background-position */
+  /* 开关：轨道是底色，白圆点用伪元素，切换时只挪 translate */
   .ui-switch {
+    position: relative;
     flex: none;
     width: 44px;
     height: 24px;
@@ -231,19 +261,27 @@
     border: 0;
     border-radius: 999px;
     background-color: #dcdfe6;
-    background-image: radial-gradient(circle closest-side, #fff 96%, transparent 100%);
-    background-size: 20px 20px;
-    background-position: 2px center;
-    background-repeat: no-repeat;
     cursor: pointer;
     appearance: none;
-    transition: background-color .2s, background-position .2s;
+    transition: background-color .2s;
   }
 
-  .ui-switch:checked {
-    background-color: var(--brand);
-    background-position: 22px center;
+  .ui-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .25);
+    transition: translate .2s;
   }
+
+  .ui-switch:checked { background-color: var(--brand); }
+
+  .ui-switch:checked::after { translate: 20px 0; }
 
   .ui-switch:disabled {
     opacity: .5;
@@ -498,8 +536,8 @@
     </div>
 
     <p class="hint">
-      对勾用背景 SVG 画，单选圆点用径向渐变画——<code>input</code> 上不支持伪元素，这里只能走 <code>background</code>。
-    </p>
+      对勾、圆点、滑块都是 <code>::after</code> 画的，目的是增加一点小动效。
+      如果是更直白的效果，不使用伪元素，单纯使用<code>background</code>绘制背景也是可以的。</p>
   </section>
 
   <!-- ========== 三、范围选择、评星 ========== -->
