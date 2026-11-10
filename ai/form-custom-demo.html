@@ -575,8 +575,6 @@
     );
 
     position: relative;
-    /* 12px 的色条和 32px 高的输入框视觉居中，下面的 padding 是给「弱 中 强」留的位置 */
-    margin-top: 10px;
     padding-bottom: 24px;
   }
 
@@ -626,8 +624,8 @@
     content: '弱 中 强';
     position: absolute;
     top: calc(var(--meter-h) + 6px);
-    left: 0;
-    right: 0;
+    left: calc(var(--b1) / 2 - 0.5em);
+    right: calc(var(--b1) / 2 - 0.5em);
     height: 18px;
     font-size: 12px;
     line-height: 18px;
