@@ -90,7 +90,7 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 12px;
-    margin: 0 0 14px;
+    margin-block: 12px;
   }
 
   .row:last-child { margin-bottom: 0; }
@@ -367,35 +367,38 @@
 
   .ui-range:disabled { cursor: not-allowed; opacity: .5; }
 
-  /* 评星：由 range 派生。整块用 mask 镂成 5 颗星，
-     左半区的填充条由滑块伪元素往左拉出来，超出输入框的部分被 mask 裁掉，不需要 JS */
+  /* 评星：由 range 派生。整块输入框用 mask 镂成 5 颗星，
+     轨道铺满金色（等于全部点亮），滑块只留 1px 当定位点，
+     再用它的阴影把右侧盖成灰色，超出输入框的部分被 mask 裁掉，不需要 JS */
   .ui-rate {
-    --star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2.5l2.95 5.98 6.6.96-4.78 4.66 1.13 6.57L12 17.56l-5.9 3.11 1.13-6.57L2.45 9.44l6.6-.96L12 2.5z'/%3E%3C/svg%3E");
+    --star: url("data:image/svg+xml,%3Csvg width='12' height='11' viewBox='0 0 12 11' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 0l1.693 3.67 4.013.476L8.74 6.89l.788 3.964L6 8.88l-3.527 1.974.788-3.964L.294 4.146l4.013-.476L6 0z'/%3E%3C/svg%3E");
 
     width: 120px; /* 5 颗 × 24px */
     height: 24px;
     margin: 0;
-    background: none;
+    background: transparent;
     cursor: pointer;
     appearance: none;
-    mask: var(--star) repeat-x left center / 24px 24px;
+    mask: var(--star) repeat-x left center / 24px 100%;
   }
 
-  /* 未点亮：灰星 */
+  /* 轨道就是「全部点亮」的金色 */
   .ui-rate::-webkit-slider-runnable-track {
     height: 100%;
-    background: #dfe1e6;
+    background: var(--warning);
   }
 
-  /* 滑块本身只留 1px 当定位点，用它的阴影往左铺一条足够长的金色条子，
-     超出输入框的部分由上面的 mask 裁掉 */
+  /* 滑块必须隐形：宽度给 1px 当定位点，
+     而且一定要 appearance: none，否则 Chrome 会把默认的蓝色滑块画出来 */
   .ui-rate::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
     width: 1px;
     height: 100%;
     margin: 0;
     border: 0;
     background: transparent;
-    box-shadow: -999em 0 0 999em var(--warning);
+    box-shadow: 999em 0 0 999em #dfe1e6;
   }
 
   .ui-rate:disabled {
@@ -602,8 +605,8 @@
     </div>
 
     <p class="hint">
-      评星是 range 的衍生组件：整块输入框用 <code>mask</code> 镂成 5 颗星，未点亮的是轨道底色；
-      滑块只留 1px 当定位点，用它的阴影往左铺一条金色条子，超出输入框的部分被 <code>mask</code> 裁掉，同样不需要 JS。
+      评星是 range 的衍生组件：整块输入框用 <code>mask</code> 镂成 5 颗星，轨道铺满金色（等于全部点亮），
+      滑块只留 1px 当定位点，用它的阴影把右侧盖成灰色，超出输入框的部分被 <code>mask</code> 裁掉，同样不需要 JS。
     </p>
   </section>
 
