@@ -171,7 +171,7 @@
   }
 
   .ui-meter-battery::-webkit-meter-bar {
-    height: 100%;
+    height: 12px;
     border: 0;
     border-radius: 2px;
     background: var(--fill);
@@ -391,23 +391,18 @@
     </div>
 
     <p class="hint">
-      色条不是三段分别设置：一个 <code>meter</code> 只铺一条「红 1/3、橙 1/3、绿 1/3」的渐变，
-      而填充伪元素的宽度只到当前值对应的位置，填到哪儿就露出哪一段的颜色，于是数值一动，红 → 橙 → 绿自己就接上了。
+      整条色条只有一条「红 / 橙 / 绿」三等分的渐变，填充伪元素画到哪儿就露出哪段颜色，不用切类名。
+      段间缝隙由轨道的 <code>mask</code> 挖出，遮罩会连子元素一起裁；「弱 中 强」用同一条渐变加
+      <code>background-clip: text</code> 上色。
     </p>
     <p class="hint">
-      段与段之间的缝隙是给轨道挂 <code>mask</code> 挖出来的，遮罩会连子元素一起裁，所以填充条同样带缝；
-      下面的「弱 中 强」用同一个渐变 + <code>background-clip: text</code> 上色，位置和色条对齐。
+      数值取 <code>zxcvbn</code> 的 <code>guesses_log10</code>，正好对上 <code>max="12"</code>、<code>low="4"</code>、
+      <code>high="8"</code>：4 以下是弱，8 以上是强。试试 <code>abc123</code>、<code>Iloveyou123</code>、
+      <code>P@ssw0rd!2024xyz</code>。
     </p>
     <p class="hint">
-      数值来自 <code>zxcvbn</code> 的 <code>guesses_log10</code>（猜中所需次数的对数），正好和
-      <code>max="12"</code>、<code>low="4"</code>、<code>high="8"</code> 对上，4 以下是弱、8 以上是强。
-      可以依次输入 <code>abc123</code>、<code>Iloveyou123</code>、<code>P@ssw0rd!2024xyz</code> 看色条一段段点亮。
-    </p>
-    <p class="hint">
-      Firefox 没有 <code>::-webkit-meter-*</code>，只有 <code>::-moz-meter-bar</code>，
-      但它里面背景的定位和轨道对不上，三色的分界会偏，所以干脆把原生填充藏掉，
-      改用 <code>meter</code> 自己的背景按 <code>--percent</code> 画，缝隙照样用 <code>mask</code> 挖。
-      另外它也不给 <code>meter</code> 渲染伪元素，所以「弱 中 强」这三个字挂在了外层容器上。
+      Firefox 的 <code>::-moz-meter-bar</code> 色段对不齐，且不渲染 <code>meter</code> 伪元素，所以填充改用
+      <code>meter</code> 自己的背景按 <code>--percent</code> 画，「弱 中 强」挂在外层容器上。
     </p>
   </section>
 </main>
