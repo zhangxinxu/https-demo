@@ -679,7 +679,7 @@
 
 <script>
   /* border-shape 不支持的内核（Firefox、旧版 Chrome）：把进度写进 --percent，轨道渐变自己去画填充 */
-  if (!CSS.supports('border-shape', 'polygon(0 0, 100% 0, 100% 100%)')) {
+  if (!CSS.supports('border-shape', 'none')) {
     document.querySelectorAll('.ui-range').forEach(function (el) {
       const min = Number(el.min) || 0;
       const max = Number(el.max) || 100;
