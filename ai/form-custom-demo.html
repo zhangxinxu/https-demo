@@ -508,6 +508,7 @@
       appearance: base-select;
       padding: 0 0 0 10px;
       line-height: 30px;
+      align-items: center;
     }
 
     .ui-select:not(:disabled):hover { border-color: #c9cdd4; }
@@ -525,9 +526,7 @@
       width: 18px;
       height: 18px;
       margin-right: 8px;
-      margin-top: 6px;
-      background: var(--select-arrow) no-repeat center / 100%;
-      transition: rotate .2s;
+      background: var(--select-arrow) no-repeat center / 18px 18px;
     }
 
     /* 下拉面板 */
@@ -540,13 +539,13 @@
       background: #fff;
       box-shadow: 0 6px 20px -8px rgba(0, 0, 0, .3);
       opacity: 0;
-      transition: opacity .15s allow-discrete;
+      transition: opacity .25s allow-discrete;
     }
 
-    .ui-select::picker(select):popover-open { opacity: 1; }
+    .ui-select:open::picker(select) { opacity: 1; }
 
     @starting-style {
-      .ui-select::picker(select):popover-open { opacity: 0; }
+      .ui-select:open::picker(select) { opacity: 0; }
     }
 
     /* 选项：和 select 自身的文字对齐，悬停、选中各一套底色 */
