@@ -311,16 +311,17 @@
      第一个形状是外轮廓（盒子 + 往左 2000px、6px 高的条），第二个是盒子本身，
      两者围出来的正是左边那条填充带，超出的部分由 overflow: hidden 裁掉 */
   .ui-range::-webkit-slider-thumb {
-    width: 16px;
-    height: 16px;
-    margin-top: -5px;
+    width: 18px;
+    height: 18px;
+    margin-top: -6px;
     appearance: none;
     border: 0;
     border-style: solid;
     border-color: var(--brand);
+    --border-color: #e5e6eb;
 
     /* border-shape 会让 border-radius 失效，圆用径向渐变画，两种情况都正常 */
-    background: radial-gradient(circle closest-side, #fff 0 92%, #e5e6eb 92% 100%);
+    background: radial-gradient(#fff 0 8px, var(--border-color) 8px 9px, transparent 0);
 
     border-shape:
       polygon(-2000px 5px, 0 5px, 0 0, 16px 0, 16px 16px, 0 16px, 0 11px, -2000px 11px)
@@ -329,7 +330,7 @@
 
   /* 悬停时把把手的描边换成品牌色，只影响圆那一块 */
   .ui-range:not(:disabled):hover::-webkit-slider-thumb {
-    background: radial-gradient(circle closest-side, #fff 0 92%, var(--brand) 92% 100%);
+    --border-color: var(--brand);
   }
 
   /* 不支持 border-shape 的内核：靠页面底部那几行 JS 把进度写进 --percent，用轨道渐变画填充 */
