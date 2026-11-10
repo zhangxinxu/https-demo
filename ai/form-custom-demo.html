@@ -582,6 +582,111 @@
     }
   }
 
+  /* =========================================================
+   * 五、日期选择：date / datetime-local / month / week / time
+   * 只改输入框本身和它右侧的图标，点开的日期浮层还是系统的
+   * =======================================================*/
+  .ui-date {
+    --icon-calendar: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M5 1a1 1 0 0 1 1 1v1h4V2a1 1 0 1 1 2 0v1h.5A2.5 2.5 0 0 1 15 5.5v8A2.5 2.5 0 0 1 12.5 16h-9A2.5 2.5 0 0 1 1 13.5v-8A2.5 2.5 0 0 1 3.5 3H4V2a1 1 0 0 1 1-1Zm8.5 6h-11v6.5a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V7Z'/%3E%3C/svg%3E");
+
+    width: 190px;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background-color: #fff;
+    color: var(--text);
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition: border-color .2s, box-shadow .2s;
+  }
+
+  .ui-date[type='datetime-local'] { width: 210px; }
+
+  .ui-date[type='month'],
+  .ui-date[type='week'] { width: 150px; }
+
+  .ui-date[type='time'] { width: 110px; }
+
+  .ui-date:hover { border-color: #c9cdd4; }
+
+  .ui-date:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(22, 119, 255, .15);
+  }
+
+  .ui-date:disabled {
+    background-color: var(--bg);
+    color: var(--text-3);
+    cursor: not-allowed;
+  }
+
+  /* 里面那串日期文字，去掉原生自带的内边距，和 border 的 10px 对齐 */
+  .ui-date::-webkit-datetime-edit {
+    padding: 0;
+  }
+
+  /* 右侧图标：先干掉原生图标，再用遮罩取形状、背景色上色，
+     和上面 select 的箭头一个套路 */
+  .ui-date::-webkit-calendar-picker-indicator {
+    width: 16px;
+    height: 16px;
+    margin-left: 6px;
+    padding: 0;
+    background: none;
+    background-color: var(--text-3);
+    -webkit-mask: var(--icon-calendar) center / 100% no-repeat;
+    mask: var(--icon-calendar) center / 100% no-repeat;
+    opacity: 1;
+    cursor: pointer;
+  }
+
+  .ui-date:hover::-webkit-calendar-picker-indicator,
+  .ui-date:focus::-webkit-calendar-picker-indicator {
+    background-color: var(--brand);
+  }
+
+  .ui-date:disabled::-webkit-calendar-picker-indicator { cursor: not-allowed; }
+
+  /* =========================================================
+   * 六、颜色选择：input[type="color"]
+   * appearance: none 之后只剩一块颜色，用 padding 留白、background-color 做外圈
+   * =======================================================*/
+  .ui-color {
+    /* 总尺寸 32×32，去掉 6px 内边距，里面那块颜色正好 20×20 */
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+    border: 0;
+    border-radius: 6px;
+    background-color: #d5d8dd;
+    appearance: none;
+    cursor: pointer;
+    transition: background-color .2s;
+  }
+
+  .ui-color:hover { background-color: #c9cdd4; }
+
+  .ui-color:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+  }
+
+  /* 里层就是那块颜色，白色描边把它和外圈分开 */
+  .ui-color::-webkit-color-swatch-wrapper { padding: 0; }
+
+  .ui-color::-webkit-color-swatch {
+    border: 1px solid #fff;
+    border-radius: 3px;
+  }
+
+  .ui-color::-moz-color-swatch {
+    border: 1px solid #fff;
+    border-radius: 3px;
+  }
+
 </style>
 </head>
 <body>
@@ -717,6 +822,76 @@
     <p class="hint">
       不支持时只能 <code>appearance: none</code> 后自己补箭头，所以 <code>select</code> 和选项的左右内边距要对得上：
       面板里的 <code>option</code> 也是收起状态显示的那一行，两边写一样的 <code>padding</code>，文字才不会跳。
+    </p>
+  </section>
+
+  <!-- ========== 五、日期选择 ========== -->
+  <section class="block">
+    <h2>五、日期选择</h2>
+    <p>
+      各种日期类型共用一套外观：改的是 <code>::-webkit-calendar-picker-indicator</code>（右侧图标）
+      和 <code>::-webkit-datetime-edit</code>（里面那串日期文字），点开的日期浮层仍然是系统的。
+    </p>
+
+    <div class="row">
+      <input class="ui-date" type="date" value="2026-11-10" aria-label="日期">
+      <input class="ui-date" type="datetime-local" value="2026-11-10T12:30" aria-label="日期时间">
+    </div>
+
+    <div class="row">
+      <input class="ui-date" type="month" value="2026-11" aria-label="月份">
+      <input class="ui-date" type="week" value="2026-W46" aria-label="周">
+      <input class="ui-date" type="time" value="12:30" aria-label="时间">
+      <input class="ui-date" type="date" value="2026-11-10" disabled aria-label="日期（禁用）">
+    </div>
+
+    <p class="hint">
+      图标和上面 select 的箭头一个套路：<code>background: none</code> 干掉原生图标，再用 <code>mask</code> 取形状、
+      <code>background-color</code> 上色，所以悬停、聚焦时能直接换成品牌色。
+    </p>
+    <p class="hint">
+      Firefox 没有这套伪元素，日历图标换不掉，只能改输入框本身，甚至不支持 <code>type="week"</code>，会退化成普通文本框；
+      另外 <code>datetime-local</code> 的值里带个 <code>T</code>，那是 HTML 规定的格式，不是笔误。
+    </p>
+  </section>
+
+  <!-- ========== 六、颜色选择 ========== -->
+  <section class="block">
+    <h2>六、颜色选择</h2>
+    <p>
+      <code>type="color"</code> 的输入框在 <code>appearance: none</code> 之后只剩一块颜色，
+      用 <code>padding</code> 留出内边距、<code>background-color</code> 做外圈，就能得到正方形色块；点开的取色器还是系统的。
+    </p>
+
+    <div class="row">
+      <label>颜色为：<input class="ui-color" type="color" value="#1677ff" list="ui-color-presets"></label>
+      <label>成功色：<input class="ui-color" type="color" value="#52c41a" list="ui-color-presets"></label>
+      <label>危险色：<input class="ui-color" type="color" value="#ff4d4f" list="ui-color-presets"></label>
+      <label>禁用：<input class="ui-color" type="color" value="#8f959e" disabled></label>
+    </div>
+
+    <datalist id="ui-color-presets">
+      <option value="#1677ff"></option>
+      <option value="#4096ff"></option>
+      <option value="#e8f1ff"></option>
+      <option value="#52c41a"></option>
+      <option value="#faad14"></option>
+      <option value="#ff4d4f"></option>
+      <option value="#1f2329"></option>
+      <option value="#646a73"></option>
+      <option value="#8f959e"></option>
+      <option value="#e5e6eb"></option>
+      <option value="#f7f8fa"></option>
+      <option value="#eef0f3"></option>
+      <option value="#ffffff"></option>
+      <option value="#000000"></option>
+    </datalist>
+
+    <p class="hint">
+      <code>list</code> 指向一个 <code>datalist</code>，取色器里就会多出一排预设色块（Chrome 有效，Firefox 不支持），色值直接取自页面主题色。
+    </p>
+    <p class="hint">
+      里面那块颜色是 <code>::-webkit-color-swatch</code>，白色描边画在它身上；外圈的灰底和圆角由 <code>input</code> 自己负责。
     </p>
   </section>
 </main>
