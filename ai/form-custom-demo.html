@@ -319,10 +319,8 @@
     height: 18px;
     margin-top: -6px;
     appearance: none;
-    border: 0;
-    border-style: solid;
-    border-color: var(--brand);
-    --border-color: #e5e6eb;
+    border: 0px solid var(--brand);
+    --border-color: #c5c6cb;
 
     /* border-shape 会让 border-radius 失效，圆用径向渐变画，两种情况都正常 */
     background: radial-gradient(#fff 0 8px, var(--border-color) 8px 9px, transparent 0);
@@ -339,6 +337,21 @@
     
     border-radius: 50%;
     box-shadow: 0 1px 2px rgba(16, 24, 40, .28);
+
+    /* border-shape 是「带子」的形状，阴影也跟着带子走，会顺着蓝色带子上下各描一道；
+       这里把绘制范围收成「带子那 6px 高的横条 + 把手圆外扩 4px 的方框」：
+       带子上的阴影被裁掉，把手自己那圈阴影留着。
+       前两个点走到 -2000px 是为了不切断带子本体，实际的左边界由输入框裁 */
+    clip-path: polygon(
+      -2000px 6px,
+      -0 6px,
+      -0 -4px,
+      calc(100% + 4px) -4px,
+      calc(100% + 4px) calc(100% + 4px),
+      -0 calc(100% + 4px),
+      -0 12px,
+      -2000px 12px
+    );
   }
 
   /* 带子是 thumb 画的，而 Blink 里 thumb 是 track 的子元素，所以在 track 上挂 clip-path 能连带子一起裁：
@@ -364,7 +377,7 @@
 
   /* 悬停时把把手的描边换成品牌色，只影响圆那一块 */
   .ui-range:not(:disabled):hover::-webkit-slider-thumb {
-    --border-color: var(--brand);
+    border-width: 1px;
   }
 
   /* 不支持 border-shape 的内核：靠页面底部那几行 JS 把进度写进 --percent，用轨道渐变画填充 */
