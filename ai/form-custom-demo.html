@@ -82,6 +82,9 @@
     margin: 14px 0 0;
     color: var(--text-3);
     font-size: 12.5px;
+    & + .hint {
+      margin-top: 8px;
+    }
   }
 
   /* 演示行 */
@@ -425,6 +428,14 @@
     mask: var(--star) repeat-x left center / 24px 100%;
   }
 
+  /* 小一号：20px 高，格子放宽到 32px。星按 12:11 等比缩到 20px 高、约 21.8px 宽，
+     剩下那 10px 就是半颗星的间距，输入框宽度跟着变成 5 × 32px */
+  .ui-rate-smaller {
+    width: 160px;
+    height: 20px;
+    mask-size: 32px 100%;
+  }
+
   /* 轨道就是「全部点亮」的金色 */
   .ui-rate::-webkit-slider-runnable-track {
     height: 100%;
@@ -442,11 +453,6 @@
     border: 0;
     background: transparent;
     box-shadow: 999em 0 0 999em #dfe1e6;
-  }
-
-  .ui-rate:disabled {
-    opacity: .5;
-    cursor: not-allowed;
   }
 
   /* Firefox 有现成的进度伪元素，用不着这段 trick */
@@ -643,14 +649,19 @@
       不支持 <code>border-shape</code> 的内核，由页面底部的几行 JS 把进度写进 <code>--percent</code>，交给轨道渐变去画。
     </p>
 
+    <h4>滑块组件派生评分组件</h4>
+
     <div class="row">
       <input class="ui-rate" type="range" max="5" step="0.5" value="4" aria-label="评分">
-      <input class="ui-rate" type="range" max="5" value="2" disabled aria-label="评分（禁用）">
+      <input class="ui-rate ui-rate-smaller" type="range" max="5" value="2" aria-label="评分（小号）">
     </div>
 
     <p class="hint">
       评星是 range 的衍生组件：整块输入框用 <code>mask</code> 镂成 5 颗星，轨道铺满金色（等于全部点亮），
       滑块只留 1px 当定位点，用它的阴影把右侧盖成灰色，超出输入框的部分被 <code>mask</code> 裁掉，同样不需要 JS。
+    </p>
+    <p class="hint">
+      改 <code>mask-size</code> 的平铺宽度、输入框的宽高，就能得到不同大小、不同疏密的评分，参见第二个评分效果。
     </p>
   </section>
 
