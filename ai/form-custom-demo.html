@@ -506,7 +506,7 @@
   @supports (appearance: base-select) {
     .ui-select {
       appearance: base-select;
-      padding: 0;
+      padding: 0 0 0 10px;
       line-height: 30px;
     }
 
@@ -519,17 +519,16 @@
       box-shadow: 0 0 0 3px rgba(22, 119, 255, .15);
     }
 
-    /* 箭头：换掉自带的 picker 图标，展开时翻转 */
+    /* 箭头：换掉自带的 picker 图标 */
     .ui-select::picker-icon {
       content: '';
       width: 18px;
       height: 18px;
-      margin-inline: auto 8px;
+      margin-right: 8px;
+      margin-top: 6px;
       background: var(--select-arrow) no-repeat center / 100%;
       transition: rotate .2s;
     }
-
-    .ui-select:open::picker-icon { rotate: 180deg; }
 
     /* 下拉面板 */
     .ui-select::picker(select) {
@@ -683,7 +682,7 @@
 
     <div class="row">
       <select class="ui-select" aria-label="城市">
-        <option value="" selected disabled>请选择城市</option>
+        <option value="" selected>请选择城市</option>
         <option>北京</option>
         <option>上海</option>
         <option>广州</option>
