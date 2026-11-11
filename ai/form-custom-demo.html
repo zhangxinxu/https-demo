@@ -988,7 +988,7 @@
       这一版不依赖 <code>border-shape</code>，带子左端的圆角由 <code>clip-path: path()</code> 剪，坐标全是固定值、不涉及百分比，兼容性一路回溯到 Chrome 88。
     </p>
 
-    <h4>锚点定位实现滑块组件</h4>
+    <h4>锚点定位实现滑块组件（Chrome only）</h4>
     <div class="row">
       <input class="ui-range-anchor" type="range" max="100" value="50">
     </div>
@@ -1130,8 +1130,8 @@
 </main>
 
 <script>
-  /* border-shape 不支持的内核（Safari、Firefox、旧版 Chrome）：把进度写进 --percent，轨道渐变自己去画填充 */
-  if (!CSS.supports('border-shape', 'none')) {
+  /* border-shape 不支持的内核（Safari、旧版 Chrome）：把进度写进 --percent，轨道渐变自己去画填充 */
+  if (!CSS.supports('border-shape', 'none') && !CSS.supports('background', '-moz-element(#button)')) {
     document.querySelectorAll('.ui-range').forEach(function (el) {
       const min = Number(el.min) || 0;
       const max = Number(el.max) || 100;
