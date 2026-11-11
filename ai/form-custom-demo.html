@@ -316,6 +316,20 @@
     --thumb-ring-width: 2px;
   }
 
+  /* 按住不放时去掉把手的投影：抬起来的那层没了，看着就是被压平贴到轨道上 */
+  .ui-range:not(:disabled):active::-webkit-slider-thumb {
+    box-shadow: none;
+  }
+
+  /* border-image 版的圆环本身是用 inset 阴影描出来的，只去掉外面那层投影，环得留下 */
+  .ui-range-border-image:not(:disabled):active::-webkit-slider-thumb {
+    box-shadow: inset 0 0 0 var(--thumb-ring-width) var(--thumb-ring);
+  }
+
+  .ui-range:not(:disabled):active::-moz-range-thumb {
+    box-shadow: none;
+  }
+
   .ui-range {
     /* 裁掉滑块往左拉出来的那条填充带。用 clip + 4px 余量而不是 hidden：
        24px 高的框会正好把把手那个往下偏 1px、带 2px 模糊的阴影切平 */
