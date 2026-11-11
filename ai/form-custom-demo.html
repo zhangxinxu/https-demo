@@ -419,9 +419,10 @@
   }
 
   /* 边框绘制被 border-image 接管后，加 border-width 画不出描边，改在背景圆环上换色 */
-  .ui-range-border-image:not(:disabled):hover::-webkit-slider-thumb {
+  .ui-range-border-image:not(:disabled):is(:hover, :active)::-webkit-slider-thumb {
     border-width: 0;
     background: radial-gradient(#fff 0 8px, var(--brand) 8px 9px, transparent 0);
+    border-image-outset: 0 0 0 1999px;
   }
 
   .ui-range::-moz-range-track {
