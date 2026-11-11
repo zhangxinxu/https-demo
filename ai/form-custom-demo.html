@@ -308,6 +308,7 @@
     overflow: hidden;
     overflow: clip;
     overflow-clip-margin: 4px;
+    --border-color: #d5d6db;
   }
 
   .ui-range::-webkit-slider-runnable-track {
@@ -316,20 +317,20 @@
     background: var(--fill);
   }
 
-  /* Chrome 没有「已填充进度」的伪元素，这里用 border-shape 让滑块自己带一条：
-     外轮廓是一条往左 2000px 的 6px 填充带，顺着把手的圆走一圈（左下、右下两处是圆的弧），
-     内轮廓就是把手那个圆；两个形状相减，只剩左边那条填充带 */
+  /* Chrome 没有「已填充进度」的伪元素，只能让滑块自己拖一条往左 2000px、6px 高的填充带。
+     默认走 border-shape：外轮廓是那条带子，内轮廓是把手那个圆，两个形状相减只剩带子 */
   .ui-range::-webkit-slider-thumb {
     width: 18px;
     height: 18px;
     margin-top: -6px;
     appearance: none;
     border: 0px solid var(--brand);
-    --border-color: #d5d6db;
 
     /* border-shape 会让 border-radius 失效，圆用径向渐变画，两种情况都正常 */
     background: radial-gradient(#fff 0 8px, var(--border-color) 8px 9px, transparent 0);
 
+    /* 带子从 -2000px 拉到 0.5px，右端顺着把手的圆拐下去（arc 走半径 9px），
+       内轮廓 circle(50%) 再把圆挖掉 */
     border-shape:
       shape(
         from -2000px 6px,
@@ -343,10 +344,8 @@
     border-radius: 50%;
     box-shadow: 0 1px 2px rgba(16, 24, 40, .28);
 
-    /* border-shape 是「带子」的形状，阴影也跟着带子走，会顺着蓝色带子上下各描一道；
-       这里把绘制范围收成「带子那 6px 高的横条 + 把手圆外扩 4px 的方框」：
-       带子上的阴影被裁掉，把手自己那圈阴影留着。
-       前两个点走到 -2000px 是为了不切断带子本体，实际的左边界由输入框裁 */
+    /* 阴影也会跟着带子形状走，顺着带子上下各描一道；这里把绘制范围收成
+       「带子那 6px 的横条 + 把手圆外扩 4px 的方框」，只留把手自己的阴影 */
     clip-path: polygon(
       -2000px 6px,
       -0 6px,
@@ -359,10 +358,9 @@
     );
   }
 
-  /* 带子是 thumb 画的，而 Blink 里 thumb 是 track 的子元素，所以在 track 上挂 clip-path 能连带子一起裁：
-     只把「轨道那 6px 高」的左上、左下两个角挖成 R3 圆弧（和轨道自己的圆角对齐），
-     上下各多留 20px（18px 高的 thumb + 阴影 + 输入框那 4px 余量），右侧和把手都原样保留 */
-  @supports (border-shape: none) {
+  /* 带子是 thumb 画的，而 Blink 里 thumb 是 track 的子元素：在 track 上挂 clip-path 能连带子一起裁，
+     只把轨道左上、左下两个角挖成 R3 圆弧和它自己的圆角对齐；上下留足 thumb + 阴影 + 4px 余量 */
+  @supports (clip-path: shape(from 0 0, line to 1px 0)) {
     .ui-range::-webkit-slider-runnable-track {
       clip-path: shape(
         from 0 -20px,
@@ -380,7 +378,7 @@
     }
   }
 
-  /* 悬停时把把手的描边换成品牌色，只影响圆那一块 */
+  /* 悬停时把把手的描边换成品牌色：1px 边框正好落在圆的内轮廓上，带子同色看不出变化 */
   .ui-range:not(:disabled):hover::-webkit-slider-thumb {
     border-width: 1px;
   }
@@ -390,6 +388,40 @@
     .ui-range::-webkit-slider-runnable-track {
       background: linear-gradient(to right, var(--brand) calc(var(--percent, 0) * 100%), var(--fill) 0);
     }
+  }
+
+  /* 方案二：border-image 版。它只画在「边框区域」里，想画到 thumb 盒子外面只能靠
+     border-image-outset 把边框图区域往左撑 2000px（只影响绘制、不改布局；
+     换成 border-left: 2000px 会把 thumb 撑成 2018px 宽，滑块位置直接算歪） */
+  .ui-range-border-image::-webkit-slider-thumb {
+    border-shape: none;
+    /* 阴影不跟带子走，原来那段裁阴影的 clip-path 就不需要了 */
+    clip-path: none;
+
+    /* 渐变只给竖向信息：品牌色压在 6px~12px（轨道那 6px），其余透明 */
+    /* slice 只切左边 1px、不开 fill：只画左边缘那一片，中间含把手那块不参与绘制；
+       这一片的目标宽度由 border-image-width 撑成 2000px，正好占住 -2000px~0 */
+    border-image:
+      linear-gradient(
+        to bottom,
+        transparent 0 6px,
+        var(--brand) 6px 12px,
+        transparent 12px
+      )
+      0 0 0 1;
+    border-image-width: 0 0 0 2000px;
+    border-image-outset: 0 0 0 2000px;
+  }
+
+  /* border-image 版不靠 JS 回传进度，轨道保持纯底色 */
+  .ui-range-border-image::-webkit-slider-runnable-track {
+    background: var(--fill);
+  }
+
+  /* 边框绘制被 border-image 接管后，加 border-width 画不出描边，改在背景圆环上换色 */
+  .ui-range-border-image:not(:disabled):hover::-webkit-slider-thumb {
+    border-width: 0;
+    background: radial-gradient(#fff 0 8px, var(--brand) 8px 9px, transparent 0);
   }
 
   .ui-range::-moz-range-track {
@@ -407,7 +439,7 @@
   .ui-range::-moz-range-thumb {
     width: 16px;
     height: 16px;
-    border: 0;
+    border: 1px solid var(--border-color);
     border-radius: 50%;
     background: #fff;
     box-shadow: 0 1px 3px rgba(16, 24, 40, .28);
@@ -841,17 +873,28 @@
     <h2>三、范围选择元素</h2>
     <p>轨道和滑块分别对应 <code>::-webkit-slider-runnable-track</code> 和 <code>::-webkit-slider-thumb</code>，Chrome 没有现成的「已填充进度」伪元素。</p>
 
+    <h4>border-shape 实现滑块组件</h4>
     <div class="row">
       <input class="ui-range" type="range" min="0" max="100" value="60">
       <span class="val">60</span>
-      <input class="ui-range" type="range" min="0" max="100" value="30" disabled>
     </div>
 
     <p class="hint">
       左半区的填充交给 <code>border-shape</code>：外轮廓用 <code>shape()</code> 画一条往左 2000px 的 6px 带子，
-      顺着把手那个圆拐过去，内轮廓就是一个 <code>circle()</code>，两个形状相减只剩填充带；
-      超出输入框的部分由 <code>overflow: hidden</code> 裁掉，不用回传进度。
-      不支持 <code>border-shape</code> 的内核，由页面底部的几行 JS 把进度写进 <code>--percent</code>，交给轨道渐变去画。
+      顺着把手那个圆拐过去，内轮廓是一个 <code>circle()</code>，两个形状相减只剩填充带；
+      超出输入框的部分由 <code>overflow: clip</code> 裁掉，不用回传进度。
+      不支持的内核由页面底部那几行 JS 把进度写进 <code>--percent</code>，交给轨道渐变去画。
+    </p>
+
+    <h4>border-image 实现滑块组件</h4>
+    <div class="row">
+      <input class="ui-range ui-range-border-image" type="range" max="100" value="30">
+    </div>
+
+    <p class="hint">
+      <code>border-image</code> 只画在边框区域里，这里用 <code>border-image-outset</code> 把绘制区域往左撑 2000px（只影响绘制、不改布局），
+      再用 <code>slice</code> 只保留左边缘那一片、不开 <code>fill</code>，让带子止步于把手的左切点，不会盖住圆。
+      这一版不依赖 <code>border-shape</code>，兼容门槛是 <code>shape()</code> 函数：Chrome 135+、Safari 18.4+，主流浏览器都已支持。
     </p>
 
     <h4>滑块组件派生评分组件</h4>
