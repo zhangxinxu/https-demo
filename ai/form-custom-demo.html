@@ -337,15 +337,18 @@
     height: 18px;
     margin-top: -6px;
     appearance: none;
-    border: 0px solid var(--brand);
+    box-sizing: border-box;
 
-    /* border-shape 会让 border-radius 失效，圆（含外圈）改用径向渐变画，
-       外圈宽度从 9px 往里让，靠 --thumb-ring-width 控制 */
-    background: radial-gradient(
-      var(--thumb-fill) 0 calc(9px - var(--thumb-ring-width)),
-      var(--thumb-ring) calc(9px - var(--thumb-ring-width)) 9px,
-      transparent 0
-    );
+    /* 圆环交给 border 画：实心描边，1x 屏下边缘锐利。
+       换成径向渐变的话，环的 stop 落在半像素上会发虚、粗细不匀 */
+    border: var(--thumb-ring-width) solid var(--thumb-ring);
+
+    /* 背景层只负责两块填充色，不参与画环：
+       上层是铺满把手的白色圆盘（半径取最近边，正好 9px），下层品牌色就是那条带子。
+       白盘边缘落在环的下沿，被 border 整个盖住，不会露出渐变的毛边 */
+    background:
+      radial-gradient(circle closest-side, var(--thumb-fill) 0 100%, transparent 0),
+      var(--thumb-ring);
 
     /* 带子从 -2000px 拉到 0.5px，右端顺着把手的圆拐下去（arc 走半径 9px），
        内轮廓 circle(50%) 再把圆挖掉 */
@@ -411,6 +414,14 @@
     border-shape: none;
     /* 阴影不跟带子走，原来那段裁阴影的 clip-path 就不需要了 */
     clip-path: none;
+
+    /* 边框这块已经被 border-image 拿去画带子了，环只能用内阴影描：
+       它同样沿 border-radius 走圆，1x 屏下也不会有渐变的发虚问题 */
+    border: 0;
+    background: var(--thumb-fill);
+    box-shadow:
+      inset 0 0 0 var(--thumb-ring-width) var(--thumb-ring),
+      0 1px 2px rgba(16, 24, 40, .28);
 
     /* 渐变只给竖向信息：品牌色压在 6px~12px（轨道那 6px），其余透明 */
     /* slice 只切左边 1px、不开 fill：只画左边缘那一片，中间含把手那块不参与绘制；
@@ -485,6 +496,18 @@
      147+ 已支持锚点定位，不关的话两条填充会叠在一起 */
   @supports (-moz-appearance: none) {
     .ui-range-anchor::before { content: none; }
+  }
+
+  /* Safari 本身支持锚点定位（含 anchor-scope），但 range 的伪元素上挂不了 anchor-name，
+     两个 anchor() 会一起失效、填充条直接塌掉，所以这一版退回 --percent 方案：
+     关掉 ::before，让轨道用渐变自己画填充，进度由页面底部那几行 JS 回传。
+     font-tech(color-COLRv1) 目前只有 Safari 没实现，拿它来认 Safari */
+  @supports not font-tech(color-COLRv1) {
+    .ui-range-anchor::before { content: none; }
+
+    .ui-range-anchor::-webkit-slider-runnable-track {
+      background: linear-gradient(to right, var(--brand) calc(var(--percent, 0) * 100%), var(--fill) 0);
+    }
   }
 
   .ui-range::-moz-range-track,
@@ -950,6 +973,8 @@
       左半区的填充交给 <code>border-shape</code>：外轮廓用 <code>shape()</code> 画一条往左 2000px 的 6px 带子，
       顺着把手那个圆拐过去，内轮廓是一个 <code>circle()</code>，两个形状相减只剩填充带；
       超出输入框的部分由 <code>overflow: clip</code> 裁掉，不用回传进度。
+      把手的圆环由 <code>border</code> 直接描出来：1 倍屏下是实心填充、边缘锐利，
+      换成 <code>radial-gradient</code> 的话，环的 stop 会落在半像素上，发虚而且粗细不匀。
       不支持的内核由页面底部那几行 JS 把进度写进 <code>--percent</code>，交给轨道渐变去画。
     </p>
 
@@ -975,7 +1000,12 @@
       <code>right</code> 贴住把手中心，宽度天然就是「已划过」的长度，不用 2000px 大带子也不用裁剪；
       把手加 <code>z-index</code> 抬高一层，把填充条的右端盖在圆底下。
       多个实例共用一套样式时，靠 <code>anchor-scope</code> 把锚点名限制在各自子树里。
-      兼容底线是锚点定位：Chrome 131+、Safari 26+、Firefox 147+。
+      兼容底线是锚点定位：Chrome 131+、Firefox 147+。
+    </p>
+    <p class="hint">
+      而 Safari 虽然支持锚点定位（含 <code>anchor-scope</code>），但 range 的伪元素上挂不了 <code>anchor-name</code>，
+      两个 <code>anchor()</code> 会一起失效，所以这一版在 Safari 里退回 <code>--percent</code> 方案，
+      用 <code>@supports not font-tech(color-COLRv1)</code> 认 Safari，进度由页面底部那几行 JS 回传。
     </p>
 
     <h4>滑块组件派生评分组件</h4>
@@ -1106,9 +1136,20 @@
 </main>
 
 <script>
-  /* border-shape 不支持的内核（Safari、旧版 Chrome）：把进度写进 --percent，轨道渐变自己去画填充 */
-  if (!CSS.supports('border-shape', 'none') && !CSS.supports('background', '-moz-element(#button)')) {
-    document.querySelectorAll('.ui-range').forEach(function (el) {
+  /* 两处需要把进度回传给 --percent、让轨道渐变自己画填充：
+     ① 不支持 border-shape 的内核（Safari、旧版 Chrome）—— border-shape 版降级；
+     ② Safari——range 的伪元素挂不了 anchor-name，锚点版也降级到这里。
+     Firefox 有自己的 ::-moz-range-progress，两边都用不着 */
+  const noBorderShape = !CSS.supports('border-shape', 'none');
+  const isFirefox = CSS.supports('background', '-moz-element(#button)');
+  const isSafari = !CSS.supports('font-tech(color-COLRv1)');
+
+  const percentTargets = [];
+  if (noBorderShape && !isFirefox) percentTargets.push('.ui-range');
+  if (isSafari) percentTargets.push('.ui-range-anchor');
+
+  if (percentTargets.length) {
+    document.querySelectorAll(percentTargets.join(',')).forEach(function (el) {
       const min = Number(el.min) || 0;
       const max = Number(el.max) || 100;
 
