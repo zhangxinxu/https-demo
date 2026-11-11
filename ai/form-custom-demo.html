@@ -376,20 +376,21 @@
     );
   }
 
-  /* 带子是 thumb 画的，而 Blink 里 thumb 是 track 的子元素：在 track 上挂 clip-path 能连带子一起裁，
-     只把轨道左上、左下两个角挖成 R3 圆弧和它自己的圆角对齐；上下留足 thumb + 阴影 + 4px 余量 */
+  /* 带子是 thumb 画的，而 Blink 里 thumb 是 track 的子元素，在 track 上挂 clip-path 能连带子一起裁。
+     这里给 track 加 1px 左内边距：clip-path 以边框盒为基准，而 thumb 从内容盒起排，
+     两者正好错开 1px，左端的弧就能往下挖 1px（R5）而不碰到把手 */
   @supports (border-shape: none) {
     .ui-range::-webkit-slider-runnable-track {
+      padding-left: .5px;
       clip-path: shape(
         from 0 -20px,
         line to 100% -20px,
         line to 100% calc(100% + 20px),
         line to 0 calc(100% + 20px),
-        /* 收到轨道下边，从 3px 处沿半圆绕回轨道上边，把左下、左上两个角挖掉 */
+        /* 从轨道下边收进来，沿 R5 的弧绕回上边（弦 6px，矢高 1px） */
         line to 0 100%,
-        line to 3px 100%,
-        arc to 0 50% of 3px cw,
-        arc to 3px 0 of 3px cw,
+        line to 1px 100%,
+        arc to 1px 0 of 5px cw,
         line to 0 0,
         close
       );
@@ -427,12 +428,12 @@
   }
 
   /* border-image 版不靠 JS 回传进度，轨道保持纯底色。
-     带子左端的圆角改用 path() 剪：path() 不支持百分比，但这里真正需要精确值的
-     只有左端那 3px 圆弧（y 也固定 0~6px），右上、右下边界用 2000px 这种
-     「远大于轨道宽度」的固定值兜住就行——反正超出轨道的部分本来就看不见 */
+     同样靠 padding-left 把把手和剪裁坐标错开 1px，左端挖 1px 深（R5）的弧；
+     path() 不支持百分比，右边界用 2000px 这种「远大于轨道宽度」的固定值兜住即可 */
   .ui-range-border-image::-webkit-slider-runnable-track {
     background: var(--fill);
-    clip-path: path("M 0 -20 H 2000 V 26 H 0 V 6 H 3 A 3 3 0 0 1 0 3 A 3 3 0 0 1 3 0 H 0 Z");
+    padding-left: .5px;
+    clip-path: path("M 0 -20 H 2000 V 26 H 0 V 6 H 1 A 5 5 0 0 1 1 0 H 0 Z");
   }
 
   /* 方案三：锚点定位版。轨迹和把手各挂一个 anchor-name，::before 绝对定位后
