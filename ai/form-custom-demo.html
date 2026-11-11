@@ -333,9 +333,9 @@
   /* Chrome 没有「已填充进度」的伪元素，只能让滑块自己拖一条往左 2000px、6px 高的填充带。
      默认走 border-shape：外轮廓是那条带子，内轮廓是把手那个圆，两个形状相减只剩带子 */
   .ui-range::-webkit-slider-thumb {
-    width: 18px;
-    height: 18px;
-    margin-top: -6px;
+    width: 16px;
+    height: 16px;
+    margin-top: -5px;
     appearance: none;
     box-sizing: border-box;
 
@@ -344,19 +344,19 @@
     border: var(--thumb-ring-width) solid var(--thumb-ring);
 
     /* 背景层只负责两块填充色，不参与画环：
-       上层是铺满把手的白色圆盘（半径取最近边，正好 9px），下层品牌色就是那条带子。
+       上层是铺满把手的白色圆盘（半径取最近边，正好 8px），下层品牌色就是那条带子。
        白盘边缘落在环的下沿，被 border 整个盖住，不会露出渐变的毛边 */
     background:
       radial-gradient(circle closest-side, var(--thumb-fill) 0 100%, transparent 0),
       var(--thumb-ring);
 
-    /* 带子从 -2000px 拉到 0.5px，右端顺着把手的圆拐下去（arc 走半径 9px），
+    /* 带子从 -2000px 拉到 0.5px，右端顺着把手的圆拐下去（arc 走半径 8px），
        内轮廓 circle(50%) 再把圆挖掉 */
     border-shape:
       shape(
-        from -2000px 6px,
+        from -2000px 5px,
         hline to 0.5px,
-        arc to 0.5px 12px of 9px cw large,
+        arc to 0.5px 11px of 8px cw large,
         hline to -2000px,
         close
       )
@@ -368,20 +368,24 @@
     /* 阴影也会跟着带子形状走，顺着带子上下各描一道；这里把绘制范围收成
        「带子那 6px 的横条 + 把手圆外扩 4px 的方框」，只留把手自己的阴影 */
     clip-path: polygon(
-      -2000px 6px,
-      -0 6px,
+      -2000px 5px,
+      -0 5px,
       -0 -4px,
       calc(100% + 4px) -4px,
       calc(100% + 4px) calc(100% + 4px),
       -0 calc(100% + 4px),
-      -0 12px,
-      -2000px 12px
+      -0 11px,
+      -2000px 11px
     );
   }
 
   /* 带子是 thumb 画的，而 Blink 里 thumb 是 track 的子元素，在 track 上挂 clip-path 能连带子一起裁。
-     这里给 track 加 1px 左内边距：clip-path 以边框盒为基准，而 thumb 从内容盒起排，
-     两者正好错开 1px，左端的弧就能往下挖 1px（R5）而不碰到把手 */
+     轨道自己是 999px 圆角，value=0 时那条圆弧会和剪裁线并排出现，所以左端的弧只能贴着边框盒左边缘走。
+     弧能往里挖多深，上限卡在带子的上、下两端（离把手圆心 3px 那一行）：把手的圆在那里的横坐标是
+       padding-left + r - √(r² - 3²)
+     r = 8（16px 把手）时是 .5 + .584 = 1.0838px，r = 9（18px）时是 1.0147px——把手缩小只多让出 .069px，
+     所以弦最多到 1.0838px，再往里就实打实削到把手圆了（弦 2px 会吃进 .916px）。
+     弧的最低点钉在边框盒左边缘（x=0），矢高和弦同值，反推半径 R = (s² + 9) / 2s = 4.694px */
   @supports (border-shape: none) {
     .ui-range::-webkit-slider-runnable-track {
       padding-left: .5px;
@@ -390,10 +394,10 @@
         line to 100% -20px,
         line to 100% calc(100% + 20px),
         line to 0 calc(100% + 20px),
-        /* 从轨道下边收进来，沿 R5 的弧绕回上边（弦 6px，矢高 1px） */
+        /* 从轨道下边收进来，沿 R4.694 的弧绕回上边（弦 6px，矢高 1.0838px） */
         line to 0 100%,
-        line to 1px 100%,
-        arc to 1px 0 of 5px cw,
+        line to 1.0838px 100%,
+        arc to 1.0838px 0 of 4.694px cw,
         line to 0 0,
         close
       );
@@ -409,7 +413,7 @@
 
   /* 方案二：border-image 版。它只画在「边框区域」里，想画到 thumb 盒子外面只能靠
      border-image-outset 把边框图区域往左撑 2000px（只影响绘制、不改布局；
-     换成 border-left: 2000px 会把 thumb 撑成 2018px 宽，滑块位置直接算歪） */
+     换成 border-left: 2000px 会把 thumb 撑成 2016px 宽，滑块位置直接算歪） */
   .ui-range-border-image::-webkit-slider-thumb {
     border-shape: none;
     /* 阴影不跟带子走，原来那段裁阴影的 clip-path 就不需要了 */
@@ -423,15 +427,15 @@
       inset 0 0 0 var(--thumb-ring-width) var(--thumb-ring),
       0 1px 2px rgba(16, 24, 40, .28);
 
-    /* 渐变只给竖向信息：品牌色压在 6px~12px（轨道那 6px），其余透明 */
+    /* 渐变只给竖向信息：品牌色压在 5px~11px（轨道那 6px），其余透明 */
     /* slice 只切左边 1px、不开 fill：只画左边缘那一片，中间含把手那块不参与绘制；
        这一片的目标宽度由 border-image-width 撑成 2000px，正好占住 -2000px~0 */
     border-image:
       linear-gradient(
         to bottom,
-        transparent 0 6px,
-        var(--brand) 6px 12px,
-        transparent 12px
+        transparent 0 5px,
+        var(--brand) 5px 11px,
+        transparent 11px
       )
       0 0 0 1;
     border-image-width: 0 0 0 2000px;
@@ -439,12 +443,12 @@
   }
 
   /* border-image 版不靠 JS 回传进度，轨道保持纯底色。
-     同样靠 padding-left 把把手和剪裁坐标错开 1px，左端挖 1px 深（R5）的弧；
+     同样靠 padding-left 把把手和剪裁坐标错开，左端挖 1.0838px 深（R4.694）的弧，理由见上面 border-shape 版；
      path() 不支持百分比，右边界用 2000px 这种「远大于轨道宽度」的固定值兜住即可 */
   .ui-range-border-image::-webkit-slider-runnable-track {
     background: var(--fill);
     padding-left: .5px;
-    clip-path: path("M 0 -20 H 2000 V 26 H 0 V 6 H 1 A 5 5 0 0 1 1 0 H 0 Z");
+    clip-path: path("M 0 -20 H 2000 V 26 H 0 V 6 H 1.0838 A 4.694 4.694 0 0 1 1.0838 0 H 0 Z");
   }
 
   /* 方案三：锚点定位版。轨迹和把手各挂一个 anchor-name，::before 绝对定位后
@@ -464,9 +468,9 @@
   }
 
   .ui-range-anchor::-webkit-slider-thumb {
-    width: 18px;
-    height: 18px;
-    margin-top: -6px;
+    width: 16px;
+    height: 16px;
+    margin-top: -5px;
     appearance: none;
     box-sizing: border-box;
     border: var(--thumb-ring-width) solid var(--thumb-ring);
