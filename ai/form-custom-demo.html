@@ -296,19 +296,30 @@
   /* =========================================================
    * 三、范围选择，以及派生的评星
    * =======================================================*/
-  .ui-range {
+  /* 三种方案共用外壳尺寸和把手配色：默认白底 + 品牌色外圈，hover / 按下整个变品牌色 */
+  .ui-range,
+  .ui-range-anchor {
     width: 240px;
     height: 24px;
     margin: 0;
     background: none;
     cursor: pointer;
     appearance: none;
+    --thumb-fill: #fff;
+    --thumb-ring: var(--brand);
+  }
+
+  .ui-range:not(:disabled):is(:hover, :active),
+  .ui-range-anchor:not(:disabled):is(:hover, :active) {
+    --thumb-fill: var(--brand);
+  }
+
+  .ui-range {
     /* 裁掉滑块往左拉出来的那条填充带。用 clip + 4px 余量而不是 hidden：
        24px 高的框会正好把把手那个往下偏 1px、带 2px 模糊的阴影切平 */
     overflow: hidden;
     overflow: clip;
     overflow-clip-margin: 4px;
-    --border-color: #d5d6db;
   }
 
   .ui-range::-webkit-slider-runnable-track {
@@ -326,8 +337,8 @@
     appearance: none;
     border: 0px solid var(--brand);
 
-    /* border-shape 会让 border-radius 失效，圆用径向渐变画，两种情况都正常 */
-    background: radial-gradient(#fff 0 8px, var(--border-color) 8px 9px, transparent 0);
+    /* border-shape 会让 border-radius 失效，圆（含 1px 外圈）改用径向渐变画 */
+    background: radial-gradient(var(--thumb-fill) 0 8px, var(--thumb-ring) 8px 9px, transparent 0);
 
     /* 带子从 -2000px 拉到 0.5px，右端顺着把手的圆拐下去（arc 走半径 9px），
        内轮廓 circle(50%) 再把圆挖掉 */
@@ -378,11 +389,6 @@
     }
   }
 
-  /* 悬停时把把手的描边换成品牌色：1px 边框正好落在圆的内轮廓上，带子同色看不出变化 */
-  .ui-range:not(:disabled):hover::-webkit-slider-thumb {
-    border-width: 1px;
-  }
-
   /* 不支持 border-shape 的内核：靠页面底部那几行 JS 把进度写进 --percent，用轨道渐变画填充 */
   @supports not (border-shape: none) {
     .ui-range::-webkit-slider-runnable-track {
@@ -410,7 +416,7 @@
       )
       0 0 0 1;
     border-image-width: 0 0 0 2000px;
-    border-image-outset: 0 0 0 2000px;
+    border-image-outset: 0 0 0 1999px;
   }
 
   /* border-image 版不靠 JS 回传进度，轨道保持纯底色。
@@ -422,25 +428,11 @@
     clip-path: path("M 0 -20 H 2000 V 26 H 0 V 6 H 3 A 3 3 0 0 1 0 3 A 3 3 0 0 1 3 0 H 0 Z");
   }
 
-  /* 边框绘制被 border-image 接管后，加 border-width 画不出描边，改在背景圆环上换色 */
-  .ui-range-border-image:not(:disabled):is(:hover, :active)::-webkit-slider-thumb {
-    border-width: 0;
-    background: radial-gradient(#fff 0 8px, var(--brand) 8px 9px, transparent 0);
-    border-image-outset: 0 0 0 1999px;
-  }
-
   /* 方案三：锚点定位版。轨迹和把手各挂一个 anchor-name，::before 绝对定位后
      用 left / right 分别贴住「轨道左边」和「把手中心」，宽度天然就是已划过的长度——
      既不用 2000px 的大带子，也不需要 overflow 裁剪 */
   .ui-range-anchor {
-    width: 240px;
-    height: 24px;
-    margin: 0;
-    background: none;
-    cursor: pointer;
-    appearance: none;
     position: relative;
-    --border-color: #d5d6db;
     /* 多个实例共用同一套样式时，把锚点名限制在各自子树里，避免互相抢 */
     anchor-scope: --range-track, --range-thumb;
   }
@@ -457,9 +449,9 @@
     height: 18px;
     margin-top: -6px;
     appearance: none;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--thumb-ring);
     border-radius: 50%;
-    background: #fff;
+    background: var(--thumb-fill);
     box-shadow: 0 1px 2px rgba(16, 24, 40, .28);
     anchor-name: --range-thumb;
     /* 把把手抬一层，填充条右端才能藏到圆底下 */
@@ -480,60 +472,34 @@
     pointer-events: none;
   }
 
-  /* 边框还在手上，圆角也正常，hover 直接换边框色即可 */
-  .ui-range-anchor:not(:disabled):hover::-webkit-slider-thumb {
-    border-color: var(--brand);
-  }
-
-  .ui-range::-moz-range-track {
-    height: 6px;
-    border-radius: 999px;
-    background: var(--fill);
-  }
-
-  .ui-range::-moz-range-progress {
-    height: 6px;
-    border-radius: 999px;
-    background: var(--brand);
-  }
-
-  .ui-range::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    border: 1px solid var(--border-color);
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(16, 24, 40, .28);
-  }
-
-  /* Firefox 有 ::-moz-range-progress，填充交给它自己画，和锚点版各走各的路 */
+  /* Firefox 自带 ::-moz-range-progress 画填充，所以要把锚点版那条 ::before 关掉：
+     147+ 已支持锚点定位，不关的话两条填充会叠在一起 */
   @supports (-moz-appearance: none) {
     .ui-range-anchor::before { content: none; }
   }
 
+  .ui-range::-moz-range-track,
   .ui-range-anchor::-moz-range-track {
     height: 6px;
     border-radius: 999px;
     background: var(--fill);
   }
 
+  .ui-range::-moz-range-progress,
   .ui-range-anchor::-moz-range-progress {
     height: 6px;
     border-radius: 999px;
     background: var(--brand);
   }
 
+  .ui-range::-moz-range-thumb,
   .ui-range-anchor::-moz-range-thumb {
     width: 16px;
     height: 16px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--thumb-ring);
     border-radius: 50%;
-    background: #fff;
+    background: var(--thumb-fill);
     box-shadow: 0 1px 3px rgba(16, 24, 40, .28);
-  }
-
-  .ui-range-anchor:not(:disabled):hover::-moz-range-thumb {
-    border-color: var(--brand);
   }
 
   .ui-range:disabled { cursor: not-allowed; opacity: .5; }
