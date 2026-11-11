@@ -360,7 +360,7 @@
 
   /* 带子是 thumb 画的，而 Blink 里 thumb 是 track 的子元素：在 track 上挂 clip-path 能连带子一起裁，
      只把轨道左上、左下两个角挖成 R3 圆弧和它自己的圆角对齐；上下留足 thumb + 阴影 + 4px 余量 */
-  @supports (clip-path: shape(from 0 0, line to 1px 0)) {
+  @supports (border-shape: none) {
     .ui-range::-webkit-slider-runnable-track {
       clip-path: shape(
         from 0 -20px,
