@@ -429,6 +429,62 @@
     border-image-outset: 0 0 0 1999px;
   }
 
+  /* 方案三：锚点定位版。轨迹和把手各挂一个 anchor-name，::before 绝对定位后
+     用 left / right 分别贴住「轨道左边」和「把手中心」，宽度天然就是已划过的长度——
+     既不用 2000px 的大带子，也不需要 overflow 裁剪 */
+  .ui-range-anchor {
+    width: 240px;
+    height: 24px;
+    margin: 0;
+    background: none;
+    cursor: pointer;
+    appearance: none;
+    position: relative;
+    --border-color: #d5d6db;
+    /* 多个实例共用同一套样式时，把锚点名限制在各自子树里，避免互相抢 */
+    anchor-scope: --range-track, --range-thumb;
+  }
+
+  .ui-range-anchor::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--fill);
+    anchor-name: --range-track;
+  }
+
+  .ui-range-anchor::-webkit-slider-thumb {
+    width: 18px;
+    height: 18px;
+    margin-top: -6px;
+    appearance: none;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .28);
+    anchor-name: --range-thumb;
+    /* 把把手抬一层，填充条右端才能藏到圆底下 */
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 填充条：左贴轨道左边，右贴把手中心，多出来的半个圆被把手盖住 */
+  .ui-range-anchor::before {
+    content: "";
+    position: absolute;
+    top: 9px;
+    height: 6px;
+    left: anchor(--range-track left);
+    right: anchor(--range-thumb center);
+    background: var(--brand);
+    border-radius: 999px;
+    pointer-events: none;
+  }
+
+  /* 边框还在手上，圆角也正常，hover 直接换边框色即可 */
+  .ui-range-anchor:not(:disabled):hover::-webkit-slider-thumb {
+    border-color: var(--brand);
+  }
+
   .ui-range::-moz-range-track {
     height: 6px;
     border-radius: 999px;
@@ -448,6 +504,36 @@
     border-radius: 50%;
     background: #fff;
     box-shadow: 0 1px 3px rgba(16, 24, 40, .28);
+  }
+
+  /* Firefox 有 ::-moz-range-progress，填充交给它自己画，和锚点版各走各的路 */
+  @supports (-moz-appearance: none) {
+    .ui-range-anchor::before { content: none; }
+  }
+
+  .ui-range-anchor::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--fill);
+  }
+
+  .ui-range-anchor::-moz-range-progress {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--brand);
+  }
+
+  .ui-range-anchor::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, .28);
+  }
+
+  .ui-range-anchor:not(:disabled):hover::-moz-range-thumb {
+    border-color: var(--brand);
   }
 
   .ui-range:disabled { cursor: not-allowed; opacity: .5; }
@@ -900,6 +986,20 @@
       <code>border-image</code> 只画在边框区域里，这里用 <code>border-image-outset</code> 把绘制区域往左撑 2000px（只影响绘制、不改布局），
       再用 <code>slice</code> 只保留左边缘那一片、不开 <code>fill</code>，让带子止步于把手的左切点，不会盖住圆。
       这一版不依赖 <code>border-shape</code>，带子左端的圆角由 <code>clip-path: path()</code> 剪，坐标全是固定值、不涉及百分比，兼容性一路回溯到 Chrome 88。
+    </p>
+
+    <h4>锚点定位实现滑块组件</h4>
+    <div class="row">
+      <input class="ui-range-anchor" type="range" max="100" value="50">
+    </div>
+
+    <p class="hint">
+      最省事的办法是让浏览器自己算：<code>input</code> 支持 <code>::before</code>，给轨道和把手各挂一个
+      <code>anchor-name</code>，再用 <code>::before</code> 绝对定位，<code>left</code> 贴住轨道左边、
+      <code>right</code> 贴住把手中心，宽度天然就是「已划过」的长度，不用 2000px 大带子也不用裁剪；
+      把手加 <code>z-index</code> 抬高一层，把填充条的右端盖在圆底下。
+      多个实例共用一套样式时，靠 <code>anchor-scope</code> 把锚点名限制在各自子树里。
+      兼容底线是锚点定位：Chrome 131+、Safari 26+、Firefox 147+。
     </p>
 
     <h4>滑块组件派生评分组件</h4>
