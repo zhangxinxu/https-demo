@@ -413,9 +413,13 @@
     border-image-outset: 0 0 0 2000px;
   }
 
-  /* border-image 版不靠 JS 回传进度，轨道保持纯底色 */
+  /* border-image 版不靠 JS 回传进度，轨道保持纯底色。
+     带子左端的圆角改用 path() 剪：path() 不支持百分比，但这里真正需要精确值的
+     只有左端那 3px 圆弧（y 也固定 0~6px），右上、右下边界用 2000px 这种
+     「远大于轨道宽度」的固定值兜住就行——反正超出轨道的部分本来就看不见 */
   .ui-range-border-image::-webkit-slider-runnable-track {
     background: var(--fill);
+    clip-path: path("M 0 -20 H 2000 V 26 H 0 V 6 H 3 A 3 3 0 0 1 0 3 A 3 3 0 0 1 3 0 H 0 Z");
   }
 
   /* 边框绘制被 border-image 接管后，加 border-width 画不出描边，改在背景圆环上换色 */
@@ -895,7 +899,7 @@
     <p class="hint">
       <code>border-image</code> 只画在边框区域里，这里用 <code>border-image-outset</code> 把绘制区域往左撑 2000px（只影响绘制、不改布局），
       再用 <code>slice</code> 只保留左边缘那一片、不开 <code>fill</code>，让带子止步于把手的左切点，不会盖住圆。
-      这一版不依赖 <code>border-shape</code>，兼容门槛是 <code>shape()</code> 函数：Chrome 135+、Safari 18.4+，主流浏览器都已支持。
+      这一版不依赖 <code>border-shape</code>，带子左端的圆角由 <code>clip-path: path()</code> 剪，坐标全是固定值、不涉及百分比，兼容性一路回溯到 Chrome 88。
     </p>
 
     <h4>滑块组件派生评分组件</h4>
