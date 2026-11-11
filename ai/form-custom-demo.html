@@ -307,11 +307,13 @@
     appearance: none;
     --thumb-fill: #fff;
     --thumb-ring: var(--brand);
+    --thumb-ring-width: 1px;
   }
 
+  /* hover / 按下：描边加粗到 2px */
   .ui-range:not(:disabled):is(:hover, :active),
   .ui-range-anchor:not(:disabled):is(:hover, :active) {
-    --thumb-fill: var(--brand);
+    --thumb-ring-width: 2px;
   }
 
   .ui-range {
@@ -337,8 +339,13 @@
     appearance: none;
     border: 0px solid var(--brand);
 
-    /* border-shape 会让 border-radius 失效，圆（含 1px 外圈）改用径向渐变画 */
-    background: radial-gradient(var(--thumb-fill) 0 8px, var(--thumb-ring) 8px 9px, transparent 0);
+    /* border-shape 会让 border-radius 失效，圆（含外圈）改用径向渐变画，
+       外圈宽度从 9px 往里让，靠 --thumb-ring-width 控制 */
+    background: radial-gradient(
+      var(--thumb-fill) 0 calc(9px - var(--thumb-ring-width)),
+      var(--thumb-ring) calc(9px - var(--thumb-ring-width)) 9px,
+      transparent 0
+    );
 
     /* 带子从 -2000px 拉到 0.5px，右端顺着把手的圆拐下去（arc 走半径 9px），
        内轮廓 circle(50%) 再把圆挖掉 */
@@ -449,7 +456,8 @@
     height: 18px;
     margin-top: -6px;
     appearance: none;
-    border: 1px solid var(--thumb-ring);
+    box-sizing: border-box;
+    border: var(--thumb-ring-width) solid var(--thumb-ring);
     border-radius: 50%;
     background: var(--thumb-fill);
     box-shadow: 0 1px 2px rgba(16, 24, 40, .28);
@@ -496,7 +504,8 @@
   .ui-range-anchor::-moz-range-thumb {
     width: 16px;
     height: 16px;
-    border: 1px solid var(--thumb-ring);
+    box-sizing: border-box;
+    border: var(--thumb-ring-width) solid var(--thumb-ring);
     border-radius: 50%;
     background: var(--thumb-fill);
     box-shadow: 0 1px 3px rgba(16, 24, 40, .28);
