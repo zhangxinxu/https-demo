@@ -331,10 +331,7 @@
   }
 
   .ui-range {
-    /* 裁掉滑块往左拖出来的填充带；留 4px 余量，免得切平把手投影 */
     overflow: hidden;
-    overflow: clip;
-    overflow-clip-margin: 4px;
   }
 
   .ui-range::-webkit-slider-runnable-track {
@@ -445,12 +442,13 @@
     border-image-outset: 0 0 0 1999px;
   }
 
-  /* 轨道保持纯底色（不靠 JS）。一样用 padding-left 错开坐标，左端剪 1.0838px 深的弧；
-     path() 不支持百分比，右边界用 2000px 兜住 */
+  /* 轨道左右两端直角：轨道底色和带子都以边框盒为界。
+     带子从 -2000px 画起，得留一道矩形把左端挡在边框盒里；
+     纵向留 20px 余量，免得把把手和它的阴影裁掉 */
   .ui-range-border-image::-webkit-slider-runnable-track {
     background: var(--fill);
-    padding-left: .5px;
-    clip-path: path("M 0 -20 H 2000 V 26 H 0 V 6 H 1.0838 A 4.694 4.694 0 0 1 1.0838 0 H 0 Z");
+    border-radius: 0;
+    clip-path: polygon(0 -20px, 100% -20px, 100% calc(100% + 20px), 0 calc(100% + 20px));
   }
 
   /* 方案三：锚点定位版。轨道和把手各挂 anchor-name，::before 用 left / right
@@ -970,11 +968,11 @@
 
     <p class="hint">
       填充带由 <code>border-shape</code> 画：外轮廓是往左 2000px 的 6px <code>shape()</code>，内轮廓是 <code>circle(50%)</code>，相减只剩带子；
-      溢出部分由 <code>overflow: clip</code> 裁掉，不用回传进度。轨道上的 <code>clip-path</code> 负责左端那道圆弧，<code>padding-left</code> 把坐标和把手错开。
+      越出边框盒的部分由 <code>overflow: clip</code> 兜底，不用回传进度。轨道上的 <code>clip-path</code> 负责左端那道圆弧，<code>padding-left</code> 把坐标和把手错开。
       圆环用 <code>border</code> 描，比径向渐变锐利。不支持 <code>border-shape</code> 的内核回退到 <code>--percent</code> + 轨道渐变。
     </p>
 
-    <h4>border-image 实现滑块组件</h4>
+    <h4>border-image 实现滑块组件（全兼容，仅直角）</h4>
     <div class="row">
       <input class="ui-range ui-range-border-image" type="range" max="100" value="30">
     </div>
@@ -982,7 +980,7 @@
     <p class="hint">
       带子由 <code>border-image</code> 画：只有 <code>border-image-outset</code> 能把绘制区域往左撑 2000px 而不改布局，
       <code>slice</code> 只取左边缘那一片、不开 <code>fill</code>，带子就止步于把手左切点。
-      左端圆弧改用 <code>clip-path: path()</code> 剪，坐标全是固定值，可回溯到 Chrome 88。
+      轨道两端走直角，左端只用一道矩形 <code>clip-path</code> 把带子挡在边框盒内，可回溯到 Chrome 88。
     </p>
 
     <h4>锚点定位实现滑块组件（Chrome only）</h4>
