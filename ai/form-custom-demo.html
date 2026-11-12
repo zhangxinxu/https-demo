@@ -446,10 +446,12 @@
     border-image-outset: 0 0 0 1999px;
   }
 
-  /* 左右两端各做一个 0.5838px / 50% 的椭圆角，深度和 border-shape 版那道 R8 剪裁弧对齐，
-     上下两条边保持直线 */
+  /* 两端做 0.5838px / 50% 的椭圆角：border-radius 管轨道自己的底色，
+     clip-path 用同一道椭圆弧把带子也裁一刀（border-radius 裁不到子元素）；
+     弧是 rx=.5838、ry=3 的半椭圆，纵向留 20px 免得切到把手 */
   .ui-range-border-image::-webkit-slider-runnable-track {
     border-radius: 0.5838px / 50%;
+    clip-path: path("M 0 -20 H 2000 V 26 H 0 V 6 H 0.5838 A 0.5838 3 0 0 1 0.5838 0 H 0 Z");
   }
 
   /* 方案三：锚点定位版。轨道和把手各挂 anchor-name，::before 用 left / right
@@ -963,7 +965,7 @@
       圆环用 <code>border</code> 描，比径向渐变锐利。不支持 <code>border-shape</code> 的内核回退到 <code>--percent</code> + 轨道渐变。
     </p>
 
-    <h4>border-image 实现滑块组件（全兼容，仅直角）</h4>
+    <h4>border-image 实现滑块组件（全兼容，仅直角或近似直角）</h4>
     <div class="row">
       <input class="ui-range ui-range-border-image" type="range" max="100" value="30">
     </div>
