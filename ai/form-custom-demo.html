@@ -89,6 +89,11 @@
     }
   }
 
+  .gray {
+    color: var(--text-2);
+    font-weight: 400;
+  }
+
   /* 演示行 */
   .row {
     display: flex;
@@ -396,20 +401,19 @@
   }
 
   /* 带子由 thumb 画，而 Blink 里 thumb 是 track 的子元素，clip-path 能连带子一起裁。
-     左端弧深度的上限卡在带子上下两端：把手圆在那一行的横坐标 = r - √(r² - 9)，
-     r=8 时是 8 - √55 = 0.5838px，再往里就削到把手了；弧的最低点钉在边框盒左边缘（矢高 = 弦），
-     反推 R = (s² + 9) / 2s = 8px——正好是把手那个圆本尊，两者同心 */
+     左端直接按轨道自己的 999px 圆角剪（6px 高 → R3 半圆），带子和灰底的端头完全重合；
+     把手贴到左端时的边界情况，后面读 value 再单独处理 */
   @supports (border-shape: none) {
-    .ui-range-border-shape::-webkit-slider-runnable-track {
+    .ui-range-border-shape:not([value="0"])::-webkit-slider-runnable-track {
       clip-path: shape(
         from 0 -20px,
         line to 100% -20px,
         line to 100% calc(100% + 20px),
         line to 0 calc(100% + 20px),
-        /* 从轨道下边收进来，沿 R8 绕回上边（弦 6px，矢高 0.5838px） */
+        /* 从轨道下边收进来，沿 R3 半圆绕回上边（弦 6px，矢高 3px） */
         line to 0 100%,
-        line to 0.5838px 100%,
-        arc to 0.5838px 0 of 8px cw,
+        line to 3px 100%,
+        arc to 3px 0 of 3px cw,
         line to 0 0,
         close
       );
@@ -953,10 +957,10 @@
     <h2>三、范围选择元素</h2>
     <p>轨道和滑块分别对应 <code>::-webkit-slider-runnable-track</code> 和 <code>::-webkit-slider-thumb</code>，Chrome 没有现成的「已填充进度」伪元素。</p>
 
-    <h4>border-shape 实现滑块组件</h4>
+    <h4>border-shape 实现滑块组件<span class="gray">（仅实验，不推荐）</span></h4>
     <div class="row">
       <input class="ui-range ui-range-border-shape" type="range" min="0" max="100" value="60">
-      <span class="val">60</span>
+      <output class="val">60</output>
     </div>
 
     <p class="hint">
@@ -965,7 +969,7 @@
       圆环用 <code>border</code> 描，比径向渐变锐利。不支持 <code>border-shape</code> 的内核回退到 <code>--percent</code> + 轨道渐变。
     </p>
 
-    <h4>border-image 实现滑块组件（全兼容，仅直角或近似直角）</h4>
+    <h4>border-image 实现滑块组件<span class="gray">（CSS全兼容，仅直角或近似直角）</span></h4>
     <div class="row">
       <input class="ui-range ui-range-border-image" type="range" max="100" value="30">
     </div>
@@ -976,7 +980,7 @@
       轨道两端用 <code>0.5838px / 50%</code> 的椭圆角收边，越界的带子交给 input 上的 <code>overflow: clip</code>，可回溯到 Chrome 88。
     </p>
 
-    <h4>锚点定位实现滑块组件（Chrome only）</h4>
+    <h4>锚点定位实现滑块组件<span class="gray">（Chrome only）</span></h4>
     <div class="row">
       <input class="ui-range-anchor" type="range" max="100" value="50">
     </div>
@@ -1139,6 +1143,24 @@
       sync();
     });
   }
+</script>
+
+<script>
+  /* 让每个 range 的 value 属性始终等于它当前的 value 属性值（property），
+     这样就能用 [value="0"] / [value="100"] 这类属性选择器直接认边界；
+     写成 setAttribute 只改默认值，不会反过来动滑块位置（dirty value flag 已置位） */
+  const syncRangeValueAttr = function (el) {
+    if (el.type === 'range' && el.getAttribute('value') !== el.value) {
+      el.setAttribute('value', el.value);
+    }
+  };
+
+  document.querySelectorAll('input[type="range"]').forEach(syncRangeValueAttr);
+
+  /* 用捕获阶段的委托，键盘、鼠标拖、点轨道都算 input；change 兜住一些手动改值的场景 */
+  document.addEventListener('input', function (event) {
+    syncRangeValueAttr(event.target);
+  }, true);
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js" defer></script>
