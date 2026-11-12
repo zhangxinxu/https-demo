@@ -1152,6 +1152,9 @@
   const syncRangeValueAttr = function (el) {
     if (el.type === 'range' && el.getAttribute('value') !== el.value) {
       el.setAttribute('value', el.value);
+
+      const output =  el.parentElement.querySelector('output');
+      if (output) output.textContent = el.value;
     }
   };
 
