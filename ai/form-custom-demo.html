@@ -331,18 +331,20 @@
   }
 
   .ui-range {
+    /* 裁掉滑块往左拖出来的 2000px 填充带 */
     overflow: hidden;
   }
 
-  .ui-range::-webkit-slider-runnable-track {
+  /* 公用：轨道高度和底色 */
+  .ui-range::-webkit-slider-runnable-track,
+  .ui-range-anchor::-webkit-slider-runnable-track {
     height: 6px;
-    border-radius: 999px;
     background: var(--fill);
   }
 
-  /* Chrome 没有填充进度的伪元素，改成让滑块自己拖一条往左 2000px 的带子：
-     外轮廓是带子，内轮廓是 circle(50%)，相减即剩下填充带 */
-  .ui-range::-webkit-slider-thumb {
+  /* 公用：把手尺寸、圆环、投影 */
+  .ui-range::-webkit-slider-thumb,
+  .ui-range-anchor::-webkit-slider-thumb {
     width: 16px;
     height: 16px;
     margin-top: -5px;
@@ -351,9 +353,20 @@
 
     /* 圆环用 border 描：实心边，1x 屏下比径向渐变锐利 */
     border: var(--thumb-ring-width) solid var(--thumb-ring);
+    border-radius: 50%;
+    background: var(--thumb-fill);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .28);
+  }
 
-    /* 背景只负责颜色：上层白盘盖住把手（closest-side 正好 8px），下层品牌色即带子；
-       白盘边缘落在环下沿，被 border 盖住不会露毛边 */
+  /* —— 方案一：border-shape 版 —— */
+  .ui-range-border-shape::-webkit-slider-runnable-track {
+    border-radius: 999px;
+  }
+
+  /* Chrome 没有填充进度的伪元素，改成让滑块自己拖一条往左 2000px 的带子：
+     外轮廓是带子，内轮廓是 circle(50%)，相减即剩下填充带 */
+  .ui-range-border-shape::-webkit-slider-thumb {
+    /* 背景两层：白盘盖住把手（closest-side 正好 8px），下层品牌色就是带子 */
     background:
       radial-gradient(circle closest-side, var(--thumb-fill) 0 100%, transparent 0),
       var(--thumb-ring);
@@ -368,9 +381,6 @@
         close
       )
       circle(50%);
-
-    border-radius: 50%;
-    box-shadow: 0 1px 2px rgba(16, 24, 40, .28);
 
     /* 阴影会跟着带子跑，这里只留「6px 横条 + 把手外扩 4px」的范围 */
     clip-path: polygon(
@@ -390,7 +400,7 @@
      r=8 时是 8 - √55 = 0.5838px，再往里就削到把手了；弧的最低点钉在边框盒左边缘（矢高 = 弦），
      反推 R = (s² + 9) / 2s = 8px——正好是把手那个圆本尊，两者同心 */
   @supports (border-shape: none) {
-    .ui-range::-webkit-slider-runnable-track {
+    .ui-range-border-shape::-webkit-slider-runnable-track {
       clip-path: shape(
         from 0 -20px,
         line to 100% -20px,
@@ -408,21 +418,16 @@
 
   /* 不支持 border-shape：靠底部 JS 写 --percent，轨道渐变画填充 */
   @supports not (border-shape: none) {
-    .ui-range::-webkit-slider-runnable-track {
+    .ui-range-border-shape::-webkit-slider-runnable-track {
       background: linear-gradient(to right, var(--brand) calc(var(--percent, 0) * 100%), var(--fill) 0);
     }
   }
 
-  /* 方案二：border-image 版。只有 outset 能把绘制区域往左撑 2000px 而不改布局
-     （border-left: 2000px 会把 thumb 撑宽，滑块位置算歪） */
+  /* —— 方案二：border-image 版 ——
+     只有 outset 能把绘制区域往左撑 2000px 而不改布局（border-left: 2000px 会把 thumb 撑宽，滑块位置算歪） */
   .ui-range-border-image::-webkit-slider-thumb {
-    border-shape: none;
-    /* 阴影不跟带子走，裁阴影的 clip-path 也不需要 */
-    clip-path: none;
-
     /* 边框已被 border-image 占用，环改用 inset 阴影描 */
     border: 0;
-    background: var(--thumb-fill);
     box-shadow:
       inset 0 0 0 var(--thumb-ring-width) var(--thumb-ring),
       0 1px 2px rgba(16, 24, 40, .28);
@@ -455,23 +460,13 @@
     anchor-scope: --range-track, --range-thumb;
   }
 
+  /* 只补锚点名，其余尺寸和外观走公用样式 */
   .ui-range-anchor::-webkit-slider-runnable-track {
-    height: 6px;
     border-radius: 999px;
-    background: var(--fill);
     anchor-name: --range-track;
   }
 
   .ui-range-anchor::-webkit-slider-thumb {
-    width: 16px;
-    height: 16px;
-    margin-top: -5px;
-    appearance: none;
-    box-sizing: border-box;
-    border: var(--thumb-ring-width) solid var(--thumb-ring);
-    border-radius: 50%;
-    background: var(--thumb-fill);
-    box-shadow: 0 1px 2px rgba(16, 24, 40, .28);
     anchor-name: --range-thumb;
     /* 抬一层，填充条右端才能藏到圆底下 */
     position: relative;
@@ -958,7 +953,7 @@
 
     <h4>border-shape 实现滑块组件</h4>
     <div class="row">
-      <input class="ui-range" type="range" min="0" max="100" value="60">
+      <input class="ui-range ui-range-border-shape" type="range" min="0" max="100" value="60">
       <span class="val">60</span>
     </div>
 
@@ -1126,7 +1121,7 @@
   const isSafari = !CSS.supports('font-tech(color-COLRv1)');
 
   const percentTargets = [];
-  if (noBorderShape && !isFirefox) percentTargets.push('.ui-range:not(.ui-range-border-image)');
+  if (noBorderShape && !isFirefox) percentTargets.push('.ui-range-border-shape');
   if (isSafari) percentTargets.push('.ui-range-anchor');
 
   if (percentTargets.length) {
