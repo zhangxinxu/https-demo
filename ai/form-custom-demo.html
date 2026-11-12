@@ -995,7 +995,7 @@
       宽度天然就是「已划过」的长度，不用大带子也不用裁剪；填充条右端藏在抬高的把手底下，<code>anchor-scope</code> 把锚点名限制在各自子树里。
     </p>
     <p class="hint">
-      Safari 的 range 伪元素挂不了 <code>anchor-name</code>，所以用 <code>@supports not font-tech(color-COLRv1)</code> 认出它，退回 <code>--percent</code> + 轨道渐变。
+      Safari 的 range 不支持伪元素，所以用 <code>@supports not font-tech(color-COLRv1)</code> 认出它，退回 <code>--percent</code> + 轨道渐变。
     </p>
 
     <h4>滑块组件派生评分组件</h4>
