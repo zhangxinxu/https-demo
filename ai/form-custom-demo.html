@@ -296,7 +296,7 @@
   /* =========================================================
    * 三、范围选择，以及派生的评星
    * =======================================================*/
-  /* 三种方案共用外壳尺寸和把手配色：默认白底 + 品牌色外圈，hover / 按下整个变品牌色 */
+  /* 三种方案共用的外壳尺寸与把手配色 */
   .ui-range,
   .ui-range-anchor {
     width: 240px;
@@ -310,18 +310,18 @@
     --thumb-ring-width: 1px;
   }
 
-  /* hover / 按下：描边加粗到 2px */
+  /* hover / 按下：圆环加粗到 2px */
   .ui-range:not(:disabled):is(:hover, :active),
   .ui-range-anchor:not(:disabled):is(:hover, :active) {
     --thumb-ring-width: 2px;
   }
 
-  /* 按住不放时去掉把手的投影：抬起来的那层没了，看着就是被压平贴到轨道上 */
+  /* 按下时去掉投影，模拟压平贴到轨道上的手感 */
   .ui-range:not(:disabled):active::-webkit-slider-thumb {
     box-shadow: none;
   }
 
-  /* border-image 版的圆环本身是用 inset 阴影描出来的，只去掉外面那层投影，环得留下 */
+  /* border-image 版的环是 inset 阴影画的，只去掉外面那层 */
   .ui-range-border-image:not(:disabled):active::-webkit-slider-thumb {
     box-shadow: inset 0 0 0 var(--thumb-ring-width) var(--thumb-ring);
   }
@@ -331,8 +331,7 @@
   }
 
   .ui-range {
-    /* 裁掉滑块往左拉出来的那条填充带。用 clip + 4px 余量而不是 hidden：
-       24px 高的框会正好把把手那个往下偏 1px、带 2px 模糊的阴影切平 */
+    /* 裁掉滑块往左拖出来的填充带；留 4px 余量，免得切平把手投影 */
     overflow: hidden;
     overflow: clip;
     overflow-clip-margin: 4px;
@@ -344,8 +343,8 @@
     background: var(--fill);
   }
 
-  /* Chrome 没有「已填充进度」的伪元素，只能让滑块自己拖一条往左 2000px、6px 高的填充带。
-     默认走 border-shape：外轮廓是那条带子，内轮廓是把手那个圆，两个形状相减只剩带子 */
+  /* Chrome 没有填充进度的伪元素，改成让滑块自己拖一条往左 2000px 的带子：
+     外轮廓是带子，内轮廓是 circle(50%)，相减即剩下填充带 */
   .ui-range::-webkit-slider-thumb {
     width: 16px;
     height: 16px;
@@ -353,19 +352,16 @@
     appearance: none;
     box-sizing: border-box;
 
-    /* 圆环交给 border 画：实心描边，1x 屏下边缘锐利。
-       换成径向渐变的话，环的 stop 落在半像素上会发虚、粗细不匀 */
+    /* 圆环用 border 描：实心边，1x 屏下比径向渐变锐利 */
     border: var(--thumb-ring-width) solid var(--thumb-ring);
 
-    /* 背景层只负责两块填充色，不参与画环：
-       上层是铺满把手的白色圆盘（半径取最近边，正好 8px），下层品牌色就是那条带子。
-       白盘边缘落在环的下沿，被 border 整个盖住，不会露出渐变的毛边 */
+    /* 背景只负责颜色：上层白盘盖住把手（closest-side 正好 8px），下层品牌色即带子；
+       白盘边缘落在环下沿，被 border 盖住不会露毛边 */
     background:
       radial-gradient(circle closest-side, var(--thumb-fill) 0 100%, transparent 0),
       var(--thumb-ring);
 
-    /* 带子从 -2000px 拉到 0.5px，右端顺着把手的圆拐下去（arc 走半径 8px），
-       内轮廓 circle(50%) 再把圆挖掉 */
+    /* 带子从 -2000px 拉到 0.5px，右端按 R8 绕过把手 */
     border-shape:
       shape(
         from -2000px 5px,
@@ -375,12 +371,11 @@
         close
       )
       circle(50%);
-    
+
     border-radius: 50%;
     box-shadow: 0 1px 2px rgba(16, 24, 40, .28);
 
-    /* 阴影也会跟着带子形状走，顺着带子上下各描一道；这里把绘制范围收成
-       「带子那 6px 的横条 + 把手圆外扩 4px 的方框」，只留把手自己的阴影 */
+    /* 阴影会跟着带子跑，这里只留「6px 横条 + 把手外扩 4px」的范围 */
     clip-path: polygon(
       -2000px 5px,
       -0 5px,
@@ -393,13 +388,10 @@
     );
   }
 
-  /* 带子是 thumb 画的，而 Blink 里 thumb 是 track 的子元素，在 track 上挂 clip-path 能连带子一起裁。
-     轨道自己是 999px 圆角，value=0 时那条圆弧会和剪裁线并排出现，所以左端的弧只能贴着边框盒左边缘走。
-     弧能往里挖多深，上限卡在带子的上、下两端（离把手圆心 3px 那一行）：把手的圆在那里的横坐标是
-       padding-left + r - √(r² - 3²)
-     r = 8（16px 把手）时是 .5 + .584 = 1.0838px，r = 9（18px）时是 1.0147px——把手缩小只多让出 .069px，
-     所以弦最多到 1.0838px，再往里就实打实削到把手圆了（弦 2px 会吃进 .916px）。
-     弧的最低点钉在边框盒左边缘（x=0），矢高和弦同值，反推半径 R = (s² + 9) / 2s = 4.694px */
+  /* 带子由 thumb 画，而 Blink 里 thumb 是 track 的子元素，clip-path 能连带子一起裁。
+     左端弧深度的上限卡在带子上下两端：把手圆在那里的横坐标 = padding-left + r - √(r² - 9)，
+     r=8 时是 1.0838px，再往里就削到把手了；弧的最低点钉在边框盒左边缘（矢高 = 弦），
+     反推 R = (s² + 9) / 2s = 4.694px */
   @supports (border-shape: none) {
     .ui-range::-webkit-slider-runnable-track {
       padding-left: .5px;
@@ -408,7 +400,7 @@
         line to 100% -20px,
         line to 100% calc(100% + 20px),
         line to 0 calc(100% + 20px),
-        /* 从轨道下边收进来，沿 R4.694 的弧绕回上边（弦 6px，矢高 1.0838px） */
+        /* 从轨道下边收进来，沿 R4.694 绕回上边（弦 6px，矢高 1.0838px） */
         line to 0 100%,
         line to 1.0838px 100%,
         arc to 1.0838px 0 of 4.694px cw,
@@ -418,32 +410,29 @@
     }
   }
 
-  /* 不支持 border-shape 的内核：靠页面底部那几行 JS 把进度写进 --percent，用轨道渐变画填充 */
+  /* 不支持 border-shape：靠底部 JS 写 --percent，轨道渐变画填充 */
   @supports not (border-shape: none) {
     .ui-range::-webkit-slider-runnable-track {
       background: linear-gradient(to right, var(--brand) calc(var(--percent, 0) * 100%), var(--fill) 0);
     }
   }
 
-  /* 方案二：border-image 版。它只画在「边框区域」里，想画到 thumb 盒子外面只能靠
-     border-image-outset 把边框图区域往左撑 2000px（只影响绘制、不改布局；
-     换成 border-left: 2000px 会把 thumb 撑成 2016px 宽，滑块位置直接算歪） */
+  /* 方案二：border-image 版。只有 outset 能把绘制区域往左撑 2000px 而不改布局
+     （border-left: 2000px 会把 thumb 撑宽，滑块位置算歪） */
   .ui-range-border-image::-webkit-slider-thumb {
     border-shape: none;
-    /* 阴影不跟带子走，原来那段裁阴影的 clip-path 就不需要了 */
+    /* 阴影不跟带子走，裁阴影的 clip-path 也不需要 */
     clip-path: none;
 
-    /* 边框这块已经被 border-image 拿去画带子了，环只能用内阴影描：
-       它同样沿 border-radius 走圆，1x 屏下也不会有渐变的发虚问题 */
+    /* 边框已被 border-image 占用，环改用 inset 阴影描 */
     border: 0;
     background: var(--thumb-fill);
     box-shadow:
       inset 0 0 0 var(--thumb-ring-width) var(--thumb-ring),
       0 1px 2px rgba(16, 24, 40, .28);
 
-    /* 渐变只给竖向信息：品牌色压在 5px~11px（轨道那 6px），其余透明 */
-    /* slice 只切左边 1px、不开 fill：只画左边缘那一片，中间含把手那块不参与绘制；
-       这一片的目标宽度由 border-image-width 撑成 2000px，正好占住 -2000px~0 */
+    /* 渐变只给竖向信息：品牌色压在 5px~11px（轨道那 6px），其余透明；
+       slice 只切左边 1px、不开 fill，只画左边缘那一片，宽度由 border-image-width 撑成 2000px */
     border-image:
       linear-gradient(
         to bottom,
@@ -456,21 +445,19 @@
     border-image-outset: 0 0 0 1999px;
   }
 
-  /* border-image 版不靠 JS 回传进度，轨道保持纯底色。
-     同样靠 padding-left 把把手和剪裁坐标错开，左端挖 1.0838px 深（R4.694）的弧，理由见上面 border-shape 版；
-     path() 不支持百分比，右边界用 2000px 这种「远大于轨道宽度」的固定值兜住即可 */
+  /* 轨道保持纯底色（不靠 JS）。一样用 padding-left 错开坐标，左端剪 1.0838px 深的弧；
+     path() 不支持百分比，右边界用 2000px 兜住 */
   .ui-range-border-image::-webkit-slider-runnable-track {
     background: var(--fill);
     padding-left: .5px;
     clip-path: path("M 0 -20 H 2000 V 26 H 0 V 6 H 1.0838 A 4.694 4.694 0 0 1 1.0838 0 H 0 Z");
   }
 
-  /* 方案三：锚点定位版。轨迹和把手各挂一个 anchor-name，::before 绝对定位后
-     用 left / right 分别贴住「轨道左边」和「把手中心」，宽度天然就是已划过的长度——
-     既不用 2000px 的大带子，也不需要 overflow 裁剪 */
+  /* 方案三：锚点定位版。轨道和把手各挂 anchor-name，::before 用 left / right
+     贴住轨道左边和把手中心，宽度天然就是已划过的长度，不用大带子也不用裁剪 */
   .ui-range-anchor {
     position: relative;
-    /* 多个实例共用同一套样式时，把锚点名限制在各自子树里，避免互相抢 */
+    /* 多实例共用样式时，锚点名限制在各自子树里 */
     anchor-scope: --range-track, --range-thumb;
   }
 
@@ -492,12 +479,12 @@
     background: var(--thumb-fill);
     box-shadow: 0 1px 2px rgba(16, 24, 40, .28);
     anchor-name: --range-thumb;
-    /* 把把手抬一层，填充条右端才能藏到圆底下 */
+    /* 抬一层，填充条右端才能藏到圆底下 */
     position: relative;
     z-index: 1;
   }
 
-  /* 填充条：左贴轨道左边，右贴把手中心，多出来的半个圆被把手盖住 */
+  /* 填充条：左贴轨道左边，右贴把手中心，露出的半个圆被把手盖住 */
   .ui-range-anchor::before {
     content: "";
     position: absolute;
@@ -510,16 +497,13 @@
     pointer-events: none;
   }
 
-  /* Firefox 自带 ::-moz-range-progress 画填充，所以要把锚点版那条 ::before 关掉：
-     147+ 已支持锚点定位，不关的话两条填充会叠在一起 */
+  /* Firefox 自带 ::-moz-range-progress，关掉 ::before 免得两条填充叠一起 */
   @supports (-moz-appearance: none) {
     .ui-range-anchor::before { content: none; }
   }
 
-  /* Safari 本身支持锚点定位（含 anchor-scope），但 range 的伪元素上挂不了 anchor-name，
-     两个 anchor() 会一起失效、填充条直接塌掉，所以这一版退回 --percent 方案：
-     关掉 ::before，让轨道用渐变自己画填充，进度由页面底部那几行 JS 回传。
-     font-tech(color-COLRv1) 目前只有 Safari 没实现，拿它来认 Safari */
+  /* Safari 支持锚点，但 range 伪元素挂不了 anchor-name，两个 anchor() 一起失效，
+     所以退回 --percent + 轨道渐变；font-tech(color-COLRv1) 目前只有它没实现，用来认 Safari */
   @supports not font-tech(color-COLRv1) {
     .ui-range-anchor::before { content: none; }
 
@@ -555,9 +539,8 @@
 
   .ui-range:disabled { cursor: not-allowed; opacity: .5; }
 
-  /* 评星：由 range 派生。整块输入框用 mask 镂成 5 颗星，
-     轨道铺满金色（等于全部点亮），滑块只留 1px 当定位点，
-     再用它的阴影把右侧盖成灰色，超出输入框的部分被 mask 裁掉，不需要 JS */
+  /* 评星：由 range 派生。mask 把整块输入框镂成 5 颗星，轨道铺满金色（等于全部点亮），
+     滑块只留 1px 当定位点，用它的阴影把右侧盖成灰色，超出的部分被 mask 裁掉 */
   .ui-rate {
     --star: url("data:image/svg+xml,%3Csvg width='12' height='11' viewBox='0 0 12 11' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 0l1.693 3.67 4.013.476L8.74 6.89l.788 3.964L6 8.88l-3.527 1.974.788-3.964L.294 4.146l4.013-.476L6 0z'/%3E%3C/svg%3E");
 
@@ -570,22 +553,20 @@
     mask: var(--star) repeat-x left center / 24px 100%;
   }
 
-  /* 小一号：20px 高，格子放宽到 32px。星按 12:11 等比缩到 20px 高、约 21.8px 宽，
-     剩下那 10px 就是半颗星的间距，输入框宽度跟着变成 5 × 32px */
+  /* 小一号：32px 一格、20px 高，宽度跟着变成 5 × 32px */
   .ui-rate-smaller {
     width: 160px;
     height: 20px;
     mask-size: 32px 100%;
   }
 
-  /* 轨道就是「全部点亮」的金色 */
+  /* 轨道＝全部点亮的金色 */
   .ui-rate::-webkit-slider-runnable-track {
     height: 100%;
     background: var(--warning);
   }
 
-  /* 滑块必须隐形：宽度给 1px 当定位点，
-     而且一定要 appearance: none，否则 Chrome 会把默认的蓝色滑块画出来 */
+  /* 滑块隐形：1px 宽当定位点；必须 appearance: none，否则会画出系统蓝滑块 */
   .ui-rate::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
@@ -597,7 +578,7 @@
     box-shadow: 999em 0 0 999em #dfe1e6;
   }
 
-  /* Firefox 有现成的进度伪元素，用不着这段 trick */
+  /* Firefox 有现成的进度伪元素，不需要这套 trick */
   .ui-rate::-moz-range-track {
     height: 100%;
     background: #dfe1e6;
@@ -988,12 +969,9 @@
     </div>
 
     <p class="hint">
-      左半区的填充交给 <code>border-shape</code>：外轮廓用 <code>shape()</code> 画一条往左 2000px 的 6px 带子，
-      顺着把手那个圆拐过去，内轮廓是一个 <code>circle()</code>，两个形状相减只剩填充带；
-      超出输入框的部分由 <code>overflow: clip</code> 裁掉，不用回传进度。
-      把手的圆环由 <code>border</code> 直接描出来：1 倍屏下是实心填充、边缘锐利，
-      换成 <code>radial-gradient</code> 的话，环的 stop 会落在半像素上，发虚而且粗细不匀。
-      不支持的内核由页面底部那几行 JS 把进度写进 <code>--percent</code>，交给轨道渐变去画。
+      填充带由 <code>border-shape</code> 画：外轮廓是往左 2000px 的 6px <code>shape()</code>，内轮廓是 <code>circle(50%)</code>，相减只剩带子；
+      溢出部分由 <code>overflow: clip</code> 裁掉，不用回传进度。轨道上的 <code>clip-path</code> 负责左端那道圆弧，<code>padding-left</code> 把坐标和把手错开。
+      圆环用 <code>border</code> 描，比径向渐变锐利。不支持 <code>border-shape</code> 的内核回退到 <code>--percent</code> + 轨道渐变。
     </p>
 
     <h4>border-image 实现滑块组件</h4>
@@ -1002,9 +980,9 @@
     </div>
 
     <p class="hint">
-      <code>border-image</code> 只画在边框区域里，这里用 <code>border-image-outset</code> 把绘制区域往左撑 2000px（只影响绘制、不改布局），
-      再用 <code>slice</code> 只保留左边缘那一片、不开 <code>fill</code>，让带子止步于把手的左切点，不会盖住圆。
-      这一版不依赖 <code>border-shape</code>，带子左端的圆角由 <code>clip-path: path()</code> 剪，坐标全是固定值、不涉及百分比，兼容性一路回溯到 Chrome 88。
+      带子由 <code>border-image</code> 画：只有 <code>border-image-outset</code> 能把绘制区域往左撑 2000px 而不改布局，
+      <code>slice</code> 只取左边缘那一片、不开 <code>fill</code>，带子就止步于把手左切点。
+      左端圆弧改用 <code>clip-path: path()</code> 剪，坐标全是固定值，可回溯到 Chrome 88。
     </p>
 
     <h4>锚点定位实现滑块组件（Chrome only）</h4>
@@ -1013,17 +991,11 @@
     </div>
 
     <p class="hint">
-      最省事的办法是让浏览器自己算：<code>input</code> 支持 <code>::before</code>，给轨道和把手各挂一个
-      <code>anchor-name</code>，再用 <code>::before</code> 绝对定位，<code>left</code> 贴住轨道左边、
-      <code>right</code> 贴住把手中心，宽度天然就是「已划过」的长度，不用 2000px 大带子也不用裁剪；
-      把手加 <code>z-index</code> 抬高一层，把填充条的右端盖在圆底下。
-      多个实例共用一套样式时，靠 <code>anchor-scope</code> 把锚点名限制在各自子树里。
-      兼容底线是锚点定位：Chrome 131+、Firefox 147+。
+      轨道和把手各挂 <code>anchor-name</code>，再用 <code>input::before</code> 绝对定位：<code>left</code> 贴轨道左边、<code>right</code> 贴把手中心，
+      宽度天然就是「已划过」的长度，不用大带子也不用裁剪；填充条右端藏在抬高的把手底下，<code>anchor-scope</code> 把锚点名限制在各自子树里。
     </p>
     <p class="hint">
-      而 Safari 虽然支持锚点定位（含 <code>anchor-scope</code>），但 range 的伪元素上挂不了 <code>anchor-name</code>，
-      两个 <code>anchor()</code> 会一起失效，所以这一版在 Safari 里退回 <code>--percent</code> 方案，
-      用 <code>@supports not font-tech(color-COLRv1)</code> 认 Safari，进度由页面底部那几行 JS 回传。
+      Safari 的 range 伪元素挂不了 <code>anchor-name</code>，所以用 <code>@supports not font-tech(color-COLRv1)</code> 认出它，退回 <code>--percent</code> + 轨道渐变。
     </p>
 
     <h4>滑块组件派生评分组件</h4>
@@ -1034,11 +1006,8 @@
     </div>
 
     <p class="hint">
-      评星是 range 的衍生组件：整块输入框用 <code>mask</code> 镂成 5 颗星，轨道铺满金色（等于全部点亮），
-      滑块只留 1px 当定位点，用它的阴影把右侧盖成灰色，超出输入框的部分被 <code>mask</code> 裁掉，同样不需要 JS。
-    </p>
-    <p class="hint">
-      改 <code>mask-size</code> 的平铺宽度、输入框的宽高，就能得到不同大小、不同疏密的评分，参见第二个评分效果。
+      评星由 range 派生：<code>mask</code> 把输入框镂成 5 颗星，轨道铺满金色，滑块只留 1px 定位点，用它的阴影把右侧盖成灰色。
+      改 <code>mask-size</code> 和宽高就能得到不同大小、疏密的评分（见第二个）。
     </p>
   </section>
 
