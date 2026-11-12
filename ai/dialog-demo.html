@@ -66,8 +66,10 @@
     box-shadow: var(--shadow-card);
   }
 
+  /* 锚点定位：抵消 .block 的 padding-top，让定位边缘落在 .block 顶边 */
   .block > h2 {
     margin: 0 0 6px;
+    scroll-margin-top: 22px;
     font-size: 16px;
     letter-spacing: -.01em;
   }
@@ -362,7 +364,7 @@
   </header>
 
   <section class="block">
-    <h2>一、popover 弹框</h2>
+    <h2 id="f1">一、popover 弹框</h2>
     <p>给 dialog 加 <code>popover</code> 属性，打开和关闭全交给 popover API，一行 JS 都不用写。</p>
 
     <button type="button" class="btn btn-primary" popovertarget="intro-dialog">查看《CSS新世界》介绍</button>
@@ -381,7 +383,7 @@
   </section>
 
   <section class="block">
-    <h2>二、点击图片查看大图</h2>
+    <h2 id="f2">二、点击图片查看大图</h2>
     <p>缩略图只挂一个自定义属性，点开后在满屏 dialog 里看大图，支持左右切换与键盘方向键。</p>
 
     <div class="thumbs">
@@ -402,7 +404,7 @@
   </section>
 
   <section class="block">
-    <h2>三、改造成组件：is="ui-dialog"</h2>
+    <h2 id="f3">三、改造成组件：is="ui-dialog"</h2>
     <p>
       给 dialog 写上 <code>is="ui-dialog"</code>，再用 <code>data-params</code> 传参，
       只认 <code>title</code>、<code>closable</code>、<code>buttons</code> 三个字段。

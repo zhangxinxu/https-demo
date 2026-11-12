@@ -66,8 +66,10 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 8px 24px -18px rgba(0, 0, 0, .3);
   }
 
+  /* 锚点定位：抵消 .block 的 padding-top，让定位边缘落在 .block 顶边 */
   .block > h2 {
     margin: 0 0 6px;
+    scroll-margin-top: 22px;
     font-size: 16px;
     letter-spacing: -.01em;
   }
@@ -340,7 +342,7 @@
 
   <!-- ========== 一、进度元素 ========== -->
   <section class="block">
-    <h2>一、进度元素</h2>
+    <h2 id="f1">一、进度元素</h2>
     <p>进度条改的是 <code>::-webkit-progress-bar</code>（轨道）和 <code>::-webkit-progress-value</code>（进度），Firefox 只给一个 <code>::-moz-progress-bar</code>。</p>
 
     <div class="row">
@@ -356,7 +358,7 @@
 
   <!-- ========== 二、计量元素 ========== -->
   <section class="block">
-    <h2>二、计量元素</h2>
+    <h2 id="f2">二、计量元素</h2>
     <p>
       <code>meter</code> 有 optimum / suboptimum / even-less-good 三个填充伪元素，
       靠 <code>low</code>、<code>high</code>、<code>optimum</code> 三个属性划分区间，所以颜色跟着数值自动变。

@@ -68,8 +68,10 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 8px 24px -18px rgba(0, 0, 0, .3);
   }
 
+  /* 锚点定位：抵消 .block 的 padding-top，让定位边缘落在 .block 顶边 */
   .block > h2 {
     margin: 0 0 6px;
+    scroll-margin-top: 22px;
     font-size: 16px;
     letter-spacing: -.01em;
   }
@@ -907,7 +909,7 @@
 
   <!-- ========== 一、常规元素 ========== -->
   <section class="block">
-    <h2>一、常规元素</h2>
+    <h2 id="f1">一、常规元素</h2>
     <p>按钮和输入框，直接改 border、background 这些基础属性就行。</p>
 
     <div class="row">
@@ -924,7 +926,7 @@
 
   <!-- ========== 二、单选框、复选框、开关 ========== -->
   <section class="block">
-    <h2>二、单选框与复选框</h2>
+    <h2 id="f2">二、单选框与复选框</h2>
     <p>默认外观画在浏览器内部的 shadow tree 里，只能先 <code>appearance: none</code> 掀掉，再自己画；开关由复选框派生。</p>
 
     <div class="row">
@@ -954,7 +956,7 @@
 
   <!-- ========== 三、范围选择、评星 ========== -->
   <section class="block">
-    <h2>三、范围选择元素</h2>
+    <h2 id="f3">三、范围选择元素</h2>
     <p>轨道和滑块分别对应 <code>::-webkit-slider-runnable-track</code> 和 <code>::-webkit-slider-thumb</code>，Chrome 没有现成的「已填充进度」伪元素。</p>
 
     <h4>border-shape 实现滑块组件<span class="gray">（仅实验，不推荐）</span></h4>
@@ -1008,7 +1010,7 @@
 
   <!-- ========== 四、下拉框 ========== -->
   <section class="block">
-    <h2>四、下拉框选择</h2>
+    <h2 id="f4">四、下拉框选择</h2>
     <p>
       支持 <code>appearance: base-select</code> 的内核（如 Chrome 135+）能把下拉面板一起自定义；
       不支持的，就只改 <code>select</code> 本身，点开仍是系统默认的下拉。
@@ -1052,7 +1054,7 @@
 
   <!-- ========== 五、日期选择 ========== -->
   <section class="block">
-    <h2>五、日期选择</h2>
+    <h2 id="f5">五、日期选择</h2>
     <p>
       原生日期浮层各家差别太大（Safari、Firefox 尤其难看），这里用 <code>flatpickr</code> 接管输入框：
       输入框外观还是自己写，点开的面板由 flatpickr 来画，各家看到的都是同一套界面。
@@ -1078,7 +1080,7 @@
 
   <!-- ========== 六、颜色选择 ========== -->
   <section class="block">
-    <h2>六、颜色选择</h2>
+    <h2 id="f6">六、颜色选择</h2>
     <p>
       <code>type="color"</code> 的输入框在 <code>appearance: none</code> 之后只剩一块颜色，
       用 <code>padding</code> 留出内边距、<code>background-color</code> 做外圈，就能得到正方形色块；点开的取色器还是系统的。

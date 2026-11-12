@@ -90,8 +90,10 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 8px 24px -18px rgba(0, 0, 0, .3);
   }
 
+  /* 锚点定位：抵消 .block 的 padding-top，让定位边缘落在 .block 顶边 */
   .block > h2 {
     margin: 0 0 6px;
+    scroll-margin-top: 22px;
     font-size: 16px;
     letter-spacing: -.01em;
   }
@@ -573,7 +575,7 @@
   </header>
 
   <section class="block">
-    <h2>一、interestfor 基础案例</h2>
+    <h2 id="f1">一、interestfor 基础案例</h2>
     <p>三个触发元素分别覆盖：链接语义触发、普通 <code>span</code> 触发、自带 <code>popover</code> 与需要自动补 <code>popover</code> 两种目标。</p>
 
     <div class="row">
@@ -626,7 +628,7 @@
   </section>
 
   <section class="block">
-    <h2>二、Tooltip 文字提示：12 个方位</h2>
+    <h2 id="f2">二、Tooltip 文字提示：12 个方位</h2>
     <p>
       这些按钮只写了 <code>interestfor</code> 和原生 <code>title</code>。组件会把 <code>title</code> 的文字搬进新建的气泡，
       回填 <code>interestfor</code> 的 id，然后把 <code>title</code> 改成 <code>data-title</code>，浏览器原生的黑框提示就不会再出现。
@@ -657,7 +659,7 @@
   </p>
 
   <section class="block">
-    <h2>三、用 shape() 画带三角的浮层</h2>
+    <h2 id="f3">三、用 shape() 画带三角的浮层</h2>
     <p>
       三角不再靠伪元素拼，而是直接长在形状路径里。整份轮廓只有一段 <code>shape()</code>：
       每条边都留了一次三角位，没有三角的边把半宽设成 <code>0</code>，三个点重合即退化，
