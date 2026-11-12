@@ -386,21 +386,20 @@
   }
 
   /* 带子由 thumb 画，而 Blink 里 thumb 是 track 的子元素，clip-path 能连带子一起裁。
-     左端弧深度的上限卡在带子上下两端：把手圆在那里的横坐标 = padding-left + r - √(r² - 9)，
-     r=8 时是 1.0838px，再往里就削到把手了；弧的最低点钉在边框盒左边缘（矢高 = 弦），
-     反推 R = (s² + 9) / 2s = 4.694px */
+     左端弧深度的上限卡在带子上下两端：把手圆在那一行的横坐标 = r - √(r² - 9)，
+     r=8 时是 8 - √55 = 0.5838px，再往里就削到把手了；弧的最低点钉在边框盒左边缘（矢高 = 弦），
+     反推 R = (s² + 9) / 2s = 8px——正好是把手那个圆本尊，两者同心 */
   @supports (border-shape: none) {
     .ui-range::-webkit-slider-runnable-track {
-      padding-left: .5px;
       clip-path: shape(
         from 0 -20px,
         line to 100% -20px,
         line to 100% calc(100% + 20px),
         line to 0 calc(100% + 20px),
-        /* 从轨道下边收进来，沿 R4.694 绕回上边（弦 6px，矢高 1.0838px） */
+        /* 从轨道下边收进来，沿 R8 绕回上边（弦 6px，矢高 0.5838px） */
         line to 0 100%,
-        line to 1.0838px 100%,
-        arc to 1.0838px 0 of 4.694px cw,
+        line to 0.5838px 100%,
+        arc to 0.5838px 0 of 8px cw,
         line to 0 0,
         close
       );
@@ -442,13 +441,10 @@
     border-image-outset: 0 0 0 1999px;
   }
 
-  /* 轨道左右两端直角：轨道底色和带子都以边框盒为界。
-     带子从 -2000px 画起，得留一道矩形把左端挡在边框盒里；
-     纵向留 20px 余量，免得把把手和它的阴影裁掉 */
+  /* 左右两端各做一个 0.5838px / 50% 的椭圆角，深度和 border-shape 版那道 R8 剪裁弧对齐，
+     上下两条边保持直线 */
   .ui-range-border-image::-webkit-slider-runnable-track {
-    background: var(--fill);
-    border-radius: 0;
-    clip-path: polygon(0 -20px, 100% -20px, 100% calc(100% + 20px), 0 calc(100% + 20px));
+    border-radius: 0.5838px / 50%;
   }
 
   /* 方案三：锚点定位版。轨道和把手各挂 anchor-name，::before 用 left / right
@@ -968,7 +964,7 @@
 
     <p class="hint">
       填充带由 <code>border-shape</code> 画：外轮廓是往左 2000px 的 6px <code>shape()</code>，内轮廓是 <code>circle(50%)</code>，相减只剩带子；
-      越出边框盒的部分由 <code>overflow: clip</code> 兜底，不用回传进度。轨道上的 <code>clip-path</code> 负责左端那道圆弧，<code>padding-left</code> 把坐标和把手错开。
+      越出边框盒的部分由 <code>overflow: clip</code> 兜底，不用回传进度。轨道上的 <code>clip-path</code> 负责左端那道圆弧。
       圆环用 <code>border</code> 描，比径向渐变锐利。不支持 <code>border-shape</code> 的内核回退到 <code>--percent</code> + 轨道渐变。
     </p>
 
@@ -980,7 +976,7 @@
     <p class="hint">
       带子由 <code>border-image</code> 画：只有 <code>border-image-outset</code> 能把绘制区域往左撑 2000px 而不改布局，
       <code>slice</code> 只取左边缘那一片、不开 <code>fill</code>，带子就止步于把手左切点。
-      轨道两端走直角，左端只用一道矩形 <code>clip-path</code> 把带子挡在边框盒内，可回溯到 Chrome 88。
+      轨道两端用 <code>0.5838px / 50%</code> 的椭圆角收边，越界的带子交给 input 上的 <code>overflow: clip</code>，可回溯到 Chrome 88。
     </p>
 
     <h4>锚点定位实现滑块组件（Chrome only）</h4>
@@ -1130,7 +1126,7 @@
   const isSafari = !CSS.supports('font-tech(color-COLRv1)');
 
   const percentTargets = [];
-  if (noBorderShape && !isFirefox) percentTargets.push('.ui-range');
+  if (noBorderShape && !isFirefox) percentTargets.push('.ui-range:not(.ui-range-border-image)');
   if (isSafari) percentTargets.push('.ui-range-anchor');
 
   if (percentTargets.length) {
