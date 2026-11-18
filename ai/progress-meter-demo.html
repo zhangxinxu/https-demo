@@ -323,20 +323,36 @@
   }
 
   @supports (-moz-appearance: none) {
-    /* Firefox：::-moz-meter-bar 的背景会被缩放，三色的分界对不上色段，
-       索性把原生填充藏掉，改用 meter 自己的背景按 --percent 画填充
-       （百分比由页面底部 JS 回传），缝隙照样用遮罩挖 */
+    /* Firefox：填充伪元素只有一个 ::-moz-meter-bar，三段区间靠 :-moz-meter-* 状态伪类区分，
+       不用再让 JS 回传百分比自己画填充。
+       它的背景是按「填充自己」的盒子铺的，渐变里那些 px 断点得先用 background-size
+       撑到整条轨道的宽度，才不会跟着填充一起缩；
+       好在 low=4 / high=8 正好落在两个断点上：弱 < b1、中 ≥ b1、强 ≥ b2，
+       所以末段颜色往后延伸，断点不会掉到盒子外。
+       缝隙遮罩没有轨道伪元素可挂，挂到 meter 元素上——它没有 border 和 padding，本身就是轨道 */
     .ui-meter-password {
-      background-color: var(--fill);
-      background-image: var(--fill-gradient);
-      background-size: calc(var(--percent, 0) * 100%) 100%;
-      background-repeat: no-repeat;
       -webkit-mask-image: var(--seam-mask);
       mask-image: var(--seam-mask);
+      background: var(--fill);
     }
 
     .ui-meter-password::-moz-meter-bar {
-      background: none;
+      border-radius: 2px;
+      -moz-appearance: none;
+      appearance: none;
+      background: var(--danger);
+      background-repeat: no-repeat;
+      background-size: var(--meter-w) 100%;
+    }
+
+    /* low ≤ 值 < high：红 + 橙 */
+    .ui-meter-password:-moz-meter-sub-optimum::-moz-meter-bar {
+      background-image: linear-gradient(to right, var(--danger) var(--b1), var(--warning) 0);
+    }
+
+    /* 值 ≥ high：整条三色 */
+    .ui-meter-password:-moz-meter-optimum::-moz-meter-bar {
+      background-image: var(--fill-gradient);
     }
   }
 
@@ -433,8 +449,11 @@
       <code>P@ssw0rd!2024xyz</code>。
     </p>
     <p class="hint">
-      Firefox 的 <code>::-moz-meter-bar</code> 色段对不齐，且不渲染 <code>meter</code> 伪元素，所以填充改用
-      <code>meter</code> 自己的背景按 <code>--percent</code> 画，「弱 中 强」挂在外层容器上。
+      Firefox 没有 <code>::-webkit-meter-*-value</code> 这一套，只给一个 <code>::-moz-meter-bar</code>，
+      区间靠 <code>:-moz-meter-optimum</code> 这些状态伪类区分。它的背景按填充自己的盒子铺，
+      所以拿 <code>background-size: var(--meter-w)</code> 把渐变撑回整条轨道的宽度；
+      没有轨道伪元素可挂遮罩，缝隙改由 <code>meter</code> 自己挖（它没有 padding，就是轨道）。
+      「弱 中 强」仍挂在外层容器上，因为 Firefox 不给 <code>meter</code> 渲染伪元素。
     </p>
   </section>
 </main>
@@ -472,8 +491,6 @@
       score = Math.min(MAX, Math.max(0, score || 0));
 
       meter.value = score;
-      /* 走不了 meter 伪元素的内核（Firefox 兜底那条）用这个变量自己画填充 */
-      meter.style.setProperty('--percent', score / MAX);
     }
 
     input.addEventListener('input', update);
