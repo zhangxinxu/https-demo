@@ -179,9 +179,24 @@
     background: var(--fill);
   }
 
+  /* Firefox 只给了 ::-moz-meter-bar 一个填充伪元素，没有 optimum / suboptimum /
+     even-less-good 之分。它把三段区间做成了挂在 meter 上的状态伪类，要和填充伪元素
+     组合起来用：meter:-moz-meter-XX::-moz-meter-bar，语义和上面三个一一对应 */
   .ui-meter-battery::-moz-meter-bar {
     border-radius: 2px;
-    background: var(--brand);
+    background: var(--brand); /* 兜底：三段状态都没命中时 */
+  }
+
+  .ui-meter-battery:-moz-meter-optimum::-moz-meter-bar {
+    background: var(--success);
+  }
+
+  .ui-meter-battery:-moz-meter-sub-optimum::-moz-meter-bar {
+    background: var(--warning);
+  }
+
+  .ui-meter-battery:-moz-meter-sub-sub-optimum::-moz-meter-bar {
+    background: var(--danger);
   }
 
   /* 数值落在哪一段，浏览器就渲染对应的那个伪元素 */
@@ -198,6 +213,15 @@
   .ui-meter-battery::-webkit-meter-even-less-good-value {
     border-radius: 2px;
     background: var(--danger);
+  }
+
+  /* Firefox 没有轨道伪元素，没填满的那截画的是 meter 自己的背景；
+     用 content-box 裁一下，让灰色只落在 padding 内，外观和 Chrome 的轨道对齐 */
+  @supports (-moz-appearance: none) {
+    .ui-meter-battery {
+      background-color: var(--fill);
+      background-clip: content-box;
+    }
   }
 
   /* ---------- 密码强度：一个 meter 切成「弱 / 中 / 强」三色段 ----------
@@ -381,6 +405,12 @@
 
     <p class="hint">
       电量条把 <code>optimum</code> 放在高位，于是低于 <code>low</code> 是红色、中间是橙色、高于 <code>high</code> 才是绿色。
+    </p>
+    <p class="hint">
+      Firefox 的填充伪元素只有 <code>::-moz-meter-bar</code> 一个，区间状态改由
+      <code>:-moz-meter-optimum</code>、<code>:-moz-meter-sub-optimum</code>、
+      <code>:-moz-meter-sub-sub-optimum</code> 三个伪类提供，要和填充伪元素串起来写：
+      <code>meter:-moz-meter-optimum::-moz-meter-bar</code>。
     </p>
 
     <h4>meter 派生密码强度</h4>
