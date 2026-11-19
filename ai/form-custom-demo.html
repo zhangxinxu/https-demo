@@ -183,6 +183,44 @@
     cursor: not-allowed;
   }
 
+  /* 文件选择：按钮藏在 shadow tree 里，用 ::file-selector-button 选中它，
+     它本身就是一个完整元素，UA 样式表里的 font / color 不会从 input 继承，要显式写 */
+  .ui-file {
+    color: var(--text-2);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .ui-file::file-selector-button {
+    height: 32px;
+    margin-inline-end: 10px;
+    padding: 0 16px;
+    border: 1px solid var(--brand);
+    border-radius: 6px;
+    background: var(--brand);
+    color: #fff;
+    font: inherit;
+    cursor: pointer;
+    transition: background-color .2s, border-color .2s;
+  }
+
+  .ui-file::file-selector-button:hover {
+    border-color: var(--brand-hover);
+    background: var(--brand-hover);
+  }
+
+  .ui-file:disabled {
+    color: var(--text-3);
+    cursor: not-allowed;
+  }
+
+  .ui-file:disabled::file-selector-button {
+    border-color: var(--line);
+    background: var(--fill);
+    color: var(--text-3);
+    cursor: not-allowed;
+  }
+
   /* =========================================================
    * 二、单选框、复选框，以及派生的开关
    * checkbox / radio 这类表单控件在 appearance: none 之后是支持伪元素的，
@@ -919,9 +957,10 @@
       <input class="ui-input" type="text" value="禁用状态" disabled>
     </div>
 
-    <p class="hint">
-      这两类元素从 IE 时代就能自定义外观，不需要 <code>appearance</code>，所以归为常规元素。
-    </p>
+    <p>文件选择框可以使用<code>::file-selector-button</code>伪元素进行样式自定义，若要隐藏后面的文案信息，可以设置<code>font-size: 0</code>。</p>
+    <div class="row">
+      <input type="file" class="ui-file">
+    </div>
   </section>
 
   <!-- ========== 二、单选框、复选框、开关 ========== -->
